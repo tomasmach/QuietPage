@@ -1,8 +1,7 @@
 /**
  * QuietPage - Main Stylesheet
  * Organic Theme with Coffee & Paper Aesthetics
- * 
- * Structure:
+ * * Structure:
  * 1. CSS Variables (Light & Dark Mode)
  * 2. Font Imports
  * 3. CSS Reset & Base Styles
@@ -74,6 +73,7 @@
 /* Nunito (Sans-serif) - For UI and body text */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
 
+
 /* ============================================
    3. CSS RESET & BASE STYLES
    ============================================ */
@@ -88,6 +88,10 @@
 }
 
 html {
+    /* Remove default margin and padding */
+    margin: 0;
+    padding: 0;
+    
     /* Improve text rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -102,6 +106,9 @@ body {
     line-height: 1.6;
     color: var(--text-main);
     background-color: var(--bg-body);
+    
+    /* Remove default margin to prevent gap above navbar */
+    margin: 0;
     
     /* Prevent horizontal scroll */
     overflow-x: hidden;
@@ -201,6 +208,7 @@ a:focus {
     margin-right: auto;
     padding-left: var(--space-sm);
     padding-right: var(--space-sm);
+    padding-bottom: var(--space-md);
 }
 
 @media (min-width: 768px) {

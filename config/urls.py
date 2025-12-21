@@ -17,9 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
+from . import views  # type: ignore
 
 urlpatterns = [
+    path('', views.HomeView.as_view(), name='home'),
     path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
+    path('journal/', include('apps.journal.urls', namespace='journal')),
 ]
 
 # Django Debug Toolbar URLs (only in development)

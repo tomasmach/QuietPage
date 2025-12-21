@@ -142,9 +142,11 @@ function initWordCount() {
             const text = textarea.value.trim();
             const wordCount = text ? text.split(/\s+/).length : 0;
             
-            if (wordCount === 1) {
+            if (wordCount === 0) {
+                counter.textContent = '0 slov';
+            } else if (wordCount === 1) {
                 counter.textContent = '1 slovo';
-            } else if (wordCount < 5) {
+            } else if (wordCount >= 2 && wordCount <= 4) {
                 counter.textContent = `${wordCount} slova`;
             } else {
                 counter.textContent = `${wordCount} slov`;

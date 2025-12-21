@@ -42,6 +42,21 @@ class User(AbstractUser):
         help_text="Opt-in for email notifications"
     )
     
+    # Writing streak tracking
+    current_streak = models.IntegerField(
+        default=0,
+        help_text="Current consecutive days writing streak"
+    )
+    longest_streak = models.IntegerField(
+        default=0,
+        help_text="Longest writing streak achieved"
+    )
+    last_entry_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date of last journal entry (in user timezone)"
+    )
+    
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
