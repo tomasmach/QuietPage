@@ -239,7 +239,7 @@ def autosave_entry(request):
                 
                 # Update tags if provided
                 if tags_str:
-                    entry.tags.set(*[tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
+                    entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
                 
                 return JsonResponse({
                     'status': 'success',
