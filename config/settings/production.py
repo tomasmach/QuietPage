@@ -15,7 +15,7 @@ import os
 DEBUG = False
 
 # Parse ALLOWED_HOSTS from environment variable (comma-separated)
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '').split(',') if host.strip()]
 
 # Database - PostgreSQL for production
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
