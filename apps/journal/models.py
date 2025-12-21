@@ -77,6 +77,6 @@ class Entry(models.Model):
         return reverse('journal:entry-detail', kwargs={'pk': self.pk})
     
     def __str__(self):
-        date_str = self.created_at.strftime('%Y-%m-%d')
+        date_str = self.created_at.strftime('%Y-%m-%d') if self.created_at else "Unsaved"
         title_preview = self.title[:30] if self.title else "Untitled"
         return f"{self.user.username} - {date_str} - {title_preview}"
