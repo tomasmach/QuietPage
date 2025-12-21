@@ -161,6 +161,10 @@
 }
 
 html {
+    /* Remove default margin and padding */
+    margin: 0;
+    padding: 0;
+    
     /* Improve text rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -175,6 +179,9 @@ body {
     line-height: 1.6;
     color: var(--text-main);
     background-color: var(--bg-body);
+    
+    /* Remove default margin to prevent gap above navbar */
+    margin: 0;
     
     /* Prevent horizontal scroll */
     overflow-x: hidden;
@@ -274,6 +281,7 @@ a:focus {
     margin-right: auto;
     padding-left: var(--space-sm);
     padding-right: var(--space-sm);
+    padding-bottom: var(--space-md);
 }
 
 @media (min-width: 768px) {
