@@ -1,10 +1,10 @@
 # Core Django and dependencies
-Django==5.1.4
+Django==6.0
 python-dotenv==1.0.1
 whitenoise==6.8.2
 
 # Custom User Model - Timezone support
-django-timezone-field==7.0
+django-timezone-field==7.2.1
 
 # Database
-psycopg2-binary==2.9.10  # PostgreSQL adapter (for production)
+psycopg2-binary==2.9.11  # PostgreSQL adapter (for production)
