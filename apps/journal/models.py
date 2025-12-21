@@ -66,8 +66,6 @@ class Entry(models.Model):
     
     def save(self, *args, **kwargs):
         """Auto-calculate word count before saving."""
-        is_new = self.pk is None
-        
         # Calculate word count from content
         if self.content:
             self.word_count = len(self.content.split())
