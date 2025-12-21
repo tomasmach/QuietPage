@@ -39,7 +39,7 @@
                 name="{{ form.title.name }}"
                 id="{{ form.title.id_for_label }}"
                 class="form-input {% if form.title.errors %}is-invalid{% endif %}"
-                placeholder="Například: Sobotní ráno, Reflexe z týdne..."
+                placeholder="Sobotní ráno, Reflexe..."
                 value="{{ form.title.value|default:'' }}"
                 maxlength="200"
             >
@@ -59,7 +59,7 @@
                 name="{{ form.content.name }}"
                 id="{{ form.content.id_for_label }}"
                 class="form-textarea form-textarea-journal {% if form.content.errors %}is-invalid{% endif %}"
-                placeholder="Co máš na srdci? Začni psát..."
+                placeholder="Začni psát..."
                 required
                 data-word-count="true"
             >{{ form.content.value|default:'' }}</textarea>
@@ -70,23 +70,78 @@
             {% endif %}
         </div>
 
-        <!-- Mood Rating Field (Placeholder - will be custom component in Úkol 3) -->
+        <!-- Mood Rating Field - Custom Mood Selector -->
         <div class="form-group">
-            <label for="{{ form.mood_rating.id_for_label }}" class="form-label">
+            <label class="form-label">
                 Jak se dnes cítíš?
             </label>
-            <select 
+            
+            <!-- Custom Mood Selector Component -->
+            <div class="mood-selector" role="group" aria-label="Výběr nálady">
+                <button 
+                    type="button" 
+                    class="mood-option {% if form.mood_rating.value == '1' %}mood-selected{% endif %}" 
+                    data-mood="1"
+                    aria-label="Velmi špatně"
+                    title="Velmi špatně"
+                >
+                    <span class="mood-emoji">😞</span>
+                    <span class="mood-label">Velmi špatně</span>
+                </button>
+                
+                <button 
+                    type="button" 
+                    class="mood-option {% if form.mood_rating.value == '2' %}mood-selected{% endif %}" 
+                    data-mood="2"
+                    aria-label="Špatně"
+                    title="Špatně"
+                >
+                    <span class="mood-emoji">😕</span>
+                    <span class="mood-label">Špatně</span>
+                </button>
+                
+                <button 
+                    type="button" 
+                    class="mood-option {% if form.mood_rating.value == '3' %}mood-selected{% endif %}" 
+                    data-mood="3"
+                    aria-label="Neutrálně"
+                    title="Neutrálně"
+                >
+                    <span class="mood-emoji">😐</span>
+                    <span class="mood-label">Neutrálně</span>
+                </button>
+                
+                <button 
+                    type="button" 
+                    class="mood-option {% if form.mood_rating.value == '4' %}mood-selected{% endif %}" 
+                    data-mood="4"
+                    aria-label="Dobře"
+                    title="Dobře"
+                >
+                    <span class="mood-emoji">🙂</span>
+                    <span class="mood-label">Dobře</span>
+                </button>
+                
+                <button 
+                    type="button" 
+                    class="mood-option {% if form.mood_rating.value == '5' %}mood-selected{% endif %}" 
+                    data-mood="5"
+                    aria-label="Skvěle"
+                    title="Skvěle"
+                >
+                    <span class="mood-emoji">😊</span>
+                    <span class="mood-label">Skvěle</span>
+                </button>
+            </div>
+            
+            <!-- Hidden input for form submission -->
+            <input 
+                type="hidden" 
                 name="{{ form.mood_rating.name }}"
                 id="{{ form.mood_rating.id_for_label }}"
-                class="form-select {% if form.mood_rating.errors %}is-invalid{% endif %}"
+                value="{{ form.mood_rating.value|default:'' }}"
             >
-                <option value="">Nevybráno</option>
-                <option value="1" {% if form.mood_rating.value == "1" %}selected{% endif %}>😞 Velmi špatně (1)</option>
-                <option value="2" {% if form.mood_rating.value == "2" %}selected{% endif %}>😕 Špatně (2)</option>
-                <option value="3" {% if form.mood_rating.value == "3" %}selected{% endif %}>😐 Neutrálně (3)</option>
-                <option value="4" {% if form.mood_rating.value == "4" %}selected{% endif %}>🙂 Dobře (4)</option>
-                <option value="5" {% if form.mood_rating.value == "5" %}selected{% endif %}>😊 Skvěle (5)</option>
-            </select>
+            
             <small class="form-help">
                 Volitelné: Zaznamenej svou náladu pro sledování wellbeingu
             </small>
@@ -107,7 +162,7 @@
                 name="{{ form.tags.name }}"
                 id="{{ form.tags.id_for_label }}"
                 class="form-input {% if form.tags.errors %}is-invalid{% endif %}"
-                placeholder="práce, rodina, sport... (odděluj čárkami)"
+                placeholder="práce, rodina, sport..."
                 value="{{ form.tags.value|default:'' }}"
             >
             <small class="form-help">
@@ -195,6 +250,12 @@
     justify-content: center;
     margin-top: var(--space-xl);
     flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.form-actions .btn {
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .autosave-status {
@@ -208,6 +269,90 @@
     font-size: 0.875rem;
     color: var(--text-muted);
     box-shadow: var(--shadow-soft);
+}
+
+/* Mood Selector Component */
+.mood-selector {
+    display: flex;
+    gap: var(--space-xs);
+    justify-content: space-between;
+    margin-bottom: var(--space-xs);
+    padding: var(--space-sm);
+    background-color: var(--bg-body);
+    border-radius: var(--radius-md);
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.mood-option {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    background-color: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    font-family: var(--font-sans);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.mood-option:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+}
+
+.mood-option:focus {
+    outline: none;
+}
+
+.mood-option:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.mood-option.mood-selected {
+    border-color: var(--primary);
+    background-color: var(--primary);
+    color: #FFFFFF;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(156, 140, 116, 0.3);
+}
+
+.mood-emoji {
+    font-size: 2rem;
+    line-height: 1;
+    display: block;
+}
+
+.mood-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.2;
+    color: var(--text-main);
+}
+
+.mood-option.mood-selected .mood-label {
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .mood-option.mood-selected {
+        color: #1A1614;
+    }
+    
+    .mood-option.mood-selected .mood-label {
+        color: #1A1614;
+    }
 }
 
 /* Responsive */
@@ -231,15 +376,90 @@
     .form-actions .btn {
         width: 100%;
     }
+    
+    /* Mood selector on mobile - hide labels, show only emojis */
+    .mood-selector {
+        gap: 6px;
+        padding: 6px;
+    }
+    
+    .mood-option {
+        padding: 8px 4px;
+        min-width: 0;
+    }
+    
+    .mood-label {
+        display: none;
+    }
+    
+    .mood-emoji {
+        font-size: 1.5rem;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 390px) {
+    .mood-selector {
+        gap: 4px;
+        padding: 4px;
+    }
+    
+    .mood-option {
+        padding: 6px 2px;
+        border-width: 1px;
+    }
+    
+    .mood-emoji {
+        font-size: 1.25rem;
+    }
 }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Initialize word count for content textarea
+// Initialize entry form functionality
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📝 Entry form initialized');
+    
+    // ============================================
+    // MOOD SELECTOR FUNCTIONALITY
+    // ============================================
+    
+    const moodSelector = document.querySelector('.mood-selector');
+    const moodHiddenInput = document.getElementById('{{ form.mood_rating.id_for_label }}');
+    
+    if (moodSelector && moodHiddenInput) {
+        const moodButtons = moodSelector.querySelectorAll('.mood-option');
+        
+        moodButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const selectedMood = this.getAttribute('data-mood');
+                
+                // Remove selection from all buttons
+                moodButtons.forEach(btn => btn.classList.remove('mood-selected'));
+                
+                // Add selection to clicked button
+                this.classList.add('mood-selected');
+                
+                // Update hidden input value
+                moodHiddenInput.value = selectedMood;
+                
+                // Visual feedback
+                console.log('😊 Mood selected:', selectedMood);
+            });
+            
+            // Keyboard support (Space/Enter)
+            button.addEventListener('keydown', function(e) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+        
+        console.log('✅ Mood selector initialized');
+    }
     
     // Word count is already handled by main.js
     // Auto-save will be implemented in Úkol 4
