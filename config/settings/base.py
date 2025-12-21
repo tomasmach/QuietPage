@@ -27,10 +27,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # Required by allauth
+    
+    # Third-party
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'taggit',
     
     # Local apps
     'apps.accounts',
+    'apps.journal',
 ]
+
+# Sites framework (required by allauth)
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -42,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Required by django-allauth
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -125,3 +137,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 # CRITICAL: This must be set before running the first migration
 AUTH_USER_MODEL = 'accounts.User'
+
+# Field Encryption for Journal Entries (django-encrypted-model-fields)
+FIELD_ENCRYPTION_KEY = os.getenv('FERNET_KEY_PRIMARY', 'XTA6mtSLGukkqeE7om2SskwnzLv0LpfJ7ba4FUZW0OM=')
+
+# Django Taggit Configuration
+TAGGIT_CASE_INSENSITIVE = True
+TAGGIT_STRIP_UNICODE_WHEN_SLUGIFYING = False  # Support Czech characters
+
+# Django AllAuth Configuration
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Dual login: username OR email (modern django-allauth syntax)
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # MVP: optional, later: mandatory
+
+# Login/Logout URLs
+LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
+LOGIN_URL = '/accounts/login/'

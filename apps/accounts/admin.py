@@ -51,6 +51,10 @@ class UserAdmin(BaseUserAdmin):
         ('QuietPage Settings', {
             'fields': ('timezone', 'email_notifications')
         }),
+        ('Writing Stats', {
+            'fields': ('current_streak', 'longest_streak', 'last_entry_date'),
+            'classes': ('collapse',)
+        }),
         ('Important Dates', {
             'fields': ('created_at', 'updated_at'),
         }),
