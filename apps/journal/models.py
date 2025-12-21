@@ -8,7 +8,7 @@ import uuid
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-from encrypted_model_fields.fields import EncryptedTextField
+from .fields import EncryptedTextField
 from taggit.managers import TaggableManager
 
 
