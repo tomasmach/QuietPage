@@ -27,6 +27,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Local apps
+    'apps.accounts',
 ]
 
 MIDDLEWARE = [
@@ -106,3 +109,7 @@ STORAGES = {
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom User Model
+# CRITICAL: This must be set before running the first migration
+AUTH_USER_MODEL = 'accounts.User'
