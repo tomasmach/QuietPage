@@ -69,6 +69,8 @@ class Entry(models.Model):
         # Calculate word count from content
         if self.content:
             self.word_count = len(self.content.split())
+        else:
+            self.word_count = 0
         
         super().save(*args, **kwargs)
     
