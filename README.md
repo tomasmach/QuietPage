@@ -16,11 +16,12 @@
 
 ## 🛠️ Technologies
 
-- **Backend**: Django
-- **Frontend**: HTML, CSS (Bootstrap)
-- **Database**: SQLite (MVP) with future scalability to PostgreSQL
+- **Backend**: Django 5.2
+- **Frontend**: HTML, CSS (Custom design system)
+- **Database**: SQLite (Development) with future scalability to PostgreSQL
+- **Python**: 3.14
 - **Hosting**: Railway, Heroku, or Docker
-- **Authentication**: Django AllAuth for secure user management
+- **Authentication**: Django built-in auth
 
 ---
 

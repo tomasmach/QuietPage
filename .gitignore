@@ -1,3 +1,9 @@
+# Project-specific files
+todo.md
+AI_DEV_GUIDE.md
+styles.md
+howtorun.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -60,6 +66,13 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+
+# Static files
+/staticfiles/
+/static/
+
+# Media files
+/media/
 
 # Flask stuff:
 instance/
