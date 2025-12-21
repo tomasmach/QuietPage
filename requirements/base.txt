@@ -1,7 +1,7 @@
 # Core Django and dependencies
 Django==6.0
-python-dotenv==1.0.1
-whitenoise==6.8.2
+python-dotenv==1.2.1
+whitenoise==6.11.0
 
 # Custom User Model - Timezone support
 django-timezone-field==7.2.1
