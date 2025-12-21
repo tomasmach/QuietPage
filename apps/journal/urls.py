@@ -1,5 +1,12 @@
 """
 URL configuration for journal app.
+
+Routes:
+- /journal/ - Dashboard (list of entries)
+- /journal/new/ - Create new entry
+- /journal/<uuid>/ - View single entry
+- /journal/<uuid>/edit/ - Edit entry
+- /journal/<uuid>/delete/ - Delete entry (with confirmation)
 """
 
 from django.urls import path
@@ -8,7 +15,6 @@ from . import views
 app_name = 'journal'
 
 urlpatterns = [
-    # Placeholder URLs - will be implemented in next task
     path('', views.EntryListView.as_view(), name='entry-list'),
     path('new/', views.EntryCreateView.as_view(), name='entry-create'),
     path('<uuid:pk>/', views.EntryDetailView.as_view(), name='entry-detail'),
