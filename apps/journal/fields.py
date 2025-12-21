@@ -16,6 +16,23 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from cryptography.fernet import Fernet, InvalidToken
 import base64
+import logging
+
+# Get logger for this module
+logger = logging.getLogger(__name__)
+
+
+class DecryptionError(Exception):
+    """
+    Raised when field decryption fails.
+    
+    This exception indicates that encrypted data could not be decrypted,
+    which may be caused by:
+    - Incorrect encryption key
+    - Corrupted data in database
+    - Data tampering
+    """
+    pass
 
 
 def get_fernet_key():
@@ -85,6 +102,9 @@ class EncryptedTextField(models.TextField):
         Convert database value to Python value (decrypt).
         
         Called when data is loaded from the database.
+        
+        Raises:
+            DecryptionError: If decryption fails for any reason.
         """
         if value is None:
             return value
@@ -94,10 +114,38 @@ class EncryptedTextField(models.TextField):
             # Value is stored as string in DB, convert to bytes for decryption
             decrypted = f.decrypt(value.encode('utf-8'))
             return decrypted.decode('utf-8')
-        except (InvalidToken, Exception) as e:
-            # If decryption fails, return empty string to avoid crashes
-            # In production, you might want to log this
-            return ''
+        except InvalidToken as e:
+            # Log the failure with safe identifiers (never log raw encrypted value)
+            logger.error(
+                "Decryption failed for field '%s' (InvalidToken). "
+                "This may indicate incorrect encryption key or data tampering. "
+                "Exception: %s",
+                self.name or 'unknown_field',
+                str(e),
+                exc_info=True,
+                extra={
+                    'field_name': self.name,
+                    'error_type': 'InvalidToken',
+                }
+            )
+            raise DecryptionError(
+                f"Failed to decrypt field '{self.name or 'unknown_field'}': {str(e)}"
+            ) from e
+        except Exception as e:
+            # Log any other unexpected errors
+            logger.error(
+                "Unexpected error during decryption of field '%s': %s",
+                self.name or 'unknown_field',
+                str(e),
+                exc_info=True,
+                extra={
+                    'field_name': self.name,
+                    'error_type': type(e).__name__,
+                }
+            )
+            raise DecryptionError(
+                f"Unexpected error decrypting field '{self.name or 'unknown_field'}': {str(e)}"
+            ) from e
     
     def get_prep_value(self, value):
         """
