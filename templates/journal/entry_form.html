@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Upravit záznam{% else %}Nový záznam{% endif %} - QuietPage
+{% endblock %}
+
+{% block content %}
+<div class="editor-container">
+    <!-- Editor Header -->
+    <header class="editor-header">
+        <h1 class="editor-title">
+            {% if object %}
+                ✏️ Upravit záznam
+            {% else %}
+                ✨ Nový záznam
+            {% endif %}
+        </h1>
+        <p class="editor-subtitle text-muted">
+            {% if object %}
+                Naposledy upraveno {{ object.updated_at|date:"j. F Y, H:i" }}
+            {% else %}
+                Tvůj prostor pro myšlenky a reflexi
+            {% endif %}
+        </p>
+    </header>
+
+    <!-- Entry Form -->
+    <form method="post" class="entry-form" id="entry-form">
+        {% csrf_token %}
+        
+        <!-- Title Field -->
+        <div class="form-group">
+            <label for="{{ form.title.id_for_label }}" class="form-label">
+                Nadpis (volitelný)
+            </label>
+            <input 
+                type="text" 
+                name="{{ form.title.name }}"
+                id="{{ form.title.id_for_label }}"
+                class="form-input {% if form.title.errors %}is-invalid{% endif %}"
+                placeholder="Například: Sobotní ráno, Reflexe z týdne..."
+                value="{{ form.title.value|default:'' }}"
+                maxlength="200"
+            >
+            {% if form.title.errors %}
+                <div class="invalid-feedback">
+                    {{ form.title.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Content Field (Main Textarea) -->
+        <div class="form-group">
+            <label for="{{ form.content.id_for_label }}" class="form-label form-label-required">
+                Tvůj záznam
+            </label>
+            <textarea 
+                name="{{ form.content.name }}"
+                id="{{ form.content.id_for_label }}"
+                class="form-textarea form-textarea-journal {% if form.content.errors %}is-invalid{% endif %}"
+                placeholder="Co máš na srdci? Začni psát..."
+                required
+                data-word-count="true"
+            >{{ form.content.value|default:'' }}</textarea>
+            {% if form.content.errors %}
+                <div class="invalid-feedback">
+                    {{ form.content.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Mood Rating Field (Placeholder - will be custom component in Úkol 3) -->
+        <div class="form-group">
+            <label for="{{ form.mood_rating.id_for_label }}" class="form-label">
+                Jak se dnes cítíš?
+            </label>
+            <select 
+                name="{{ form.mood_rating.name }}"
+                id="{{ form.mood_rating.id_for_label }}"
+                class="form-select {% if form.mood_rating.errors %}is-invalid{% endif %}"
+            >
+                <option value="">Nevybráno</option>
+                <option value="1" {% if form.mood_rating.value == "1" %}selected{% endif %}>😞 Velmi špatně (1)</option>
+                <option value="2" {% if form.mood_rating.value == "2" %}selected{% endif %}>😕 Špatně (2)</option>
+                <option value="3" {% if form.mood_rating.value == "3" %}selected{% endif %}>😐 Neutrálně (3)</option>
+                <option value="4" {% if form.mood_rating.value == "4" %}selected{% endif %}>🙂 Dobře (4)</option>
+                <option value="5" {% if form.mood_rating.value == "5" %}selected{% endif %}>😊 Skvěle (5)</option>
+            </select>
+            <small class="form-help">
+                Volitelné: Zaznamenej svou náladu pro sledování wellbeingu
+            </small>
+            {% if form.mood_rating.errors %}
+                <div class="invalid-feedback">
+                    {{ form.mood_rating.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Tags Field -->
+        <div class="form-group">
+            <label for="{{ form.tags.id_for_label }}" class="form-label">
+                Štítky
+            </label>
+            <input 
+                type="text" 
+                name="{{ form.tags.name }}"
+                id="{{ form.tags.id_for_label }}"
+                class="form-input {% if form.tags.errors %}is-invalid{% endif %}"
+                placeholder="práce, rodina, sport... (odděluj čárkami)"
+                value="{{ form.tags.value|default:'' }}"
+            >
+            <small class="form-help">
+                Například: reflexe, vděčnost, plány
+            </small>
+            {% if form.tags.errors %}
+                <div class="invalid-feedback">
+                    {{ form.tags.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">
+                {% if object %}
+                    💾 Uložit změny
+                {% else %}
+                    ✅ Vytvořit záznam
+                {% endif %}
+            </button>
+            
+            <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'journal:entry-list' %}{% endif %}" class="btn btn-secondary btn-lg">
+                ❌ Zrušit
+            </a>
+        </div>
+    </form>
+
+    <!-- Auto-save indicator (will be activated in Úkol 4) -->
+    <div id="autosave-status" class="autosave-status" aria-live="polite" style="display: none;">
+        <!-- JavaScript will populate this -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Editor-specific styles */
+.editor-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-md);
+}
+
+.editor-header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+
+.editor-title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    color: var(--text-main);
+    margin-bottom: var(--space-xs);
+}
+
+.editor-subtitle {
+    font-size: 0.875rem;
+}
+
+.entry-form {
+    background-color: var(--bg-card);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+}
+
+/* Fix form inputs overflowing the card */
+.entry-form .form-input,
+.entry-form .form-textarea,
+.entry-form .form-select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.entry-form .form-group {
+    width: 100%;
+    max-width: 100%;
+}
+
+.form-actions {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+    margin-top: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.autosave-status {
+    position: fixed;
+    bottom: var(--space-md);
+    right: var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    box-shadow: var(--shadow-soft);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .editor-container {
+        padding: var(--space-md) var(--space-sm);
+    }
+    
+    .editor-title {
+        font-size: 1.5rem;
+    }
+    
+    .entry-form {
+        padding: var(--space-md);
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize word count for content textarea
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📝 Entry form initialized');
+    
+    // Word count is already handled by main.js
+    // Auto-save will be implemented in Úkol 4
+    // Textarea auto-resize will be implemented in Úkol 5
+});
+</script>
+{% endblock %}
