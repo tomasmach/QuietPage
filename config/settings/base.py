@@ -8,6 +8,7 @@ Environment-specific settings should be placed in development.py or production.p
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -138,8 +139,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CRITICAL: This must be set before running the first migration
 AUTH_USER_MODEL = 'accounts.User'
 
-# Field Encryption for Journal Entries (django-encrypted-model-fields)
-FIELD_ENCRYPTION_KEY = os.getenv('FERNET_KEY_PRIMARY', 'XTA6mtSLGukkqeE7om2SskwnzLv0LpfJ7ba4FUZW0OM=')
+# Field Encryption for Journal Entries
+# CRITICAL: Must be set in environment variables for security
+FIELD_ENCRYPTION_KEY = os.getenv('FERNET_KEY_PRIMARY')
+if not FIELD_ENCRYPTION_KEY:
+    raise ImproperlyConfigured(
+        'FERNET_KEY_PRIMARY environment variable is required. '
+        'Generate a key with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"'
+    )
 
 # Django Taggit Configuration
 TAGGIT_CASE_INSENSITIVE = True
