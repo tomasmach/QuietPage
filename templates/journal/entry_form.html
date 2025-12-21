@@ -6,6 +6,17 @@
 {% endblock %}
 
 {% block content %}
+<!-- Zen Mode Toggle Button (Fixed bottom-right) -->
+<button type="button" class="zen-toggle" id="zen-toggle" aria-label="Přepnout Zen Mode">
+    <span class="zen-toggle-icon" id="zen-icon">🧘</span>
+    <span class="zen-toggle-label" id="zen-label">Zen Mode</span>
+</button>
+
+<!-- Zen Mode Exit Hint -->
+<div class="zen-exit-hint" id="zen-exit-hint">
+    Stiskni ESC pro ukončení
+</div>
+
 <div class="editor-container">
     <!-- Editor Header -->
     <header class="editor-header">
@@ -377,6 +388,7 @@
     .form-actions .btn {
         width: 100%;
     }
+}
     
     /* Mood selector on mobile - hide labels, show only emojis */
     .mood-selector {
@@ -584,6 +596,59 @@ document.addEventListener('DOMContentLoaded', function() {
     if (contentTextarea && window.QuietPage && window.QuietPage.autoResizeTextarea) {
         window.QuietPage.autoResizeTextarea(contentTextarea);
     }
+    
+    // ============================================
+    // ZEN MODE FUNCTIONALITY
+    // ============================================
+    
+    const zenToggle = document.getElementById('zen-toggle');
+    const zenIcon = document.getElementById('zen-icon');
+    const zenLabel = document.getElementById('zen-label');
+    let isZenMode = false;
+    
+    // Toggle Zen Mode
+    function toggleZenMode() {
+        isZenMode = !isZenMode;
+        
+        if (isZenMode) {
+            // Activate Zen Mode
+            document.body.classList.add('zen-mode-active');
+            zenIcon.textContent = '❌';
+            zenLabel.textContent = 'Ukončit';
+            
+            // Focus on content textarea
+            if (contentTextarea) {
+                contentTextarea.focus();
+            }
+            
+            console.log('🧘 Zen Mode activated');
+        } else {
+            // Deactivate Zen Mode
+            document.body.classList.remove('zen-mode-active');
+            zenIcon.textContent = '🧘';
+            zenLabel.textContent = 'Zen Mode';
+            
+            console.log('✨ Zen Mode deactivated');
+        }
+    }
+    
+    // Click handler for zen toggle button
+    if (zenToggle) {
+        zenToggle.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent any form submission
+            e.stopPropagation(); // Stop event bubbling
+            toggleZenMode();
+        });
+    }
+    
+    // ESC key handler for exiting zen mode
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isZenMode) {
+            toggleZenMode();
+        }
+    });
+    
+    console.log('✅ Zen Mode initialized');
 });
 </script>
 {% endblock %}
