@@ -8,6 +8,10 @@ from django.views.generic import ListView, CreateView, DetailView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+import json
 from .models import Entry
 
 
@@ -130,3 +134,83 @@ class EntryDeleteView(LoginRequiredMixin, DeleteView):
             'Záznam byl úspěšně smazán.'
         )
         return super().delete(request, *args, **kwargs)
+
+
+@login_required
+@require_POST
+def autosave_entry(request):
+    """
+    AJAX endpoint for auto-saving journal entries.
+    
+    Creates a new entry or updates existing one based on entry_id.
+    Returns JSON response with status and entry ID.
+    """
+    try:
+        data = json.loads(request.body)
+        title = data.get('title', '').strip()
+        content = data.get('content', '').strip()
+        mood_rating = data.get('mood_rating', None)
+        tags_str = data.get('tags', '').strip()
+        entry_id = data.get('entry_id', None)
+        
+        # Content is required for saving
+        if not content:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Obsah nemůže být prázdný'
+            }, status=400)
+        
+        # Update existing entry or create new one
+        if entry_id:
+            try:
+                entry = Entry.objects.get(id=entry_id, user=request.user)  # type: ignore
+                entry.title = title
+                entry.content = content
+                entry.mood_rating = mood_rating if mood_rating else None
+                entry.save()
+                
+                # Update tags if provided
+                if tags_str:
+                    entry.tags.set(*[tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Automaticky uloženo',
+                    'entry_id': str(entry.id),
+                    'is_new': False
+                })
+            except Exception:  # type: ignore
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Záznam nenalezen'
+                }, status=404)
+        else:
+            # Create new entry
+            entry = Entry.objects.create(  # type: ignore
+                user=request.user,
+                title=title,
+                content=content,
+                mood_rating=mood_rating if mood_rating else None
+            )
+            
+            # Add tags if provided
+            if tags_str:
+                entry.tags.set(*[tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Automaticky uloženo',
+                'entry_id': str(entry.id),
+                'is_new': True
+            })
+            
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Neplatná data'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Chyba při ukládání: {str(e)}'
+        }, status=500)

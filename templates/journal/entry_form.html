@@ -447,6 +447,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Visual feedback
                 console.log('😊 Mood selected:', selectedMood);
+                
+                // Trigger auto-save
+                triggerAutoSave();
             });
             
             // Keyboard support (Space/Enter)
@@ -461,8 +464,113 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Mood selector initialized');
     }
     
-    // Word count is already handled by main.js
-    // Auto-save will be implemented in Úkol 4
+    // ============================================
+    // AUTO-SAVE FUNCTIONALITY
+    // ============================================
+    
+    const titleInput = document.getElementById('{{ form.title.id_for_label }}');
+    const contentTextarea = document.getElementById('{{ form.content.id_for_label }}');
+    const tagsInput = document.getElementById('{{ form.tags.id_for_label }}');
+    const entryForm = document.getElementById('entry-form');
+    
+    // Track current entry ID (null for new entries, UUID for editing)
+    let currentEntryId = {% if object %}'{{ object.id }}'{% else %}null{% endif %};
+    let isAutoSaving = false;
+    
+    // Auto-save function with AJAX
+    function autoSaveEntry() {
+        // Don't save if already saving or content is empty
+        const content = contentTextarea.value.trim();
+        if (isAutoSaving || !content) {
+            return;
+        }
+        
+        isAutoSaving = true;
+        
+        // Show "saving" indicator
+        if (window.QuietPage && window.QuietPage.showSaveIndicator) {
+            window.QuietPage.showSaveIndicator('Ukládám...', 'saving');
+        }
+        
+        // Prepare data
+        const data = {
+            title: titleInput.value.trim(),
+            content: content,
+            mood_rating: moodHiddenInput.value || null,
+            tags: tagsInput.value.trim(),
+            entry_id: currentEntryId
+        };
+        
+        // Send AJAX request
+        fetch('{% url "journal:autosave" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.QuietPage.getCSRFToken()
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            isAutoSaving = false;
+            
+            if (result.status === 'success') {
+                // Update entry ID if it's a new entry
+                if (result.is_new && result.entry_id) {
+                    currentEntryId = result.entry_id;
+                    console.log('✅ New entry created:', currentEntryId);
+                    
+                    // Update form action to edit mode (optional - prevents creating duplicates)
+                    // This way subsequent saves will update the same entry
+                    const editUrl = `/journal/${currentEntryId}/edit/`;
+                    window.history.replaceState({}, '', editUrl);
+                }
+                
+                // Show success indicator
+                if (window.QuietPage && window.QuietPage.showSaveIndicator) {
+                    window.QuietPage.showSaveIndicator('Automaticky uloženo', 'success');
+                }
+                
+                console.log('💾 Auto-save successful');
+            } else {
+                console.error('❌ Auto-save failed:', result.message);
+                if (window.QuietPage && window.QuietPage.showSaveIndicator) {
+                    window.QuietPage.showSaveIndicator('Chyba při ukládání', 'error');
+                }
+            }
+        })
+        .catch(error => {
+            isAutoSaving = false;
+            console.error('❌ Auto-save error:', error);
+            if (window.QuietPage && window.QuietPage.showSaveIndicator) {
+                window.QuietPage.showSaveIndicator('Chyba při ukládání', 'error');
+            }
+        });
+    }
+    
+    // Debounced auto-save (1 second delay)
+    const debouncedAutoSave = window.QuietPage.debounce(autoSaveEntry, 1000);
+    
+    // Trigger auto-save on input
+    function triggerAutoSave() {
+        debouncedAutoSave();
+    }
+    
+    // Attach event listeners
+    if (titleInput) {
+        titleInput.addEventListener('input', triggerAutoSave);
+    }
+    
+    if (contentTextarea) {
+        contentTextarea.addEventListener('input', triggerAutoSave);
+    }
+    
+    if (tagsInput) {
+        tagsInput.addEventListener('input', triggerAutoSave);
+    }
+    
+    console.log('✅ Auto-save initialized');
+    
     // Textarea auto-resize will be implemented in Úkol 5
 });
 </script>
