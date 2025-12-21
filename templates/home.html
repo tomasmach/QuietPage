@@ -24,7 +24,7 @@
         <!-- CTA Buttons -->
         <div class="hero-cta">
             {% if user.is_authenticated %}
-                <a href="{% url 'journal:entry-list' %}" class="btn btn-primary btn-lg">
+                <a href="{% url 'journal:dashboard' %}" class="btn btn-primary btn-lg">
                     Pokračovat v psaní
                 </a>
                 <a href="{% url 'journal:entry-create' %}" class="btn btn-secondary btn-lg">
