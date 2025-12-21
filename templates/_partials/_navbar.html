@@ -13,7 +13,7 @@
         <div class="navbar-links">
             {% if user.is_authenticated %}
                 <!-- Links for authenticated users -->
-                <a href="{% url 'journal:entry-list' %}" class="navbar-link">Dashboard</a>
+                <a href="{% url 'journal:dashboard' %}" class="navbar-link">Dashboard</a>
                 <a href="{% url 'journal:entry-create' %}" class="navbar-link btn btn-primary btn-sm">Nový záznam</a>
             {% else %}
                 <!-- Links for guests -->

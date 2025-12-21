@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - QuietPage{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Greeting Header -->
+    <header class="dashboard-header">
+        <h1 class="dashboard-greeting">
+            {{ greeting }}, <span class="dashboard-username">{{ user_first_name }}</span> ☕
+        </h1>
+        <p class="dashboard-subtitle">
+            Tvůj klidný prostor pro reflexi a psaní
+        </p>
+    </header>
+
+    <!-- Quick Action -->
+    <div class="dashboard-action">
+        <a href="{% url 'journal:entry-create' %}" class="btn btn-primary btn-lg">
+            ✨ Nový záznam
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📝</div>
+            <div class="stat-value">{{ stats.total_entries }}</div>
+            <div class="stat-label">
+                {% if stats.total_entries == 1 %}
+                    Záznam
+                {% elif stats.total_entries >= 2 and stats.total_entries <= 4 %}
+                    Záznamy
+                {% else %}
+                    Záznamů
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-value">{{ stats.current_streak }}</div>
+            <div class="stat-label">
+                {% if stats.current_streak == 1 %}
+                    Den v řadě
+                {% elif stats.current_streak >= 2 and stats.current_streak <= 4 %}
+                    Dny v řadě
+                {% else %}
+                    Dní v řadě
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value">{{ stats.total_words|default:0 }}</div>
+            <div class="stat-label">
+                {% if stats.total_words == 1 %}
+                    Slovo
+                {% elif stats.total_words >= 2 and stats.total_words <= 4 %}
+                    Slova
+                {% else %}
+                    Slov
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Entries -->
+    {% if recent_entries %}
+    <section class="recent-entries">
+        <h2 class="section-title">Poslední záznamy</h2>
+        
+        <div class="entries-list">
+            {% for entry in recent_entries %}
+            <article class="entry-card">
+                <a href="{{ entry.get_absolute_url }}" class="entry-link">
+                    <div class="entry-header">
+                        <h3 class="entry-title">
+                            {% if entry.title %}
+                                {{ entry.title }}
+                            {% else %}
+                                <em class="text-muted">Bez názvu</em>
+                            {% endif %}
+                        </h3>
+                        <time class="entry-date" datetime="{{ entry.created_at|date:'c' }}">
+                            {{ entry.created_at|date:"j. F Y" }}
+                        </time>
+                    </div>
+                    
+                    <div class="entry-meta">
+                        {% if entry.mood_rating %}
+                            <span class="entry-mood">
+                                {% if entry.mood_rating == 1 %}😞
+                                {% elif entry.mood_rating == 2 %}😕
+                                {% elif entry.mood_rating == 3 %}😐
+                                {% elif entry.mood_rating == 4 %}🙂
+                                {% elif entry.mood_rating == 5 %}😊
+                                {% endif %}
+                            </span>
+                        {% endif %}
+                        
+                        <span class="entry-word-count">{{ entry.word_count }} slov</span>
+                    </div>
+                </a>
+                
+                <div class="entry-actions">
+                    <a href="{% url 'journal:entry-update' entry.id %}" class="entry-action-link" title="Upravit">
+                        ✏️
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Dashboard Container */
+.dashboard-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-md);
+}
+
+/* Dashboard Header */
+.dashboard-header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+
+.dashboard-greeting {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: var(--space-xs);
+    line-height: 1.2;
+}
+
+.dashboard-username {
+    color: var(--primary);
+}
+
+.dashboard-subtitle {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+}
+
+/* Quick Action */
+.dashboard-action {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+}
+
+/* Statistics Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-2xl);
+}
+
+.stat-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    text-align: center;
+    box-shadow: var(--shadow-soft);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(74, 64, 58, 0.08);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-sm);
+    display: block;
+}
+
+.stat-value {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1;
+    margin-bottom: var(--space-xs);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: lowercase;
+}
+
+/* Recent Entries Section */
+.recent-entries {
+    margin-bottom: var(--space-2xl);
+}
+
+.section-title {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: var(--space-lg);
+    text-align: center;
+}
+
+.entries-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+/* Entry Card */
+.entry-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-soft);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    position: relative;
+}
+
+.entry-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(74, 64, 58, 0.08);
+}
+
+.entry-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-sm);
+    gap: var(--space-sm);
+}
+
+.entry-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    flex: 1;
+}
+
+.entry-date {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.entry-meta {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    margin-bottom: var(--space-sm);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.entry-mood {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.entry-word-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.entry-preview {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--text-main);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.entry-actions {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+}
+
+.entry-action-link {
+    font-size: 1.125rem;
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.entry-card:hover .entry-action-link {
+    opacity: 0.6;
+}
+
+.entry-action-link:hover {
+    opacity: 1;
+}
+
+/* Section Footer */
+.section-footer {
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: var(--space-lg) var(--space-sm);
+    }
+    
+    .dashboard-greeting {
+        font-size: 2rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+    }
+    
+    .stat-card {
+        padding: var(--space-md);
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+    }
+    
+    .entry-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-xs);
+    }
+    
+    .entry-card {
+        padding: var(--space-md);
+    }
+    
+    .entry-action-link {
+        opacity: 0.6;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-greeting {
+        font-size: 1.75rem;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}

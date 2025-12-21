@@ -16,7 +16,7 @@ from . import views
 app_name = 'journal'
 
 urlpatterns = [
-    path('', views.EntryListView.as_view(), name='entry-list'),
+    path('', views.DashboardView.as_view(), name='dashboard'),
     path('new/', views.EntryCreateView.as_view(), name='entry-create'),
     path('autosave/', views.autosave_entry, name='autosave'),
     path('<uuid:pk>/', views.EntryDetailView.as_view(), name='entry-detail'),

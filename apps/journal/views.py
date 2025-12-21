@@ -4,20 +4,77 @@ Journal views for QuietPage.
 CRUD operations for journal entries with privacy and user isolation.
 """
 
-from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.db.models import Count, Q, Sum
 import json
+from datetime import datetime, timedelta
 from .models import Entry
+
+
+class DashboardView(LoginRequiredMixin, TemplateView):
+    """
+    Main dashboard after login.
+    
+    Features:
+    - Time-based greeting (4-9, 9-12, 12-18, 18-4)
+    - Recent entries overview
+    - Statistics (total entries, current streak, word count)
+    - Quick action button for new entry
+    """
+    template_name = 'journal/dashboard.html'
+    
+    def get_greeting(self):
+        """Return time-based greeting in Czech."""
+        # Get current hour in user's timezone
+        user_tz = self.request.user.timezone  # type: ignore
+        now = timezone.now().astimezone(user_tz)
+        hour = now.hour
+        
+        if 4 <= hour < 9:
+            return "Dobré ráno"
+        elif 9 <= hour < 12:
+            return "Dobré dopoledne"
+        elif 12 <= hour < 18:
+            return "Dobré odpoledne"
+        else:  # 18-4
+            return "Dobrý večer"
+    
+    def get_context_data(self, **kwargs):
+        """Add dashboard data to context."""
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        # Time-based greeting
+        context['greeting'] = self.get_greeting()
+        context['user_first_name'] = user.first_name or user.username
+        
+        # Recent entries (all entries for MVP) - only select needed fields to avoid decryption issues
+        context['recent_entries'] = Entry.objects.filter(  # type: ignore
+            user=user
+        ).only('id', 'title', 'created_at', 'mood_rating', 'word_count').order_by('-created_at')
+        
+        # Statistics - use aggregation to avoid loading encrypted content
+        context['stats'] = {
+            'total_entries': Entry.objects.filter(user=user).count(),  # type: ignore
+            'current_streak': user.current_streak,  # type: ignore
+            'total_words': Entry.objects.filter(user=user).aggregate(  # type: ignore
+                total=Sum('word_count')
+            )['total'] or 0,
+        }
+        
+        return context
 
 
 class EntryListView(LoginRequiredMixin, ListView):
     """
-    Dashboard - list of user's journal entries.
+    Full list of user's journal entries.
     
     - Displays only entries belonging to the logged-in user
     - Ordered by most recent first
@@ -29,8 +86,10 @@ class EntryListView(LoginRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        """Filter entries to show only current user's entries."""
-        return Entry.objects.filter(user=self.request.user).order_by('-created_at')  # type: ignore
+        """Filter entries to show only current user's entries - avoid loading encrypted content."""
+        return Entry.objects.filter(  # type: ignore
+            user=self.request.user
+        ).only('id', 'title', 'created_at', 'mood_rating', 'word_count').order_by('-created_at')
 
 
 class EntryCreateView(LoginRequiredMixin, CreateView):
@@ -65,17 +124,22 @@ class EntryCreateView(LoginRequiredMixin, CreateView):
 
 class EntryDetailView(LoginRequiredMixin, DetailView):
     """
-    View single journal entry.
+    View single journal entry - redirects to edit for MVP.
     
     - Only shows entries belonging to the current user (404 otherwise)
+    - For MVP, we redirect directly to edit mode instead of showing read-only view
     """
     model = Entry
-    template_name = 'journal/entry_detail.html'
-    context_object_name = 'entry'
     
     def get_queryset(self):
         """Ensure user can only view their own entries."""
         return Entry.objects.filter(user=self.request.user)  # type: ignore
+    
+    def get(self, request, *args, **kwargs):
+        """Redirect to edit view for MVP simplicity."""
+        from django.shortcuts import redirect
+        self.object = self.get_object()
+        return redirect('journal:entry-update', pk=self.object.pk)
 
 
 class EntryUpdateView(LoginRequiredMixin, UpdateView):
