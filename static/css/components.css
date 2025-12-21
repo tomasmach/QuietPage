@@ -16,7 +16,6 @@
    ============================================ */
 
 .navbar {
-    background-color: var(--bg-card);
     border-bottom: 1px solid var(--border-color);
     padding: var(--space-sm) 0;
     position: sticky;
