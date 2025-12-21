@@ -1,5 +1,5 @@
 # Core Django and dependencies
-Django==6.0
+Django>=6.0,<7.0
 python-dotenv==1.2.1
 whitenoise==6.11.0
 
