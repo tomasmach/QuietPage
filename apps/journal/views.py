@@ -189,7 +189,7 @@ class EntryDeleteView(LoginRequiredMixin, DeleteView):
     model = Entry
     template_name = 'journal/entry_confirm_delete.html'
     context_object_name = 'entry'
-    success_url = reverse_lazy('journal:entry-list')
+    success_url = reverse_lazy('journal:dashboard')
     
     def get_queryset(self):
         """Ensure user can only delete their own entries."""
