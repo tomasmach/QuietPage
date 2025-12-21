@@ -16,6 +16,7 @@ from django.db.models import Count, Q, Sum
 import json
 from datetime import datetime, timedelta
 from .models import Entry
+from .utils import get_random_quote
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -68,6 +69,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 total=Sum('word_count')
             )['total'] or 0,
         }
+        
+        # Inspirational quote for empty state
+        context['quote'] = get_random_quote()
         
         return context
 

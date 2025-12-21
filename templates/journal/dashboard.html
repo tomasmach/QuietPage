@@ -67,7 +67,7 @@
         </div>
     </div>
 
-    <!-- Recent Entries -->
+    <!-- Recent Entries or Empty State -->
     {% if recent_entries %}
     <section class="recent-entries">
         <h2 class="section-title">Poslední záznamy</h2>
@@ -113,6 +113,31 @@
             </article>
             {% endfor %}
         </div>
+    </section>
+    {% else %}
+    <!-- Empty State with Inspirational Quote -->
+    <section class="empty-state">
+        <div class="empty-state-icon">📖</div>
+        <h2 class="empty-state-title">Tvůj deník čeká na první slova</h2>
+        
+        <!-- Inspirational Quote -->
+        <div class="quote-card">
+            <div class="quote-icon">✨</div>
+            <blockquote class="quote-text">
+                "{{ quote.text }}"
+            </blockquote>
+            {% if quote.author %}
+            <cite class="quote-author">— {{ quote.author }}</cite>
+            {% endif %}
+        </div>
+        
+        <p class="empty-state-description">
+            Začni psát svůj první záznam a objevuj sílu pravidelného journalingu.
+        </p>
+        
+        <a href="{% url 'journal:entry-create' %}" class="btn btn-primary btn-lg">
+            ✨ Začít psát
+        </a>
     </section>
     {% endif %}
 </div>
@@ -326,6 +351,69 @@
     text-align: center;
 }
 
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-md);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: var(--space-lg);
+    opacity: 0.5;
+}
+
+.empty-state-title {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: var(--space-xl);
+}
+
+/* Quote Card */
+.quote-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    margin-bottom: var(--space-xl);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+}
+
+.quote-icon {
+    font-size: 2rem;
+    margin-bottom: var(--space-md);
+    opacity: 0.3;
+}
+
+.quote-text {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: var(--text-main);
+    font-style: italic;
+    margin: 0 0 var(--space-md) 0;
+}
+
+.quote-author {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-style: normal;
+}
+
+.empty-state-description {
+    font-size: 1rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: var(--space-xl);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .dashboard-container {
@@ -375,6 +463,26 @@
     
     .section-title {
         font-size: 1.5rem;
+    }
+    
+    .empty-state {
+        padding: var(--space-xl) var(--space-sm);
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+    }
+    
+    .quote-card {
+        padding: var(--space-lg);
+    }
+    
+    .quote-text {
+        font-size: 1.125rem;
     }
 }
 </style>
