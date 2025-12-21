@@ -62,6 +62,7 @@
                 placeholder="Začni psát..."
                 required
                 data-word-count="true"
+                data-auto-resize="true"
             >{{ form.content.value|default:'' }}</textarea>
             {% if form.content.errors %}
                 <div class="invalid-feedback">
@@ -571,7 +572,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('✅ Auto-save initialized');
     
-    // Textarea auto-resize will be implemented in Úkol 5
+    // ============================================
+    // TEXTAREA AUTO-RESIZE (ensure it works with auto-saved content)
+    // ============================================
+    
+    // Auto-resize is initialized globally in main.js
+    // But we need to trigger it after auto-save updates content
+    // This is already handled by the 'input' event listener
+    
+    // Trigger initial resize for pre-filled content
+    if (contentTextarea && window.QuietPage && window.QuietPage.autoResizeTextarea) {
+        window.QuietPage.autoResizeTextarea(contentTextarea);
+    }
 });
 </script>
 {% endblock %}

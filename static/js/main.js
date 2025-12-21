@@ -260,6 +260,52 @@ saveIndicatorStyle.textContent = `
 document.head.appendChild(saveIndicatorStyle);
 
 // ============================================
+// 3B. TEXTAREA AUTO-RESIZE
+// ============================================
+
+/**
+ * Auto-resize textarea based on content
+ * Usage: Call initTextareaAutoResize() or apply to specific textarea
+ * 
+ * @param {HTMLTextAreaElement} textarea - Textarea element to auto-resize
+ */
+function autoResizeTextarea(textarea) {
+    if (!textarea) return;
+    
+    // Reset height to auto to get correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Set height to scrollHeight (content height)
+    textarea.style.height = textarea.scrollHeight + 'px';
+}
+
+/**
+ * Initialize auto-resize for all textareas with data-auto-resize attribute
+ */
+function initTextareaAutoResize() {
+    const textareas = document.querySelectorAll('textarea[data-auto-resize]');
+    
+    textareas.forEach((textarea) => {
+        // Initial resize
+        autoResizeTextarea(textarea);
+        
+        // Resize on input
+        textarea.addEventListener('input', function() {
+            autoResizeTextarea(this);
+        });
+        
+        // Resize on window resize (for responsive layouts)
+        window.addEventListener('resize', () => {
+            autoResizeTextarea(textarea);
+        });
+    });
+    
+    if (textareas.length > 0) {
+        console.log(`✅ Auto-resize initialized for ${textareas.length} textarea(s)`);
+    }
+}
+
+// ============================================
 // 4. UTILITY FUNCTIONS
 // ============================================
 
@@ -352,6 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize form helpers
     initCharacterCount();
     initWordCount();
+    initTextareaAutoResize();
     
     console.log('✨ QuietPage JavaScript initialized');
 });
@@ -363,5 +410,6 @@ window.QuietPage = {
     getCSRFToken,
     formatDateCzech,
     formatTimeCzech,
-    hideMessage
+    hideMessage,
+    autoResizeTextarea
 };

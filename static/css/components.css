@@ -386,6 +386,13 @@
     line-height: 1.8;
 }
 
+/* Textarea with auto-resize - disable manual resize */
+.form-textarea[data-auto-resize] {
+    resize: none;
+    overflow: hidden;
+    transition: height 0.1s ease;
+}
+
 /* Select dropdown */
 .form-select {
     appearance: none;
