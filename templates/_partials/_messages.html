@@ -1,0 +1,15 @@
+{# Django Messages Framework Template #}
+{# Displays success, error, warning, and info messages #}
+
+<div class="messages-container" role="alert" aria-live="polite">
+    {% for message in messages %}
+        <div class="message message-{{ message.tags }}" data-message-id="{{ forloop.counter }}">
+            <div class="message-content">
+                {{ message }}
+            </div>
+            <button type="button" class="message-close" aria-label="Zavřít zprávu">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endfor %}
+</div>
