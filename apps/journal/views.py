@@ -17,6 +17,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Count, Q, Sum
+from django.shortcuts import redirect
 
 from .models import Entry
 from .utils import get_random_quote
@@ -147,7 +148,6 @@ class EntryDetailView(LoginRequiredMixin, DetailView):
     
     def get(self, request, *args, **kwargs):
         """Redirect to edit view for MVP simplicity."""
-        from django.shortcuts import redirect
         self.object = self.get_object()
         return redirect('journal:entry-update', pk=self.object.pk)
 
