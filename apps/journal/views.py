@@ -7,6 +7,7 @@ CRUD operations for journal entries with privacy and user isolation.
 import json
 import logging
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -41,7 +42,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_greeting(self):
         """Return time-based greeting in Czech."""
         # Get current hour in user's timezone
-        user_tz = self.request.user.timezone  # type: ignore
+        user_tz = ZoneInfo(str(self.request.user.timezone))  # type: ignore
         now = timezone.now().astimezone(user_tz)
         hour = now.hour
         
