@@ -240,7 +240,7 @@ def autosave_entry(request):
                 entry = Entry.objects.get(id=entry_id, user=request.user)  # type: ignore
                 entry.title = title
                 entry.content = content
-                entry.mood_rating = mood_rating if mood_rating else None
+                entry.mood_rating = mood_rating
                 entry.save()
                 
                 # Update tags if provided
@@ -264,7 +264,7 @@ def autosave_entry(request):
                 user=request.user,
                 title=title,
                 content=content,
-                mood_rating=mood_rating if mood_rating else None
+                mood_rating=mood_rating
             )
             
             # Add tags if provided
