@@ -37,7 +37,7 @@
     </header>
 
     <!-- Entry Form -->
-    <form method="post" class="entry-form" id="entry-form">
+    <form method="post" class="entry-form" id="entry-form" data-edit-url-template="{% url 'journal:entry-update' '00000000-0000-0000-0000-000000000000' %}">
         {% csrf_token %}
         
         <!-- Title Field -->
@@ -531,9 +531,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentEntryId = result.entry_id;
                     console.log('✅ New entry created:', currentEntryId);
                     
-                    // Update form action to edit mode (optional - prevents creating duplicates)
-                    // This way subsequent saves will update the same entry
-                    const editUrl = `/journal/${currentEntryId}/edit/`;
+                    // Update form action to edit mode (prevents creating duplicates)
+                    // Use Django-generated URL template from data attribute
+                    const editUrlTemplate = entryForm.getAttribute('data-edit-url-template');
+                    let editUrl;
+                    
+                    if (editUrlTemplate) {
+                        // Replace placeholder UUID with actual entry ID
+                        editUrl = editUrlTemplate.replace('00000000-0000-0000-0000-000000000000', currentEntryId);
+                    } else {
+                        // Fallback to hardcoded pattern if data attribute is missing
+                        editUrl = `/journal/${currentEntryId}/edit/`;
+                    }
+                    
                     window.history.replaceState({}, '', editUrl);
                 }
                 
