@@ -244,9 +244,8 @@ def autosave_entry(request):
                 entry.mood_rating = mood_rating
                 entry.save()
                 
-                # Update tags if provided
-                if tags_str:
-                    entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
+                # Update tags (clear if empty, set if provided)
+                entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
                 
                 return JsonResponse({
                     'status': 'success',
