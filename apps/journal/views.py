@@ -254,7 +254,7 @@ def autosave_entry(request):
                     'entry_id': str(entry.id),
                     'is_new': False
                 })
-            except Exception:  # type: ignore
+            except Entry.DoesNotExist:  # type: ignore
                 return JsonResponse({
                     'status': 'error',
                     'message': 'Záznam nenalezen'
