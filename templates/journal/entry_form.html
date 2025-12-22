@@ -517,7 +517,9 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': window.QuietPage.getCSRFToken()
+                'X-CSRFToken': (window.QuietPage && window.QuietPage.getCSRFToken) 
+                    ? window.QuietPage.getCSRFToken()
+                    : document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
             },
             body: JSON.stringify(data)
         })
