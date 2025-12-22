@@ -197,7 +197,7 @@
                 {% endif %}
             </button>
             
-            <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'journal:entry-list' %}{% endif %}" class="btn btn-secondary btn-lg">
+            <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'journal:dashboard' %}{% endif %}" class="btn btn-secondary btn-lg">
                 ❌ Zrušit
             </a>
         </div>
