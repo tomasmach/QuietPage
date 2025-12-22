@@ -4,6 +4,10 @@ Journal views for QuietPage.
 CRUD operations for journal entries with privacy and user isolation.
 """
 
+import json
+import logging
+from datetime import datetime, timedelta
+
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
@@ -13,10 +17,12 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Count, Q, Sum
-import json
-from datetime import datetime, timedelta
+
 from .models import Entry
 from .utils import get_random_quote
+
+# Logger for this module
+logger = logging.getLogger(__name__)
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -277,8 +283,12 @@ def autosave_entry(request):
             'status': 'error',
             'message': 'Neplatná data'
         }, status=400)
-    except Exception as e:
+    except Exception:
+        # Log the full exception with stack trace on the server
+        logger.exception('Unexpected error during auto-save')
+        
+        # Return generic error message to the client (don't expose internal details)
         return JsonResponse({
             'status': 'error',
-            'message': f'Chyba při ukládání: {str(e)}'
+            'message': 'Chyba při ukládání.'
         }, status=500)
