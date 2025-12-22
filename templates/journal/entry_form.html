@@ -560,7 +560,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Debounced auto-save (1 second delay)
-    const debouncedAutoSave = window.QuietPage.debounce(autoSaveEntry, 1000);
+    const debouncedAutoSave = (window.QuietPage && window.QuietPage.debounce) 
+        ? window.QuietPage.debounce(autoSaveEntry, 1000)
+        : autoSaveEntry; // Fallback to non-debounced if unavailable
     
     // Trigger auto-save on input
     function triggerAutoSave() {
