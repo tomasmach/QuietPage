@@ -6,9 +6,10 @@
  * 1. Buttons
  * 2. Cards
  * 3. Form Elements
- * 4. Messages (Django Messages Framework)
- * 5. Utility Components
- * 6. Homepage Specific Styles
+ * 4. Zen Mode (Distraction-free writing)
+ * 5. Messages (Django Messages Framework)
+ * 6. Utility Components
+ * 7. Homepage Specific Styles
  */
 
 /* ============================================
@@ -393,7 +394,7 @@
 }
 
 /* ============================================
-   7. ZEN MODE (Distraction-free writing)
+   4. ZEN MODE (Distraction-free writing)
    ============================================ */
 
 /* Zen Mode Toggle Button - always fixed position */
@@ -605,7 +606,7 @@ body.zen-mode-active .zen-exit-hint {
 }
 
 /* ============================================
-   4. MESSAGES (Django Messages Framework)
+   5. MESSAGES (Django Messages Framework)
    ============================================ */
 
 .messages-container {
@@ -721,7 +722,7 @@ body.zen-mode-active .zen-exit-hint {
 }
 
 /* ============================================
-   5. UTILITY COMPONENTS
+   6. UTILITY COMPONENTS
    ============================================ */
 
 /* Badge */
@@ -818,7 +819,7 @@ body.zen-mode-active .zen-exit-hint {
 }
 
 /* ============================================
-   6. HOMEPAGE SPECIFIC STYLES
+   7. HOMEPAGE SPECIFIC STYLES
    ============================================ */
 
 /* Hero Section */
