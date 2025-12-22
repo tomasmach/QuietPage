@@ -44,7 +44,16 @@
                         </span>
                     {% endif %}
                     
-                    <span class="entry-word-count">{{ entry.word_count }} slov</span>
+                    <span class="entry-word-count">
+                        {{ entry.word_count }}
+                        {% if entry.word_count == 1 %}
+                            slovo
+                        {% elif entry.word_count >= 2 and entry.word_count <= 4 %}
+                            slova
+                        {% else %}
+                            slov
+                        {% endif %}
+                    </span>
                 </div>
             </a>
             
