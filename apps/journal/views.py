@@ -225,6 +225,20 @@ def autosave_entry(request):
         title = data.get('title', '').strip()
         content = data.get('content', '').strip()
         mood_rating = data.get('mood_rating', None)
+        # Validate mood_rating if provided
+        if mood_rating is not None:
+            try:
+                mood_rating = int(mood_rating)
+                if not (1 <= mood_rating <= 5):
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Hodnocení nálady musí být mezi 1 a 5'
+                    }, status=400)
+            except (TypeError, ValueError):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Neplatné hodnocení nálady'
+                }, status=400)
         tags_str = data.get('tags', '').strip()
         entry_id = data.get('entry_id', None)
         
