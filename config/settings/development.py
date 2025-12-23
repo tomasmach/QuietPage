@@ -43,5 +43,9 @@ INTERNAL_IPS = [
 # Disable HTTPS redirect for development
 SECURE_SSL_REDIRECT = False
 
+# Session and CSRF settings for development (relaxed)
+SESSION_COOKIE_SECURE = False  # Allow HTTP in development
+CSRF_COOKIE_SECURE = False     # Allow HTTP in development
+
 # Email backend - print emails to console
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

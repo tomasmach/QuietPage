@@ -164,7 +164,18 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = 'optional'  # MVP: optional, later: mandatory
 
+# Custom forms for allauth
+ACCOUNT_FORMS = {
+    'signup': 'apps.accounts.forms.CustomSignupForm',
+    'login': 'apps.accounts.forms.CustomLoginForm',
+}
+
 # Login/Logout URLs
-LOGIN_REDIRECT_URL = '/'
-ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/journal/'  # Dashboard je na /journal/ (ne /journal/dashboard/)
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login/'
+
+# Session Configuration - "Remember me" automaticky (14 dní)
+SESSION_COOKIE_AGE = 1209600  # 14 days in seconds
+SESSION_SAVE_EVERY_REQUEST = True  # Prodlouží session při každé aktivitě
+SESSION_COOKIE_NAME = 'quietpage_sessionid'

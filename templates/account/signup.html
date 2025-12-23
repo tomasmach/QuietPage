@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}Registrace - QuietPage{% endblock %}
+
+{% block meta_description %}Vytvořte si účet na QuietPage a začněte psát svůj deník ještě dnes.{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card card">
+        <div class="auth-header">
+            <h1>Začněte psát</h1>
+            <p class="text-muted">Vytvořte si svůj účet zdarma</p>
+        </div>
+
+        <form method="post" action="{% url 'account_signup' %}" class="auth-form">
+            {% csrf_token %}
+            
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <!-- Username Field -->
+            <div class="form-group">
+                <label for="id_username" class="form-label form-label-required">
+                    Uživatelské jméno
+                </label>
+                <input 
+                    type="text" 
+                    name="username" 
+                    id="id_username"
+                    class="form-input {% if form.username.errors %}is-invalid{% endif %}"
+                    placeholder="uzivatelskeJmeno"
+                    autocomplete="username"
+                    required
+                    autofocus
+                    value="{{ form.username.value|default:'' }}"
+                >
+                {% if form.username.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.username.errors.0 }}
+                    </div>
+                {% else %}
+                    <small class="form-help">Minimálně 3 znaky, pouze písmena, čísla a @/./+/-/_</small>
+                {% endif %}
+            </div>
+
+            <!-- Email Field -->
+            <div class="form-group">
+                <label for="id_email" class="form-label form-label-required">
+                    E-mailová adresa
+                </label>
+                <input 
+                    type="email" 
+                    name="email" 
+                    id="id_email"
+                    class="form-input {% if form.email.errors %}is-invalid{% endif %}"
+                    placeholder="vas@email.cz"
+                    autocomplete="email"
+                    required
+                    value="{{ form.email.value|default:'' }}"
+                >
+                {% if form.email.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.email.errors.0 }}
+                    </div>
+                {% else %}
+                    <small class="form-help">Potřebujeme pro obnovení hesla (volitelné potvrzení)</small>
+                {% endif %}
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group">
+                <label for="id_password1" class="form-label form-label-required">
+                    Heslo
+                </label>
+                <input 
+                    type="password" 
+                    name="password1" 
+                    id="id_password1"
+                    class="form-input {% if form.password1.errors %}is-invalid{% endif %}"
+                    placeholder="Silné heslo"
+                    autocomplete="new-password"
+                    required
+                >
+                {% if form.password1.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.password1.errors.0 }}
+                    </div>
+                {% else %}
+                    <small class="form-help">Minimálně 8 znaků, nesmí být příliš podobné vašim osobním údajům</small>
+                {% endif %}
+            </div>
+
+            <!-- Password Confirmation Field -->
+            <div class="form-group">
+                <label for="id_password2" class="form-label form-label-required">
+                    Potvrzení hesla
+                </label>
+                <input 
+                    type="password" 
+                    name="password2" 
+                    id="id_password2"
+                    class="form-input {% if form.password2.errors %}is-invalid{% endif %}"
+                    placeholder="Zadejte heslo znovu"
+                    autocomplete="new-password"
+                    required
+                >
+                {% if form.password2.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.password2.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Non-field Errors -->
+            {% if form.non_field_errors %}
+                <div class="form-group">
+                    <div class="invalid-feedback" style="display: block;">
+                        {{ form.non_field_errors.0 }}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Submit Button -->
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-block btn-lg">
+                    Vytvořit účet
+                </button>
+            </div>
+
+            <!-- Privacy Note -->
+            <p class="text-muted text-small" style="text-align: center; margin-top: 16px;">
+                Registrací souhlasíte s ochranou vašich dat. Vaše záznamy jsou šifrované a soukromé.
+            </p>
+        </form>
+
+        <!-- Auth Footer -->
+        <div class="auth-footer">
+            <div class="divider"></div>
+            
+            <p class="text-muted text-small" style="text-align: center;">
+                Už máte účet? 
+                <a href="{% url 'account_login' %}">Přihlaste se</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

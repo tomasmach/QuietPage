@@ -15,6 +15,7 @@
                 <!-- Links for authenticated users -->
                 <a href="{% url 'journal:dashboard' %}" class="navbar-link">Dashboard</a>
                 <a href="{% url 'journal:entry-create' %}" class="navbar-link btn btn-primary btn-sm">Nový záznam</a>
+                <a href="{% url 'account_logout' %}" class="navbar-link">Odhlásit se</a>
             {% else %}
                 <!-- Links for guests -->
                 <a href="{% url 'account_login' %}" class="navbar-link">Přihlásit se</a>

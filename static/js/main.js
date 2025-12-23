@@ -318,7 +318,58 @@ function initTextareaAutoResize() {
 }
 
 // ============================================
-// 4. UTILITY FUNCTIONS
+// 4. USER MENU DROPDOWN
+// ============================================
+
+/**
+ * Initialize user menu dropdown toggle
+ * Handles click outside to close dropdown
+ */
+function initUserMenu() {
+    const userMenuTrigger = document.querySelector('.user-menu-trigger');
+    const userMenuDropdown = document.querySelector('.user-menu-dropdown');
+    
+    if (!userMenuTrigger || !userMenuDropdown) return;
+    
+    // Toggle dropdown on trigger click
+    userMenuTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = userMenuDropdown.hasAttribute('hidden');
+        
+        if (isHidden) {
+            userMenuDropdown.removeAttribute('hidden');
+            userMenuTrigger.setAttribute('aria-expanded', 'true');
+        } else {
+            userMenuDropdown.setAttribute('hidden', '');
+            userMenuTrigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!userMenuDropdown.hasAttribute('hidden')) {
+            userMenuDropdown.setAttribute('hidden', '');
+            userMenuTrigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+    
+    // Prevent dropdown from closing when clicking inside it
+    userMenuDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+    
+    // Close dropdown on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !userMenuDropdown.hasAttribute('hidden')) {
+            userMenuDropdown.setAttribute('hidden', '');
+            userMenuTrigger.setAttribute('aria-expanded', 'false');
+            userMenuTrigger.focus();
+        }
+    });
+}
+
+// ============================================
+// 5. UTILITY FUNCTIONS
 // ============================================
 
 /**
@@ -411,6 +462,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initCharacterCount();
     initWordCount();
     initTextareaAutoResize();
+    
+    // Initialize user menu
+    initUserMenu();
     
     console.log('✨ QuietPage JavaScript initialized');
 });
