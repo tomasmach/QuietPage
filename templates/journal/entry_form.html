@@ -272,7 +272,7 @@
 
 .autosave-status {
     position: fixed;
-    bottom: var(--space-md);
+    bottom: 90px;
     right: var(--space-md);
     padding: var(--space-xs) var(--space-sm);
     background-color: var(--bg-card);
@@ -281,6 +281,13 @@
     font-size: 0.875rem;
     color: var(--text-muted);
     box-shadow: var(--shadow-soft);
+    transition: opacity 0.2s ease;
+}
+
+/* Hide autosave status in zen mode */
+body.zen-mode-active .autosave-status {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* Mood Selector Component */
@@ -498,11 +505,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         isAutoSaving = true;
         
-        // Show "saving" indicator
-        if (window.QuietPage && window.QuietPage.showSaveIndicator) {
-            window.QuietPage.showSaveIndicator('Ukládám...', 'saving');
-        }
-        
         // Prepare data
         const data = {
             title: titleInput.value.trim(),
@@ -551,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Show success indicator
                 if (window.QuietPage && window.QuietPage.showSaveIndicator) {
-                    window.QuietPage.showSaveIndicator('Automaticky uloženo', 'success');
+                    window.QuietPage.showSaveIndicator('Uloženo', 'success');
                 }
                 
                 console.log('💾 Auto-save successful');

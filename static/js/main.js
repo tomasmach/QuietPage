@@ -171,6 +171,11 @@ function initWordCount() {
  * @param {string} type - Type: 'success', 'saving', 'error'
  */
 function showSaveIndicator(message = 'Uloženo', type = 'success') {
+    // Don't show indicator if zen mode is active
+    if (document.body.classList.contains('zen-mode-active')) {
+        return;
+    }
+    
     // Remove existing indicator
     const existing = document.querySelector('.save-indicator');
     if (existing) existing.remove();
@@ -197,7 +202,7 @@ const saveIndicatorStyle = document.createElement('style');
 saveIndicatorStyle.textContent = `
     .save-indicator {
         position: fixed;
-        bottom: 24px;
+        bottom: 90px;
         right: 24px;
         padding: 12px 20px;
         border-radius: 8px;
@@ -206,6 +211,7 @@ saveIndicatorStyle.textContent = `
         box-shadow: var(--shadow-soft);
         z-index: 9998;
         animation: fadeIn 0.3s ease;
+        transition: opacity 0.2s ease, bottom 0.2s ease;
     }
     
     .save-indicator-success {
@@ -224,6 +230,12 @@ saveIndicatorStyle.textContent = `
         background-color: #FFEBEE;
         color: #C62828;
         border-left: 4px solid #F44336;
+    }
+    
+    /* Hide save indicator in zen mode */
+    body.zen-mode-active .save-indicator {
+        opacity: 0;
+        pointer-events: none;
     }
     
     @media (prefers-color-scheme: dark) {
@@ -250,7 +262,7 @@ saveIndicatorStyle.textContent = `
     
     @media (max-width: 768px) {
         .save-indicator {
-            bottom: 16px;
+            bottom: 80px;
             right: 16px;
             left: 16px;
             text-align: center;

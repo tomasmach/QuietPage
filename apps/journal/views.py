@@ -249,7 +249,7 @@ def autosave_entry(request):
                 
                 return JsonResponse({
                     'status': 'success',
-                    'message': 'Automaticky uloženo',
+                    'message': 'Uloženo',
                     'entry_id': str(entry.id),
                     'is_new': False
                 })
@@ -273,7 +273,7 @@ def autosave_entry(request):
             
             return JsonResponse({
                 'status': 'success',
-                'message': 'Automaticky uloženo',
+                'message': 'Uloženo',
                 'entry_id': str(entry.id),
                 'is_new': True
             })
