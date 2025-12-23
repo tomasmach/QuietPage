@@ -1,11 +1,12 @@
 """
 Utility functions for journal app.
 
-Includes streak calculation and timezone handling.
+Includes streak calculation, timezone handling, and inspirational quotes.
 """
 
 from datetime import timedelta
 import pytz
+import random
 from django.utils import timezone
 
 
@@ -129,3 +130,50 @@ def recalculate_user_streak(user):
         'current_streak': current_streak,
         'longest_streak': longest_streak
     }
+
+
+# Inspirational quotes for empty state
+INSPIRATIONAL_QUOTES = [
+    {
+        'text': 'Psaní je cesta k poznání sama sebe.',
+        'author': None
+    },
+    {
+        'text': 'Každý záznam je krok k jasnější mysli.',
+        'author': None
+    },
+    {
+        'text': 'Tvé myšlenky si zaslouží být vyslyšeny.',
+        'author': None
+    },
+    {
+        'text': 'Journaling není o dokonalosti, je o upřímnosti.',
+        'author': None
+    },
+    {
+        'text': 'Začni odtud, začni teď.',
+        'author': None
+    },
+    {
+        'text': 'Píšeš pro sebe, ne pro ostatní.',
+        'author': None
+    },
+    {
+        'text': 'Klid přichází, když myšlenky najdou místo na papíře.',
+        'author': None
+    },
+    {
+        'text': 'Každý den je nová stránka.',
+        'author': None
+    },
+]
+
+
+def get_random_quote():
+    """
+    Get a random inspirational quote for empty state.
+    
+    Returns:
+        dict with 'text' and 'author' (author can be None)
+    """
+    return random.choice(INSPIRATIONAL_QUOTES)

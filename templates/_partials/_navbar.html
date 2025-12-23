@@ -1,0 +1,25 @@
+{% load static %}
+
+<!-- Navigation Bar -->
+<nav class="navbar" role="navigation" aria-label="Hlavní navigace">
+    <div class="navbar-container">
+        <!-- Logo / Brand -->
+        <a href="{% url 'home' %}" class="navbar-brand">
+            <span class="navbar-logo">📖</span>
+            <span class="navbar-title">QuietPage</span>
+        </a>
+        
+        <!-- Navigation Links -->
+        <div class="navbar-links">
+            {% if user.is_authenticated %}
+                <!-- Links for authenticated users -->
+                <a href="{% url 'journal:dashboard' %}" class="navbar-link">Dashboard</a>
+                <a href="{% url 'journal:entry-create' %}" class="navbar-link btn btn-primary btn-sm">Nový záznam</a>
+            {% else %}
+                <!-- Links for guests -->
+                <a href="{% url 'account_login' %}" class="navbar-link">Přihlásit se</a>
+                <a href="{% url 'account_signup' %}" class="navbar-link btn btn-primary btn-sm">Začít psát</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>

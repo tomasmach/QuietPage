@@ -1,14 +1,135 @@
 /**
  * QuietPage - UI Components
  * Organic Theme Components (Buttons, Cards, Forms, Messages)
- * 
- * Structure:
+ * * Structure:
+ * 0. Navigation Bar
  * 1. Buttons
  * 2. Cards
  * 3. Form Elements
- * 4. Messages (Django Messages Framework)
- * 5. Utility Components
+ * 4. Zen Mode (Distraction-free writing)
+ * 5. Messages (Django Messages Framework)
+ * 6. Utility Components
+ * 7. Homepage Specific Styles
  */
+
+/* ============================================
+   0. NAVIGATION BAR
+   ============================================ */
+
+.navbar {
+    border-bottom: 1px solid var(--border-color);
+    padding: var(--space-sm) 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+    background-color: rgba(253, 251, 247, 0.95);
+}
+
+@media (prefers-color-scheme: dark) {
+    .navbar {
+        background-color: rgba(38, 32, 28, 0.95);
+    }
+}
+
+.navbar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+@media (min-width: 768px) {
+    .navbar-container {
+        padding: 0 var(--space-md);
+    }
+}
+
+/* Brand/Logo */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    text-decoration: none;
+    transition: opacity var(--transition-fast);
+}
+
+.navbar-brand:hover {
+    opacity: 0.8;
+    text-decoration: none;
+}
+
+.navbar-brand:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 4px;
+    border-radius: var(--radius-sm);
+}
+
+.navbar-logo {
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.navbar-title {
+    display: none;
+}
+
+@media (min-width: 480px) {
+    .navbar-title {
+        display: inline;
+    }
+}
+
+/* Navigation Links */
+.navbar-links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.navbar-link {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-main);
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.navbar-link:hover {
+    color: var(--primary);
+    background-color: var(--bg-body);
+    text-decoration: none;
+}
+
+.navbar-link:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Responsive navbar */
+@media (max-width: 480px) {
+    .navbar-links {
+        gap: var(--space-xs);
+    }
+    
+    .navbar-link {
+        padding: 6px 10px;
+        font-size: 0.8125rem;
+    }
+    
+    .navbar-link.btn {
+        padding: 8px 12px;
+    }
+}
 
 /* ============================================
    1. BUTTONS
@@ -36,14 +157,16 @@
 /* Primary Button - Main CTA */
 .btn-primary {
     background-color: var(--primary);
-    color: var(--bg-card);
+    color: #FFFFFF;
     box-shadow: var(--shadow-soft);
 }
 
 .btn-primary:hover {
     background-color: var(--primary-hover);
+    color: #FFFFFF;
     transform: translateY(-2px);
     box-shadow: 0 12px 28px rgba(74, 64, 58, 0.12);
+    text-decoration: none;
 }
 
 .btn-primary:active {
@@ -117,6 +240,17 @@
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
+}
+
+/* Ensure good contrast in dark mode */
+@media (prefers-color-scheme: dark) {
+    .btn-primary {
+        color: #1A1614;
+    }
+    
+    .btn-primary:hover {
+        color: #1A1614;
+    }
 }
 
 /* ============================================
@@ -219,7 +353,7 @@
     background-color: var(--bg-input);
     border: 2px solid var(--border-color);
     border-radius: var(--radius-md);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), padding 0.2s ease, font-size 0.2s ease, border 0.2s ease, background-color 0.2s ease;
     
     /* Paper-like appearance */
     box-shadow: inset 0 1px 2px rgba(74, 64, 58, 0.05);
@@ -250,6 +384,154 @@
     min-height: 300px;
     font-size: 1.125rem;
     line-height: 1.8;
+}
+
+/* Textarea with auto-resize - disable manual resize */
+.form-textarea[data-auto-resize] {
+    resize: none;
+    overflow: hidden;
+    transition: height 0.1s ease;
+}
+
+/* ============================================
+   4. ZEN MODE (Distraction-free writing)
+   ============================================ */
+
+/* Zen Mode Toggle Button - always fixed position */
+.zen-toggle {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 200;
+    background-color: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 10px 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.zen-toggle:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(74, 64, 58, 0.12);
+}
+
+.zen-toggle:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.zen-toggle-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+/* Hide toggle button label on mobile */
+@media (max-width: 480px) {
+    .zen-toggle-label {
+        display: none;
+    }
+    
+    .zen-toggle {
+        padding: 10px 12px;
+        bottom: 16px;
+        right: 16px;
+    }
+}
+
+/* Zen Mode Active State */
+body.zen-mode-active {
+    overflow: hidden;
+}
+
+/* Hide elements when zen mode is active - simple opacity fade */
+body.zen-mode-active .navbar,
+body.zen-mode-active .editor-header,
+body.zen-mode-active .form-actions,
+body.zen-mode-active .form-help,
+body.zen-mode-active .form-label,
+body.zen-mode-active .mood-selector,
+body.zen-mode-active .word-count,
+body.zen-mode-active .form-group:not(:has(#id_content)):not(:has(#id_title)) {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+/* Keep entry-form at same size, just simplify styling */
+body.zen-mode-active .entry-form {
+    box-shadow: none;
+    background-color: var(--bg-body);
+    border: none;
+}
+
+/* Zen mode: Focus on content textarea */
+body.zen-mode-active .form-textarea-journal {
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+body.zen-mode-active .form-textarea-journal:focus {
+    outline: none;
+    box-shadow: none;
+    border: none;
+}
+
+/* Style title in zen mode */
+body.zen-mode-active #id_title {
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+body.zen-mode-active #id_title:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Exit zen mode hint */
+.zen-exit-hint {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-card);
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 199;
+    box-shadow: var(--shadow-soft);
+}
+
+body.zen-mode-active .zen-exit-hint {
+    animation: fadeInOut 4s ease;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Mobile zen mode adjustments */
+@media (max-width: 768px) {
+    /* Hide exit hint on mobile */
+    body.zen-mode-active .zen-exit-hint {
+        display: none;
+    }
 }
 
 /* Select dropdown */
@@ -324,7 +606,7 @@
 }
 
 /* ============================================
-   4. MESSAGES (Django Messages Framework)
+   5. MESSAGES (Django Messages Framework)
    ============================================ */
 
 .messages-container {
@@ -440,7 +722,7 @@
 }
 
 /* ============================================
-   5. UTILITY COMPONENTS
+   6. UTILITY COMPONENTS
    ============================================ */
 
 /* Badge */
@@ -534,4 +816,161 @@
     height: 64px;
     line-height: 64px;
     font-size: 1.5rem;
+}
+
+/* ============================================
+   7. HOMEPAGE SPECIFIC STYLES
+   ============================================ */
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-md);
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-content {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.hero-title {
+    font-family: var(--font-serif);
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: var(--space-sm);
+    line-height: 1.2;
+}
+
+.hero-icon {
+    display: block;
+    font-size: 4rem;
+    margin-bottom: var(--space-sm);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.hero-subtitle {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: var(--space-md);
+}
+
+.hero-description {
+    font-size: 1.125rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    margin-bottom: var(--space-xl);
+}
+
+.hero-cta {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Responsive hero */
+@media (max-width: 768px) {
+    .hero {
+        padding: var(--space-xl) var(--space-sm);
+        min-height: 50vh;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-icon {
+        font-size: 3rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.25rem;
+    }
+    
+    .hero-description {
+        font-size: 1rem;
+    }
+    
+    .hero-cta {
+        flex-direction: column;
+    }
+    
+    .hero-cta .btn {
+        width: 100%;
+    }
+}
+
+/* Features Section */
+.features {
+    padding: var(--space-2xl) var(--space-md);
+    padding-bottom: var(--space-2xl);
+    background-color: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    margin-bottom: 0;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    max-width: 1200px;
+    margin: 0 auto;
+    margin-bottom: 0;
+}
+
+.feature-card {
+    text-align: center;
+    padding: var(--space-lg);
+    margin-bottom: 0;
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+    display: block;
+}
+
+.feature-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: var(--space-sm);
+}
+
+.feature-description {
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+/* Responsive features */
+@media (max-width: 768px) {
+    .features {
+        padding: var(--space-xl) var(--space-sm);
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+    
+    .feature-card {
+        padding: var(--space-md);
+    }
 }

@@ -142,9 +142,11 @@ function initWordCount() {
             const text = textarea.value.trim();
             const wordCount = text ? text.split(/\s+/).length : 0;
             
-            if (wordCount === 1) {
+            if (wordCount === 0) {
+                counter.textContent = '0 slov';
+            } else if (wordCount === 1) {
                 counter.textContent = '1 slovo';
-            } else if (wordCount < 5) {
+            } else if (wordCount >= 2 && wordCount <= 4) {
                 counter.textContent = `${wordCount} slova`;
             } else {
                 counter.textContent = `${wordCount} slov`;
@@ -169,6 +171,11 @@ function initWordCount() {
  * @param {string} type - Type: 'success', 'saving', 'error'
  */
 function showSaveIndicator(message = 'Uloženo', type = 'success') {
+    // Don't show indicator if zen mode is active
+    if (document.body.classList.contains('zen-mode-active')) {
+        return;
+    }
+    
     // Remove existing indicator
     const existing = document.querySelector('.save-indicator');
     if (existing) existing.remove();
@@ -195,7 +202,7 @@ const saveIndicatorStyle = document.createElement('style');
 saveIndicatorStyle.textContent = `
     .save-indicator {
         position: fixed;
-        bottom: 24px;
+        bottom: 90px;
         right: 24px;
         padding: 12px 20px;
         border-radius: 8px;
@@ -204,6 +211,7 @@ saveIndicatorStyle.textContent = `
         box-shadow: var(--shadow-soft);
         z-index: 9998;
         animation: fadeIn 0.3s ease;
+        transition: opacity 0.2s ease, bottom 0.2s ease;
     }
     
     .save-indicator-success {
@@ -222,6 +230,12 @@ saveIndicatorStyle.textContent = `
         background-color: #FFEBEE;
         color: #C62828;
         border-left: 4px solid #F44336;
+    }
+    
+    /* Hide save indicator in zen mode */
+    body.zen-mode-active .save-indicator {
+        opacity: 0;
+        pointer-events: none;
     }
     
     @media (prefers-color-scheme: dark) {
@@ -248,7 +262,7 @@ saveIndicatorStyle.textContent = `
     
     @media (max-width: 768px) {
         .save-indicator {
-            bottom: 16px;
+            bottom: 80px;
             right: 16px;
             left: 16px;
             text-align: center;
@@ -256,6 +270,52 @@ saveIndicatorStyle.textContent = `
     }
 `;
 document.head.appendChild(saveIndicatorStyle);
+
+// ============================================
+// 3B. TEXTAREA AUTO-RESIZE
+// ============================================
+
+/**
+ * Auto-resize textarea based on content
+ * Usage: Call initTextareaAutoResize() or apply to specific textarea
+ * 
+ * @param {HTMLTextAreaElement} textarea - Textarea element to auto-resize
+ */
+function autoResizeTextarea(textarea) {
+    if (!textarea) return;
+    
+    // Reset height to auto to get correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Set height to scrollHeight (content height)
+    textarea.style.height = textarea.scrollHeight + 'px';
+}
+
+/**
+ * Initialize auto-resize for all textareas with data-auto-resize attribute
+ */
+function initTextareaAutoResize() {
+    const textareas = document.querySelectorAll('textarea[data-auto-resize]');
+    
+    textareas.forEach((textarea) => {
+        // Initial resize
+        autoResizeTextarea(textarea);
+        
+        // Resize on input
+        textarea.addEventListener('input', function() {
+            autoResizeTextarea(this);
+        });
+        
+        // Resize on window resize (for responsive layouts)
+        window.addEventListener('resize', () => {
+            autoResizeTextarea(textarea);
+        });
+    });
+    
+    if (textareas.length > 0) {
+        console.log(`✅ Auto-resize initialized for ${textareas.length} textarea(s)`);
+    }
+}
 
 // ============================================
 // 4. UTILITY FUNCTIONS
@@ -350,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize form helpers
     initCharacterCount();
     initWordCount();
+    initTextareaAutoResize();
     
     console.log('✨ QuietPage JavaScript initialized');
 });
@@ -361,5 +422,6 @@ window.QuietPage = {
     getCSRFToken,
     formatDateCzech,
     formatTimeCzech,
-    hideMessage
+    hideMessage,
+    autoResizeTextarea
 };

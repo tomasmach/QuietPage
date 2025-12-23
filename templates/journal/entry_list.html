@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Všechny záznamy - QuietPage{% endblock %}
+
+{% block content %}
+<div class="entries-container">
+    <!-- Header -->
+    <header class="entries-header">
+        <h1 class="entries-title">Všechny záznamy</h1>
+        <a href="{% url 'journal:entry-create' %}" class="btn btn-primary">
+            ✨ Nový záznam
+        </a>
+    </header>
+
+    <!-- Entries List -->
+    {% if entries %}
+    <div class="entries-list">
+        {% for entry in entries %}
+        <article class="entry-card">
+            <a href="{{ entry.get_absolute_url }}" class="entry-link">
+                <div class="entry-header">
+                    <h3 class="entry-title">
+                        {% if entry.title %}
+                            {{ entry.title }}
+                        {% else %}
+                            <em class="text-muted">Bez názvu</em>
+                        {% endif %}
+                    </h3>
+                    <time class="entry-date" datetime="{{ entry.created_at|date:'c' }}">
+                        {{ entry.created_at|date:"j. F Y" }}
+                    </time>
+                </div>
+                
+                <div class="entry-meta">
+                    {% if entry.mood_rating %}
+                        <span class="entry-mood">
+                            {% if entry.mood_rating == 1 %}😞
+                            {% elif entry.mood_rating == 2 %}😕
+                            {% elif entry.mood_rating == 3 %}😐
+                            {% elif entry.mood_rating == 4 %}🙂
+                            {% elif entry.mood_rating == 5 %}😊
+                            {% endif %}
+                        </span>
+                    {% endif %}
+                    
+                    <span class="entry-word-count">
+                        {{ entry.word_count }}
+                        {% if entry.word_count == 1 %}
+                            slovo
+                        {% elif entry.word_count >= 2 and entry.word_count <= 4 %}
+                            slova
+                        {% else %}
+                            slov
+                        {% endif %}
+                    </span>
+                </div>
+            </a>
+            
+            <div class="entry-actions">
+                <a href="{% url 'journal:entry-update' entry.id %}" class="entry-action-link" title="Upravit">
+                    ✏️
+                </a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav class="pagination" aria-label="Stránkování">
+        <ul class="pagination-list">
+            {% if page_obj.has_previous %}
+            <li>
+                <a href="?page=1" class="pagination-link" aria-label="První stránka">
+                    ‹‹
+                </a>
+            </li>
+            <li>
+                <a href="?page={{ page_obj.previous_page_number }}" class="pagination-link" aria-label="Předchozí stránka">
+                    ‹
+                </a>
+            </li>
+            {% endif %}
+
+            <li class="pagination-current">
+                Stránka {{ page_obj.number }} z {{ page_obj.paginator.num_pages }}
+            </li>
+
+            {% if page_obj.has_next %}
+            <li>
+                <a href="?page={{ page_obj.next_page_number }}" class="pagination-link" aria-label="Další stránka">
+                    ›
+                </a>
+            </li>
+            <li>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="pagination-link" aria-label="Poslední stránka">
+                    ››
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div class="empty-state-icon">📖</div>
+        <h2 class="empty-state-title">Zatím nemáš žádné záznamy</h2>
+        <p class="empty-state-text">
+            Začni psát svůj první záznam a začni sledovat své myšlenky a náladu.
+        </p>
+        <a href="{% url 'journal:entry-create' %}" class="btn btn-primary btn-lg">
+            ✨ Vytvořit první záznam
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Back to Dashboard -->
+    <div class="entries-footer">
+        <a href="{% url 'journal:dashboard' %}" class="btn btn-secondary">
+            ← Zpět na dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Entries Container */
+.entries-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-md);
+}
+
+/* Entries Header */
+.entries-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.entries-title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+/* Entries List - reuse styles from dashboard */
+.entries-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.entry-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-soft);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    position: relative;
+}
+
+.entry-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(74, 64, 58, 0.08);
+}
+
+.entry-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-sm);
+    gap: var(--space-sm);
+}
+
+.entry-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    flex: 1;
+}
+
+.entry-date {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.entry-meta {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.entry-mood {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.entry-word-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.entry-actions {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+}
+
+.entry-action-link {
+    font-size: 1.125rem;
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.entry-card:hover .entry-action-link {
+    opacity: 0.6;
+}
+
+.entry-action-link:hover {
+    opacity: 1;
+}
+
+/* Pagination */
+.pagination {
+    margin-bottom: var(--space-xl);
+}
+
+.pagination-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-xs);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pagination-link {
+    display: inline-block;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-main);
+    text-decoration: none;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.pagination-link:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.pagination-current {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-md);
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: var(--space-lg);
+    opacity: 0.5;
+}
+
+.empty-state-title {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: var(--space-sm);
+}
+
+.empty-state-text {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: var(--space-xl);
+    line-height: 1.6;
+}
+
+/* Entries Footer */
+.entries-footer {
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .entries-container {
+        padding: var(--space-lg) var(--space-sm);
+    }
+    
+    .entries-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .entries-header .btn {
+        width: 100%;
+    }
+    
+    .entries-title {
+        font-size: 1.75rem;
+    }
+    
+    .entry-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-xs);
+    }
+    
+    .entry-card {
+        padding: var(--space-md);
+    }
+    
+    .entry-action-link {
+        opacity: 0.6;
+    }
+    
+    .pagination-list {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .entries-title {
+        font-size: 1.5rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
