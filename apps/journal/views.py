@@ -222,8 +222,8 @@ def autosave_entry(request):
     """
     try:
         data = json.loads(request.body)
-        title = data.get('title', '').strip()
-        content = data.get('content', '').strip()
+        title = (data.get('title') or '').strip()
+        content = (data.get('content') or '').strip()
         mood_rating = data.get('mood_rating', None)
         # Validate mood_rating if provided
         if mood_rating is not None:
@@ -239,7 +239,7 @@ def autosave_entry(request):
                     'status': 'error',
                     'message': 'Neplatné hodnocení nálady'
                 }, status=400)
-        tags_str = data.get('tags', '').strip()
+        tags_str = (data.get('tags') or '').strip()
         entry_id = data.get('entry_id', None)
         
         # Content is required for saving
