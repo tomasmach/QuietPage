@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
@@ -131,7 +131,6 @@ class EntryCreateView(LoginRequiredMixin, CreateView):
     
     def get_success_url(self):
         """Redirect directly to edit view to avoid redirect chain."""
-        from django.urls import reverse
         return reverse('journal:entry-update', kwargs={'pk': self.object.pk})  # type: ignore
 
 
@@ -183,7 +182,6 @@ class EntryUpdateView(LoginRequiredMixin, UpdateView):
     
     def get_success_url(self):
         """Redirect to dashboard after successful update."""
-        from django.urls import reverse
         return reverse('journal:dashboard')
 
 
