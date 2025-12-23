@@ -130,8 +130,9 @@ class EntryCreateView(LoginRequiredMixin, CreateView):
         return response
     
     def get_success_url(self):
-        """Redirect to the newly created entry's detail page."""
-        return self.object.get_absolute_url()  # type: ignore
+        """Redirect directly to edit view to avoid redirect chain."""
+        from django.urls import reverse
+        return reverse('journal:entry-update', kwargs={'pk': self.object.pk})  # type: ignore
 
 
 class EntryDetailView(LoginRequiredMixin, DetailView):
@@ -181,8 +182,9 @@ class EntryUpdateView(LoginRequiredMixin, UpdateView):
         return response
     
     def get_success_url(self):
-        """Redirect to the updated entry's detail page."""
-        return self.object.get_absolute_url()  # type: ignore
+        """Redirect to dashboard after successful update."""
+        from django.urls import reverse
+        return reverse('journal:dashboard')
 
 
 class EntryDeleteView(LoginRequiredMixin, DeleteView):
