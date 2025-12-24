@@ -13,8 +13,9 @@
         <div class="navbar-links">
             {% if user.is_authenticated %}
                 <!-- Links for authenticated users -->
-                <a href="{% url 'journal:dashboard' %}" class="navbar-link">Dashboard</a>
+                <a href="{% url 'journal:dashboard' %}" class="navbar-link {% if request.resolver_match.namespace == 'journal' and 'dashboard' in request.resolver_match.url_name %}navbar-link-active{% endif %}">Dashboard</a>
                 <a href="{% url 'journal:entry-create' %}" class="navbar-link btn btn-primary btn-sm">Nový záznam</a>
+                <a href="{% url 'accounts:settings-profile' %}" class="navbar-link {% if 'settings' in request.path %}navbar-link-active{% endif %}">Nastavení</a>
                 <a href="{% url 'account_logout' %}" class="navbar-link">Odhlásit se</a>
             {% else %}
                 <!-- Links for guests -->
