@@ -75,7 +75,6 @@ def get_user_avatar_url(user):
     if user.avatar and hasattr(user.avatar, 'url'):
         return user.avatar.url
     
-    # Return placeholder avatar URL
-    # For now, we'll return a static placeholder path
-    # User will provide the actual image later
-    return f"{settings.STATIC_URL}images/default-avatar.png"
+    # Return placeholder avatar URL (SVG)
+    # User can replace this with custom image later
+    return f"{settings.STATIC_URL}images/default-avatar.svg"
