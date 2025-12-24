@@ -16,6 +16,9 @@ from django.urls import reverse
 from django.utils.html import strip_tags
 import sys
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 def resize_avatar(image_file, size=(512, 512)):
     """
@@ -164,19 +167,20 @@ def send_email_verification(user, new_email, request):
     # Render email templates
     html_message = render_to_string('accounts/emails/email_verification.html', context)
     plain_message = render_to_string('accounts/emails/email_verification.txt', context)
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@quietpage.com')
     
     # Send email
     try:
         send_mail(
             subject='QuietPage - Potvrzení změny e-mailu',
             message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@quietpage.com',
+            from_email=from_email,
             recipient_list=[new_email],
             html_message=html_message,
             fail_silently=False,
         )
-        return True
     except Exception as e:
-        # Log the error in production
-        print(f"Failed to send verification email: {e}")
+        logger.error(f"Failed to send verification email to {new_email}: {e}", exc_info=True)
         return False
+    else:
+        return True
