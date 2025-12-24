@@ -51,17 +51,18 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         """
         Process form submission and resize avatar if uploaded.
         """
+        # Check if user wants to remove avatar (takes priority over upload)
+        if self.request.POST.get('remove_avatar') == 'true':
+            if form.instance.avatar:
+                form.instance.avatar.delete(save=False)
+            form.instance.avatar = None
+
         # Check if avatar was uploaded
-        if 'avatar' in self.request.FILES:
+        elif 'avatar' in self.request.FILES:
             avatar_file = self.request.FILES['avatar']
             # Resize avatar to 512x512px
             resized_avatar = resize_avatar(avatar_file)
             form.instance.avatar = resized_avatar
-        
-        # Check if user wants to remove avatar
-        if self.request.POST.get('remove_avatar') == 'true':
-            form.instance.avatar.delete(save=False)
-            form.instance.avatar = None
         
         messages.success(self.request, 'Profil byl úspěšně aktualizován.')
         return super().form_valid(form)
