@@ -8,4 +8,4 @@ class JournalConfig(AppConfig):
     
     def ready(self):
         """Import signals when app is ready."""
-        import apps.journal.signals  # noqa
+        import apps.journal.signals
