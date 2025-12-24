@@ -38,18 +38,16 @@
                 <li class="settings-nav-divider"></li>
                 
                 <li>
-                    <a href="#" 
-                       class="settings-nav-item {% if active_section == 'password' %}active{% endif %}"
-                       title="Připravujeme...">
+                    <a href="{% url 'accounts:settings-password' %}" 
+                       class="settings-nav-item {% if active_section == 'password' %}active{% endif %}">
                         <span class="settings-nav-icon">🔑</span>
                         <span>Změna hesla</span>
                     </a>
                 </li>
                 
                 <li>
-                    <a href="#" 
-                       class="settings-nav-item {% if active_section == 'email' %}active{% endif %}"
-                       title="Připravujeme...">
+                    <a href="{% url 'accounts:settings-email' %}" 
+                       class="settings-nav-item {% if active_section == 'email' %}active{% endif %}">
                         <span class="settings-nav-icon">📧</span>
                         <span>Změna e-mailu</span>
                     </a>
@@ -58,9 +56,8 @@
                 <li class="settings-nav-divider"></li>
                 
                 <li>
-                    <a href="#" 
-                       class="settings-nav-item settings-nav-item-danger {% if active_section == 'delete' %}active{% endif %}"
-                       title="Připravujeme...">
+                    <a href="{% url 'accounts:settings-delete' %}" 
+                       class="settings-nav-item settings-nav-item-danger {% if active_section == 'delete' %}active{% endif %}">
                         <span class="settings-nav-icon">⚠️</span>
                         <span>Smazat účet</span>
                     </a>

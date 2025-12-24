@@ -1193,10 +1193,7 @@ body.zen-mode-active .zen-exit-hint {
 .settings-sidebar {
     flex-shrink: 0;
     width: 280px;
-    position: sticky;
-    top: calc(var(--space-lg) + 60px);
     align-self: flex-start;
-    height: fit-content;
 }
 
 @media (max-width: 968px) {
@@ -1461,15 +1458,9 @@ body.zen-mode-active .zen-exit-hint {
 /* Stats Grid */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-md);
     margin-top: var(--space-md);
-}
-
-@media (max-width: 768px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
 }
 
 @media (max-width: 480px) {
@@ -1480,8 +1471,9 @@ body.zen-mode-active .zen-exit-hint {
 
 .stat-card {
     display: flex;
-    align-items: center;
-    gap: var(--space-md);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
     padding: var(--space-md);
     background-color: var(--bg-body);
     border-radius: var(--radius-md);
@@ -1606,6 +1598,72 @@ body.zen-mode-active .zen-exit-hint {
 
 .btn-text-danger:hover {
     color: #A94842;
+}
+
+/* Danger Zone (Account Deletion) */
+.danger-zone {
+    margin-top: var(--space-lg);
+    padding: var(--space-lg);
+    background-color: #FFF5F5;
+    border: 2px solid #FFC9C9;
+    border-radius: var(--radius-md);
+}
+
+@media (prefers-color-scheme: dark) {
+    .danger-zone {
+        background-color: #3D1F1F;
+        border-color: #6B3030;
+    }
+}
+
+.danger-zone-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.danger-zone-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.danger-zone-header h2 {
+    color: #D32F2F;
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+    .danger-zone-header h2 {
+        color: #FF6B6B;
+    }
+}
+
+.danger-zone-content {
+    color: var(--text-main);
+}
+
+.danger-zone-content h3 {
+    color: #D32F2F;
+    font-size: 1.125rem;
+    margin-bottom: var(--space-sm);
+}
+
+@media (prefers-color-scheme: dark) {
+    .danger-zone-content h3 {
+        color: #FF6B6B;
+    }
+}
+
+.danger-zone-content ul {
+    margin: var(--space-sm) 0;
+    padding-left: var(--space-md);
+}
+
+.danger-zone-content li {
+    margin-bottom: var(--space-xs);
+    line-height: 1.6;
 }
 
 /* Utility Classes for Settings */

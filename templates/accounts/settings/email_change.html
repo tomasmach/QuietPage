@@ -1,0 +1,88 @@
+{% extends "accounts/settings/base_settings.html" %}
+{% load static %}
+
+{% block title %}Změna e-mailu - Nastavení - QuietPage{% endblock %}
+
+{% block settings_content %}
+<div class="settings-page">
+    <header class="settings-page-header">
+        <h1>Změna e-mailové adresy</h1>
+        <p class="text-muted">Aktualizujte svou e-mailovou adresu</p>
+    </header>
+    
+    <form method="post" class="settings-form">
+        {% csrf_token %}
+        
+        <!-- Current Email (Read-only) -->
+        <section class="form-section">
+            <h2 class="form-section-title">Současný e-mail</h2>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Vaše současná e-mailová adresa</span>
+                    <span class="info-value">{{ current_email }}</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- New Email Form -->
+        <section class="form-section">
+            <h2 class="form-section-title">Nový e-mail</h2>
+            
+            <div class="form-group">
+                <label for="{{ form.new_email.id_for_label }}" class="form-label">
+                    {{ form.new_email.label }}
+                </label>
+                {{ form.new_email }}
+                {% if form.new_email.help_text %}
+                    <p class="form-help">{{ form.new_email.help_text }}</p>
+                {% endif %}
+                {% if form.new_email.errors %}
+                    <div class="form-errors">
+                        {% for error in form.new_email.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}" class="form-label">
+                    {{ form.password.label }}
+                </label>
+                {{ form.password }}
+                {% if form.password.help_text %}
+                    <p class="form-help">{{ form.password.help_text }}</p>
+                {% endif %}
+                {% if form.password.errors %}
+                    <div class="form-errors">
+                        {% for error in form.password.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+        
+        <!-- Warning Box -->
+        <div class="info-box" style="border-left-color: var(--primary);">
+            <h3>Důležité upozornění</h3>
+            <ul>
+                <li>Změna e-mailu bude okamžitá</li>
+                <li>Nový e-mail budete používat pro obnovení hesla</li>
+                <li>Ujistěte se, že máte přístup k nové e-mailové adrese</li>
+            </ul>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                Změnit e-mail
+            </button>
+            <a href="{% url 'accounts:settings-profile' %}" class="btn btn-secondary">
+                Zrušit
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
