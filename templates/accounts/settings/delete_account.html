@@ -1,0 +1,145 @@
+{% extends "accounts/settings/base_settings.html" %}
+{% load static %}
+
+{% block title %}Smazat účet - Nastavení - QuietPage{% endblock %}
+
+{% block settings_content %}
+<div class="settings-page">
+    <header class="settings-page-header">
+        <h1 style="color: #D32F2F;">Smazat účet</h1>
+        <p class="text-muted">Trvale odstranit váš účet a všechna data</p>
+    </header>
+    
+    <!-- DANGER ZONE WARNING -->
+    <div class="danger-zone">
+        <div class="danger-zone-header">
+            <span class="danger-zone-icon">⚠️</span>
+            <h2>Nebezpečná zóna</h2>
+        </div>
+        
+        <div class="danger-zone-content">
+            <h3>Tato akce je NEVRATNÁ!</h3>
+            <p>Pokud smažete svůj účet, stane se následující:</p>
+            <ul>
+                <li><strong>Váš účet bude trvale smazán</strong> - nelze ho obnovit</li>
+                <li><strong>Všechny vaše záznamy ({{ total_entries }}) budou smazány</strong> - vše co jste napsali zmizí</li>
+                <li><strong>Profilové údaje zmizí</strong> - jméno, bio, avatar, vše</li>
+                <li><strong>Statistiky budou ztraceny</strong> - streaky, celkový počet slov, vše</li>
+                <li><strong>Okamžitě ztratíte přístup</strong> - budete odhlášeni a nemůžete se znovu přihlásit</li>
+            </ul>
+            
+            <p style="margin-top: var(--space-md); font-weight: 600; color: var(--text-main);">
+                Prosím, ujistěte se, že jste si exportovali všechna důležitá data před smazáním účtu.
+            </p>
+        </div>
+    </div>
+    
+    <form method="post" class="settings-form" id="delete-form">
+        {% csrf_token %}
+        
+        <!-- Account Statistics -->
+        <section class="form-section">
+            <h2 class="form-section-title">Co bude smazáno</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card" style="border-left: 3px solid #D32F2F;">
+                    <span class="stat-label">Celkem záznamů</span>
+                    <span class="stat-value">{{ total_entries }}</span>
+                </div>
+                
+                <div class="stat-card" style="border-left: 3px solid #D32F2F;">
+                    <span class="stat-label">Uživatelský účet</span>
+                    <span class="stat-value">{{ user.username }}</span>
+                </div>
+                
+                <div class="stat-card" style="border-left: 3px solid #D32F2F;">
+                    <span class="stat-label">E-mail</span>
+                    <span class="stat-value">{{ user.email }}</span>
+                </div>
+                
+                <div class="stat-card" style="border-left: 3px solid #D32F2F;">
+                    <span class="stat-label">Účet od</span>
+                    <span class="stat-value">{{ user.date_joined|date:"j. F Y" }}</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Confirmation Form -->
+        <section class="form-section">
+            <h2 class="form-section-title">Potvrzení smazání</h2>
+            
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}" class="form-label">
+                    {{ form.password.label }}
+                </label>
+                {{ form.password }}
+                {% if form.password.help_text %}
+                    <p class="form-help">{{ form.password.help_text }}</p>
+                {% endif %}
+                {% if form.password.errors %}
+                    <div class="form-errors">
+                        {% for error in form.password.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.confirm_text.id_for_label }}" class="form-label">
+                    {{ form.confirm_text.label }}
+                </label>
+                {{ form.confirm_text }}
+                {% if form.confirm_text.help_text %}
+                    <p class="form-help">{{ form.confirm_text.help_text }}</p>
+                {% endif %}
+                {% if form.confirm_text.errors %}
+                    <div class="form-errors">
+                        {% for error in form.confirm_text.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-checkbox-wrapper">
+                <input type="checkbox" id="understand-checkbox" class="form-checkbox" required>
+                <label for="understand-checkbox" class="form-label">
+                    Rozumím, že tato akce je nevratná a všechna moje data budou trvale smazána
+                </label>
+            </div>
+        </section>
+        
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger" id="delete-btn" disabled>
+                Trvale smazat účet
+            </button>
+            <a href="{% url 'accounts:settings-profile' %}" class="btn btn-secondary">
+                Zrušit a vrátit se zpět
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript for confirmation checkbox -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkbox = document.getElementById('understand-checkbox');
+    const deleteBtn = document.getElementById('delete-btn');
+    const form = document.getElementById('delete-form');
+    
+    // Enable delete button only when checkbox is checked
+    checkbox.addEventListener('change', function() {
+        deleteBtn.disabled = !this.checked;
+    });
+    
+    // Final confirmation before submit
+    form.addEventListener('submit', function(e) {
+        if (!confirm('POSLEDNÍ VAROVÁNÍ: Opravdu chcete TRVALE smazat svůj účet? Tuto akci NELZE vrátit zpět!')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

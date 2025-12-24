@@ -1,0 +1,191 @@
+{% extends "accounts/settings/base_settings.html" %}
+{% load static %}
+
+{% block title %}Profil - Nastavení - QuietPage{% endblock %}
+
+{% block settings_content %}
+<div class="settings-page">
+    <header class="settings-page-header">
+        <h1>Profil</h1>
+        <p class="text-muted">Upravte své osobní informace a profilový obrázek</p>
+    </header>
+    
+    <form method="post" enctype="multipart/form-data" class="settings-form" id="profile-form">
+        {% csrf_token %}
+        
+        <!-- Avatar Section -->
+        <section class="form-section">
+            <h2 class="form-section-title">Profilový obrázek</h2>
+            
+            <div class="avatar-upload-zone">
+                <div class="avatar-preview-wrapper">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" 
+                             alt="Profilový obrázek {{ user.username }}" 
+                             class="avatar-preview"
+                             id="avatar-preview">
+                    {% else %}
+                        <img src="{% static 'images/default-avatar.png' %}" 
+                             alt="Výchozí profilový obrázek" 
+                             class="avatar-preview avatar-preview-placeholder"
+                             id="avatar-preview">
+                    {% endif %}
+                </div>
+                
+                <div class="avatar-actions">
+                    <label for="{{ form.avatar.id_for_label }}" class="btn btn-secondary">
+                        <span>{% if user.avatar %}Změnit obrázek{% else %}Nahrát obrázek{% endif %}</span>
+                    </label>
+                    {{ form.avatar }}
+                    
+                    {% if user.avatar %}
+                        <button type="button" 
+                                class="btn btn-text btn-text-danger" 
+                                id="remove-avatar-btn">
+                            Odstranit obrázek
+                        </button>
+                        <input type="hidden" name="remove_avatar" id="remove-avatar-input" value="false">
+                    {% endif %}
+                </div>
+                
+                {% if form.avatar.help_text %}
+                    <p class="form-help">{{ form.avatar.help_text }}</p>
+                {% endif %}
+                
+                {% if form.avatar.errors %}
+                    <div class="form-errors">
+                        {% for error in form.avatar.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+        
+        <!-- Personal Information Section -->
+        <section class="form-section">
+            <h2 class="form-section-title">Osobní informace</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                        {{ form.first_name.label }}
+                    </label>
+                    {{ form.first_name }}
+                    {% if form.first_name.help_text %}
+                        <p class="form-help">{{ form.first_name.help_text }}</p>
+                    {% endif %}
+                    {% if form.first_name.errors %}
+                        <div class="form-errors">
+                            {% for error in form.first_name.errors %}
+                                <p class="form-error">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                        {{ form.last_name.label }}
+                    </label>
+                    {{ form.last_name }}
+                    {% if form.last_name.help_text %}
+                        <p class="form-help">{{ form.last_name.help_text }}</p>
+                    {% endif %}
+                    {% if form.last_name.errors %}
+                        <div class="form-errors">
+                            {% for error in form.last_name.errors %}
+                                <p class="form-error">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.bio.id_for_label }}" class="form-label">
+                    {{ form.bio.label }}
+                </label>
+                {{ form.bio }}
+                {% if form.bio.help_text %}
+                    <p class="form-help">{{ form.bio.help_text }}</p>
+                {% endif %}
+                {% if form.bio.errors %}
+                    <div class="form-errors">
+                        {% for error in form.bio.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+        
+        <!-- Account Information (Read-only) -->
+        <section class="form-section">
+            <h2 class="form-section-title">Informace o účtu</h2>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Uživatelské jméno</span>
+                    <span class="info-value">{{ user.username }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">E-mail</span>
+                    <span class="info-value">{{ user.email }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Účet vytvořen</span>
+                    <span class="info-value">{{ user.date_joined|date:"j. F Y" }}</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                Uložit změny
+            </button>
+            <a href="{% url 'home' %}" class="btn btn-secondary">
+                Zrušit
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript for avatar preview and removal -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarInput = document.getElementById('{{ form.avatar.id_for_label }}');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const removeBtn = document.getElementById('remove-avatar-btn');
+    const removeInput = document.getElementById('remove-avatar-input');
+    
+    // Preview avatar on file select
+    if (avatarInput) {
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatarPreview.src = e.target.result;
+                    avatarPreview.classList.remove('avatar-preview-placeholder');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Handle remove avatar
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            if (confirm('Opravdu chcete odstranit profilový obrázek?')) {
+                removeInput.value = 'true';
+                document.getElementById('profile-form').submit();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

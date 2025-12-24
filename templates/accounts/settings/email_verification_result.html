@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if success %}Úspěch{% else %}Chyba{% endif %} - Ověření e-mailu - QuietPage
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 4rem auto; padding: 0 1rem;">
+    <div class="card" style="padding: 3rem; text-align: center;">
+        {% if success %}
+            {# Success State #}
+            <div style="font-size: 4rem; margin-bottom: 1.5rem;">✅</div>
+            <h1 style="color: var(--text-main); margin-bottom: 1rem;">E-mail úspěšně změněn!</h1>
+            <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1.125rem;">
+                Váš e-mail byl úspěšně změněn na<br>
+                <strong style="color: var(--primary);">{{ new_email }}</strong>
+            </p>
+            
+            <div style="background-color: var(--bg-secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">
+                    Od teď můžete tento e-mail používat pro přihlášení a obnovení hesla.
+                </p>
+            </div>
+            
+            <a href="{% url 'accounts:settings-profile' %}" class="btn btn-primary" style="margin-right: 1rem;">
+                Přejít do nastavení
+            </a>
+            <a href="{% url 'journal:dashboard' %}" class="btn btn-secondary">
+                Přejít na dashboard
+            </a>
+        
+        {% else %}
+            {# Error States #}
+            {% if error == 'expired' %}
+                <div style="font-size: 4rem; margin-bottom: 1.5rem;">⏰</div>
+                <h1 style="color: var(--text-main); margin-bottom: 1rem;">Odkaz vypršel</h1>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    {{ message }}
+                </p>
+                
+                <div style="background-color: var(--bg-secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">
+                        Verifikační odkazy vyprší za 24 hodin z bezpečnostních důvodů.
+                        Můžete si nechat poslat nový odkaz v nastavení.
+                    </p>
+                </div>
+                
+                <a href="{% url 'accounts:settings-email' %}" class="btn btn-primary">
+                    Požádat o nový odkaz
+                </a>
+            
+            {% elif error == 'taken' %}
+                <div style="font-size: 4rem; margin-bottom: 1.5rem;">⚠️</div>
+                <h1 style="color: var(--text-main); margin-bottom: 1rem;">E-mail není dostupný</h1>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    {{ message }}
+                </p>
+                
+                <div style="background-color: var(--bg-secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">
+                        Tento e-mail byl mezitím použit jiným uživatelem. 
+                        Zkuste prosím jiný e-mail.
+                    </p>
+                </div>
+                
+                <a href="{% url 'accounts:settings-email' %}" class="btn btn-primary">
+                    Zkusit jiný e-mail
+                </a>
+            
+            {% else %}
+                {# invalid or other errors #}
+                <div style="font-size: 4rem; margin-bottom: 1.5rem;">❌</div>
+                <h1 style="color: var(--text-main); margin-bottom: 1rem;">Neplatný odkaz</h1>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    {{ message }}
+                </p>
+                
+                <div style="background-color: var(--bg-secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">
+                        Tento odkaz byl již použit, nebo je neplatný.
+                        Pokud potřebujete změnit e-mail, vytvořte novou žádost.
+                    </p>
+                </div>
+                
+                <a href="{% url 'accounts:settings-email' %}" class="btn btn-primary">
+                    Zpět do nastavení
+                </a>
+            {% endif %}
+        {% endif %}
+        
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">
+                Pokud potřebujete pomoc, kontaktujte nás na <a href="mailto:podpora@quietpage.com" style="color: var(--primary);">podpora@quietpage.com</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

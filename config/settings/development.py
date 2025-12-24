@@ -49,3 +49,4 @@ CSRF_COOKIE_SECURE = False     # Allow HTTP in development
 
 # Email backend - print emails to console
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'QuietPage <noreply@quietpage.com>'

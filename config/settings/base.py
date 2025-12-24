@@ -121,6 +121,11 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # For collectstatic
 STATICFILES_DIRS = [BASE_DIR / 'static']  # Custom static files
 
+# Media files (User uploaded files - avatars, etc.)
+# https://docs.djangoproject.com/en/5.2/topics/files/
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # WhiteNoise configuration for efficient static file serving
 STORAGES = {
     "default": {
