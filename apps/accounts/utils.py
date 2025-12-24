@@ -25,13 +25,14 @@ def resize_avatar(image_file, size=(512, 512)):
     """
     # Open the image
     img = Image.open(image_file)
+    # Convert all to RGBA first for consistent handling
+    if img.mode != 'RGBA':
+        img = img.convert('RGBA')
     
     # Convert RGBA to RGB if necessary (for PNG with transparency)
     if img.mode in ('RGBA', 'LA', 'P'):
         background = Image.new('RGB', img.size, (255, 255, 255))
-        if img.mode == 'P':
-            img = img.convert('RGBA')
-        background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+        background.paste(img, mask=img.split()[3])  # Alpha channel
         img = background
     
     # Resize using high-quality Lanczos filter
