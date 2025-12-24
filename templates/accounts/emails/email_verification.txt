@@ -1,0 +1,22 @@
+QuietPage - Potvrzení změny e-mailu
+=====================================
+
+Ahoj, {{ user.username }}!
+
+Obdrželi jsme žádost o změnu e-mailové adresy na vašem účtu QuietPage na:
+
+{{ new_email }}
+
+Pro dokončení změny prosím klikněte na tento odkaz:
+
+{{ verification_url }}
+
+DŮLEŽITÉ INFORMACE:
+-------------------
+• Tento odkaz vyprší za {{ expiry_hours }} hodin
+• Pokud jste o změnu nežádali, tento e-mail ignorujte
+• Váš současný e-mail zůstane nezměněn, dokud odkaz nepotvrdíte
+
+---
+Tento e-mail byl odeslán systémem QuietPage
+Váš klidný prostor pro psaní a reflexi

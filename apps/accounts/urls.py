@@ -25,6 +25,9 @@ urlpatterns = [
     # Security settings
     path('settings/security/password/', views.CustomPasswordChangeView.as_view(), name='settings-password'),
     path('settings/security/email/', views.EmailChangeView.as_view(), name='settings-email'),
+    path('settings/security/email/verify/<str:token>/', views.EmailVerifyView.as_view(), name='email-verify'),
+    path('settings/security/email/resend/', views.EmailResendVerificationView.as_view(), name='email-resend'),
+    path('settings/security/email/cancel/', views.EmailCancelChangeView.as_view(), name='email-cancel'),
     
     # Account deletion
     path('settings/delete/', views.AccountDeleteView.as_view(), name='settings-delete'),

@@ -7,7 +7,7 @@ in the Django admin interface.
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User
+from .models import User, EmailChangeRequest
 
 
 @admin.register(User)
@@ -69,3 +69,52 @@ class UserAdmin(BaseUserAdmin):
     
     # Make timestamp fields readonly
     readonly_fields = ('created_at', 'updated_at', 'date_joined', 'last_login')
+
+
+@admin.register(EmailChangeRequest)
+class EmailChangeRequestAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for EmailChangeRequest model.
+    
+    Displays email change requests with filtering and search capabilities.
+    """
+    
+    list_display = [
+        'user',
+        'new_email',
+        'created_at',
+        'expires_at',
+        'is_verified',
+        'verified_at'
+    ]
+    
+    list_filter = [
+        'is_verified',
+        'created_at',
+        'expires_at'
+    ]
+    
+    search_fields = [
+        'user__username',
+        'user__email',
+        'new_email'
+    ]
+    
+    ordering = ['-created_at']
+    
+    readonly_fields = [
+        'user',
+        'new_email',
+        'created_at',
+        'expires_at',
+        'is_verified',
+        'verified_at'
+    ]
+    
+    def has_add_permission(self, request):
+        """Disable adding email change requests via admin."""
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """Make all fields read-only."""
+        return False

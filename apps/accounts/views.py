@@ -9,10 +9,14 @@ from django.contrib import messages
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
-from django.shortcuts import redirect
+from django.db import transaction
+from django.db.models import Sum, Count
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import UpdateView, RedirectView, FormView
-from django.db.models import Sum
+from django.utils import timezone
+from django.views.generic import UpdateView, RedirectView, FormView, TemplateView, View
+from datetime import timedelta
+
 from .forms import (
     ProfileUpdateForm,
     GoalsUpdateForm,
@@ -20,8 +24,8 @@ from .forms import (
     EmailChangeForm,
     AccountDeleteForm,
 )
-from .models import User
-from .utils import resize_avatar
+from .models import User, EmailChangeRequest
+from .utils import resize_avatar, send_email_verification, verify_email_change_token
 
 
 class SettingsOverviewView(LoginRequiredMixin, RedirectView):
@@ -192,10 +196,14 @@ class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 class EmailChangeView(LoginRequiredMixin, FormView):
     """
     View for changing user email address with password confirmation.
+    
+    This view creates a pending email change request and sends a verification
+    email to the new address. The email is not changed until the user clicks
+    the verification link.
     """
     template_name = 'accounts/settings/email_change.html'
     form_class = EmailChangeForm
-    success_url = reverse_lazy('accounts:settings-profile')
+    success_url = reverse_lazy('accounts:settings-email')
     
     def get_form_kwargs(self):
         """
@@ -207,26 +215,221 @@ class EmailChangeView(LoginRequiredMixin, FormView):
     
     def form_valid(self, form):
         """
-        Update user email and show success message.
+        Create email change request and send verification email.
         """
         new_email = form.cleaned_data['new_email']
-        self.request.user.email = new_email
-        self.request.user.save()
+        user = self.request.user
         
-        messages.success(
-            self.request,
-            f'E-mail byl úspěšně změněn na {new_email}.'
+        # Cancel any existing pending requests for this user
+        EmailChangeRequest.objects.filter(
+            user=user,
+            is_verified=False
+        ).delete()
+        
+        # Create new email change request
+        email_request = EmailChangeRequest.objects.create(
+            user=user,
+            new_email=new_email
         )
+        
+        # Send verification email
+        email_sent = send_email_verification(user, new_email, self.request)
+        
+        if email_sent:
+            messages.success(
+                self.request,
+                f'Poslali jsme verifikační odkaz na {new_email}. '
+                f'Zkontrolujte svou e-mailovou schránku a klikněte na odkaz pro potvrzení změny.'
+            )
+        else:
+            messages.error(
+                self.request,
+                'Nepodařilo se odeslat verifikační e-mail. Zkuste to prosím znovu později.'
+            )
+        
         return super().form_valid(form)
     
     def get_context_data(self, **kwargs):
         """
-        Add active section and current email to context.
+        Add active section, current email, and pending request to context.
         """
         context = super().get_context_data(**kwargs)
         context['active_section'] = 'email'
         context['current_email'] = self.request.user.email
+        
+        # Check for pending email change request
+        pending_request = EmailChangeRequest.objects.filter(
+            user=self.request.user,
+            is_verified=False
+        ).order_by('-created_at').first()
+        
+        if pending_request and not pending_request.is_expired():
+            context['pending_request'] = pending_request
+        
         return context
+
+
+class EmailVerifyView(TemplateView):
+    """
+    View for verifying email change via token link.
+    
+    This view is accessed when user clicks the verification link in their email.
+    It validates the token, checks expiry, and atomically updates the user's email.
+    """
+    template_name = 'accounts/settings/email_verification_result.html'
+    
+    def get(self, request, token):
+        """
+        Process the email verification token.
+        """
+        # Verify and decode the token
+        user_id, new_email = verify_email_change_token(token, max_age=86400)  # 24 hours
+        
+        if not user_id or not new_email:
+            return self.render_to_response({
+                'success': False,
+                'error': 'expired',
+                'message': 'Tento odkaz již vypršel. Požádejte prosím o nový verifikační odkaz.'
+            })
+        
+        # Get the user
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return self.render_to_response({
+                'success': False,
+                'error': 'invalid',
+                'message': 'Neplatný verifikační odkaz.'
+            })
+        
+        # Find the corresponding email change request
+        email_request = EmailChangeRequest.objects.filter(
+            user=user,
+            new_email=new_email,
+            is_verified=False
+        ).order_by('-created_at').first()
+        
+        if not email_request:
+            return self.render_to_response({
+                'success': False,
+                'error': 'invalid',
+                'message': 'Tento odkaz již byl použit nebo je neplatný.'
+            })
+        
+        # Check if request has expired
+        if email_request.is_expired():
+            return self.render_to_response({
+                'success': False,
+                'error': 'expired',
+                'message': 'Tento odkaz již vypršel. Požádejte prosím o nový verifikační odkaz.'
+            })
+        
+        # Check if new email is still available (not taken by another user)
+        if User.objects.filter(email=new_email).exclude(id=user.id).exists():
+            # Delete the request since email is no longer available
+            email_request.delete()
+            return self.render_to_response({
+                'success': False,
+                'error': 'taken',
+                'message': 'Tento e-mail je již používán jiným účtem.'
+            })
+        
+        # Atomically update user email and mark request as verified
+        with transaction.atomic():
+            user.email = new_email
+            user.save(update_fields=['email'])
+            
+            email_request.is_verified = True
+            email_request.verified_at = timezone.now()
+            email_request.save(update_fields=['is_verified', 'verified_at'])
+        
+        return self.render_to_response({
+            'success': True,
+            'new_email': new_email,
+            'message': f'E-mail byl úspěšně změněn na {new_email}.'
+        })
+
+
+class EmailResendVerificationView(LoginRequiredMixin, View):
+    """
+    View for resending email verification link.
+    
+    Allows users to request a new verification email if they didn't receive
+    the original or if the link expired.
+    """
+    
+    def post(self, request):
+        """
+        Resend verification email for the most recent pending request.
+        """
+        # Get the most recent pending request
+        pending_request = EmailChangeRequest.objects.filter(
+            user=request.user,
+            is_verified=False
+        ).order_by('-created_at').first()
+        
+        if not pending_request:
+            messages.error(request, 'Nebyly nalezeny žádné nevyřízené žádosti o změnu e-mailu.')
+            return redirect('accounts:settings-email')
+        
+        # Check rate limiting: max 3 requests per hour
+        recent_requests = EmailChangeRequest.objects.filter(
+            user=request.user,
+            new_email=pending_request.new_email,
+            created_at__gte=timezone.now() - timedelta(hours=1)
+        ).count()
+        
+        if recent_requests >= 3:
+            messages.error(
+                request,
+                'Příliš mnoho pokusů. Zkuste to prosím znovu později.'
+            )
+            return redirect('accounts:settings-email')
+        
+        # Send verification email
+        email_sent = send_email_verification(
+            request.user,
+            pending_request.new_email,
+            request
+        )
+        
+        if email_sent:
+            messages.success(
+                request,
+                f'Verifikační odkaz byl znovu odeslán na {pending_request.new_email}.'
+            )
+        else:
+            messages.error(
+                request,
+                'Nepodařilo se odeslat e-mail. Zkuste to prosím znovu později.'
+            )
+        
+        return redirect('accounts:settings-email')
+
+
+class EmailCancelChangeView(LoginRequiredMixin, View):
+    """
+    View for canceling a pending email change request.
+    
+    Allows users to cancel their email change request if they made a mistake
+    or changed their mind.
+    """
+    
+    def post(self, request):
+        """
+        Cancel any pending email change requests for the current user.
+        """
+        deleted_count = EmailChangeRequest.objects.filter(
+            user=request.user,
+            is_verified=False
+        ).delete()[0]
+        
+        if deleted_count > 0:
+            messages.success(request, 'Žádost o změnu e-mailu byla zrušena.')
+        else:
+            messages.info(request, 'Nebyly nalezeny žádné nevyřízené žádosti.')
+        
+        return redirect('accounts:settings-email')
 
 
 class AccountDeleteView(LoginRequiredMixin, FormView):
