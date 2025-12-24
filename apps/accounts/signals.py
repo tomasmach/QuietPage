@@ -5,7 +5,6 @@ This module handles automatic cleanup and processing of user-related files,
 such as deleting old avatars when new ones are uploaded.
 """
 
-import os
 from django.db.models.signals import pre_save, pre_delete
 from django.dispatch import receiver
 from .models import User
@@ -33,11 +32,9 @@ def delete_old_avatar_on_update(sender, instance, **kwargs):
     if old_user.avatar and old_user.avatar != instance.avatar:
         # Delete the old file from storage
         try:
-            if os.path.isfile(old_user.avatar.path):
-                os.remove(old_user.avatar.path)
-        except (OSError, ValueError, NotImplementedError):
-            # OSError: File deletion failed
-            # ValueError/NotImplementedError: Remote storage doesn't support .path
+            old_user.avatar.delete(save=False)
+        except Exception:
+            # Silently ignore deletion failures to not block user save
             pass
 
 
@@ -51,7 +48,6 @@ def delete_avatar_on_user_delete(sender, instance, **kwargs):
     if instance.avatar:
         # Delete the avatar file from storage
         try:
-            if os.path.isfile(instance.avatar.path):
-                os.remove(instance.avatar.path)
-        except (OSError, ValueError, NotImplementedError):
+            instance.avatar.delete(save=False)
+        except Exception:
             pass
