@@ -52,6 +52,7 @@ def resize_avatar(image_file, size=(512, 512)):
     # Save to BytesIO
     output = BytesIO()
     output_img.save(output, format='JPEG', quality=90, optimize=True)
+    output_size = output.tell()
     output.seek(0)
     
     # Create InMemoryUploadedFile
@@ -60,7 +61,7 @@ def resize_avatar(image_file, size=(512, 512)):
         'ImageField',
         f"{image_file.name.split('.')[0]}.jpg",
         'image/jpeg',
-        output.tell(),
+        output_size,
         None
     )
 
