@@ -12,6 +12,7 @@ from django.contrib.auth.views import PasswordChangeView
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import UpdateView, RedirectView, FormView
+from django.db.models import Sum
 from .forms import (
     ProfileUpdateForm,
     GoalsUpdateForm,
@@ -139,17 +140,15 @@ class PrivacySettingsView(LoginRequiredMixin, UpdateView):
         
         # Get total entries count
         from apps.journal.models import Entry
-        total_entries = Entry.objects.filter(user=user).count()
-        
-        # Get total words written
-        total_words = sum(
-            Entry.objects.filter(user=user).values_list('word_count', flat=True)
+        stats = Entry.objects.filter(user=user).aggregate(
+            total_entries=Count('id'),
+            total_words=Sum('word_count')
         )
         
         context['stats'] = {
             'account_created': user.created_at,
-            'total_entries': total_entries,
-            'total_words': total_words,
+            'total_entries': stats['total_entries'] or 0,
+            'total_words': stats['total_words'] or 0,
             'current_streak': user.current_streak,
             'longest_streak': user.longest_streak,
         }
