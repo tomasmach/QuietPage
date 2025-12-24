@@ -22,10 +22,10 @@ urlpatterns = [
     # Privacy settings
     path('settings/privacy/', views.PrivacySettingsView.as_view(), name='settings-privacy'),
     
-    # Security settings (will be implemented in Phase 10)
-    # path('settings/security/password/', views.PasswordChangeView.as_view(), name='settings-password'),
-    # path('settings/security/email/', views.EmailChangeView.as_view(), name='settings-email'),
+    # Security settings
+    path('settings/security/password/', views.CustomPasswordChangeView.as_view(), name='settings-password'),
+    path('settings/security/email/', views.EmailChangeView.as_view(), name='settings-email'),
     
-    # Account deletion (will be implemented in Phase 10)
-    # path('settings/delete/', views.AccountDeleteView.as_view(), name='settings-delete'),
+    # Account deletion
+    path('settings/delete/', views.AccountDeleteView.as_view(), name='settings-delete'),
 ]
