@@ -6,7 +6,9 @@ It includes additional fields specific to the QuietPage application such as
 timezone support for accurate date/time display and privacy settings.
 """
 
+from datetime import time
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from timezone_field import TimeZoneField
 
@@ -40,6 +42,45 @@ class User(AbstractUser):
     email_notifications = models.BooleanField(
         default=False,
         help_text="Opt-in for email notifications"
+    )
+    
+    # Profile fields
+    avatar = models.ImageField(
+        upload_to='avatars/%Y/%m/',
+        blank=True,
+        null=True,
+        help_text="Profile picture (max 2MB, 512x512px recommended)"
+    )
+    bio = models.TextField(
+        max_length=500,
+        blank=True,
+        help_text="Short bio about yourself"
+    )
+    
+    # Writing goals and preferences
+    daily_word_goal = models.IntegerField(
+        default=750,
+        validators=[MinValueValidator(100), MaxValueValidator(5000)],
+        help_text="Daily word count goal (100-5000 words)"
+    )
+    preferred_writing_time = models.CharField(
+        max_length=20,
+        choices=[
+            ('morning', 'Ráno (do 12:00)'),
+            ('afternoon', 'Odpoledne (12:00-18:00)'),
+            ('evening', 'Večer (18:00+)'),
+            ('anytime', 'Kdykoli'),
+        ],
+        default='morning',
+        help_text="Preferred time of day for writing"
+    )
+    reminder_enabled = models.BooleanField(
+        default=False,
+        help_text="Enable daily writing reminders"
+    )
+    reminder_time = models.TimeField(
+        default=time(8, 0),
+        help_text="Time for daily reminder"
     )
     
     # Writing streak tracking
