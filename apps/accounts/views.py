@@ -227,7 +227,7 @@ class EmailChangeView(LoginRequiredMixin, FormView):
         ).delete()
         
         # Create new email change request
-        email_request = EmailChangeRequest.objects.create(
+        EmailChangeRequest.objects.create(
             user=user,
             new_email=new_email
         )
