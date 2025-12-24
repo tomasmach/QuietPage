@@ -24,6 +24,7 @@ urlpatterns = [
     path('', views.HomeView.as_view(), name='home'),
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
+    path('accounts/', include('apps.accounts.urls', namespace='accounts')),
     path('journal/', include('apps.journal.urls', namespace='journal')),
 ]
 
