@@ -9,6 +9,9 @@ from django.db.models.signals import pre_save, pre_delete
 from django.dispatch import receiver
 from .models import User
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 @receiver(pre_save, sender=User)
 def delete_old_avatar_on_update(sender, instance, **kwargs):
@@ -34,8 +37,11 @@ def delete_old_avatar_on_update(sender, instance, **kwargs):
         try:
             old_user.avatar.delete(save=False)
         except Exception:
-            # Silently ignore deletion failures to not block user save
-            pass
+            # Log but don't block user save
+            logger.warning(
+                f"Failed to delete old avatar for user {instance.pk}",
+                exc_info=True
+            )
 
 
 @receiver(pre_delete, sender=User)
@@ -50,4 +56,7 @@ def delete_avatar_on_user_delete(sender, instance, **kwargs):
         try:
             instance.avatar.delete(save=False)
         except Exception:
-            pass
+            logger.warning(
+                f"Failed to delete avatar for user {instance.pk} during deletion",
+                exc_info=True
+            )
