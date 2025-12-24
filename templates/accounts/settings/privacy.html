@@ -1,0 +1,119 @@
+{% extends "accounts/settings/base_settings.html" %}
+{% load static %}
+
+{% block title %}Soukromí - Nastavení - QuietPage{% endblock %}
+
+{% block settings_content %}
+<div class="settings-page">
+    <header class="settings-page-header">
+        <h1>Soukromí</h1>
+        <p class="text-muted">Spravujte nastavení soukromí a prohlédněte si statistiky svého účtu</p>
+    </header>
+    
+    <!-- Privacy Settings Form -->
+    <form method="post" class="settings-form">
+        {% csrf_token %}
+        
+        <section class="form-section">
+            <h2 class="form-section-title">Nastavení soukromí</h2>
+            
+            <div class="form-group">
+                <div class="form-checkbox-wrapper">
+                    {{ form.email_notifications }}
+                    <label for="{{ form.email_notifications.id_for_label }}" class="form-checkbox-label">
+                        {{ form.email_notifications.label }}
+                    </label>
+                </div>
+                {% if form.email_notifications.help_text %}
+                    <p class="form-help">{{ form.email_notifications.help_text }}</p>
+                {% endif %}
+                {% if form.email_notifications.errors %}
+                    <div class="form-errors">
+                        {% for error in form.email_notifications.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+        
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                Uložit změny
+            </button>
+        </div>
+    </form>
+    
+    <!-- Account Statistics (Read-only) -->
+    <section class="form-section mt-4">
+        <h2 class="form-section-title">Statistiky účtu</h2>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-content">
+                    <span class="stat-label">Účet vytvořen</span>
+                    <span class="stat-value">{{ stats.account_created|date:"j. F Y" }}</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-content">
+                    <span class="stat-label">Celkem zápisů</span>
+                    <span class="stat-value">{{ stats.total_entries }}</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">✍️</div>
+                <div class="stat-content">
+                    <span class="stat-label">Celkem slov</span>
+                    <span class="stat-value">{{ stats.total_words|default:"0" }}</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-content">
+                    <span class="stat-label">Současná série</span>
+                    <span class="stat-value">{{ stats.current_streak }} {% if stats.current_streak == 1 %}den{% elif stats.current_streak >= 2 and stats.current_streak <= 4 %}dny{% else %}dní{% endif %}</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-content">
+                    <span class="stat-label">Nejdelší série</span>
+                    <span class="stat-value">{{ stats.longest_streak }} {% if stats.longest_streak == 1 %}den{% elif stats.longest_streak >= 2 and stats.longest_streak <= 4 %}dny{% else %}dní{% endif %}</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">⏰</div>
+                <div class="stat-content">
+                    <span class="stat-label">Časové pásmo</span>
+                    <span class="stat-value">{{ user.timezone }}</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Data Privacy Info -->
+    <section class="form-section">
+        <h2 class="form-section-title">Vaše data</h2>
+        
+        <div class="info-box">
+            <p class="text-muted">
+                🔒 Vaše záznamy jsou šifrovány a nikdo kromě vás k nim nemá přístup. 
+                QuietPage je navržen s ohledem na vaše soukromí.
+            </p>
+            <p class="text-muted mt-2">
+                Pokud budete chtít smazat svůj účet, najdete tuto možnost v sekci "Smazat účet" v menu vlevo.
+                Smazáním účtu budou trvale odstraněna všechna vaše data.
+            </p>
+        </div>
+    </section>
+</div>
+{% endblock %}

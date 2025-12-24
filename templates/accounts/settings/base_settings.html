@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Nastavení - QuietPage{% endblock %}
+
+{% block content %}
+<div class="settings-layout">
+    <!-- Left Sidebar Navigation -->
+    <aside class="settings-sidebar">
+        <nav class="settings-nav">
+            <h2 class="settings-nav-title">Nastavení</h2>
+            
+            <ul class="settings-nav-list">
+                <li>
+                    <a href="{% url 'accounts:settings-profile' %}" 
+                       class="settings-nav-item {% if active_section == 'profile' %}active{% endif %}">
+                        <span class="settings-nav-icon">👤</span>
+                        <span>Profil</span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a href="{% url 'accounts:settings-goals' %}" 
+                       class="settings-nav-item {% if active_section == 'goals' %}active{% endif %}">
+                        <span class="settings-nav-icon">🎯</span>
+                        <span>Cíle & Předvolby</span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a href="{% url 'accounts:settings-privacy' %}" 
+                       class="settings-nav-item {% if active_section == 'privacy' %}active{% endif %}">
+                        <span class="settings-nav-icon">🔒</span>
+                        <span>Soukromí</span>
+                    </a>
+                </li>
+                
+                <li class="settings-nav-divider"></li>
+                
+                <li>
+                    <a href="#" 
+                       class="settings-nav-item {% if active_section == 'password' %}active{% endif %}"
+                       title="Připravujeme...">
+                        <span class="settings-nav-icon">🔑</span>
+                        <span>Změna hesla</span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a href="#" 
+                       class="settings-nav-item {% if active_section == 'email' %}active{% endif %}"
+                       title="Připravujeme...">
+                        <span class="settings-nav-icon">📧</span>
+                        <span>Změna e-mailu</span>
+                    </a>
+                </li>
+                
+                <li class="settings-nav-divider"></li>
+                
+                <li>
+                    <a href="#" 
+                       class="settings-nav-item settings-nav-item-danger {% if active_section == 'delete' %}active{% endif %}"
+                       title="Připravujeme...">
+                        <span class="settings-nav-icon">⚠️</span>
+                        <span>Smazat účet</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="settings-content">
+        {% block settings_content %}
+        <!-- Child templates will override this block -->
+        {% endblock %}
+    </main>
+</div>
+{% endblock %}
