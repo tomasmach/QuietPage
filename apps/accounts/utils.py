@@ -55,7 +55,7 @@ def resize_avatar(image_file, size=(512, 512)):
         'ImageField',
         f"{image_file.name.split('.')[0]}.jpg",
         'image/jpeg',
-        sys.getsizeof(output),
+        output.tell(),
         None
     )
 
@@ -78,4 +78,4 @@ def get_user_avatar_url(user):
     
     # Return placeholder avatar URL (SVG)
     # User can replace this with custom image later
-    return f"{settings.STATIC_URL}images/default-avatar.svg"
+    return f"{settings.STATIC_URL}images/default-avatar.png"
