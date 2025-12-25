@@ -8,8 +8,25 @@ import uuid
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.contenttypes.models import ContentType
 from .fields import EncryptedTextField
 from taggit.managers import TaggableManager
+from taggit.models import TaggedItemBase, GenericUUIDTaggedItemBase
+
+
+class UUIDTaggedItem(GenericUUIDTaggedItemBase, TaggedItemBase):
+    """
+    Custom TaggedItem model that supports UUID primary keys.
+    
+    This is required because django-taggit's default TaggedItem uses
+    integer primary keys, but Entry uses UUID.
+    """
+    class Meta:
+        verbose_name = "Tag"
+        verbose_name_plural = "Tags"
+        indexes = [
+            models.Index(fields=["content_type", "object_id"]),
+        ]
 
 
 class Entry(models.Model):
@@ -50,7 +67,7 @@ class Entry(models.Model):
     )
     
     # Tagging (free-form via django-taggit)
-    tags = TaggableManager(blank=True)
+    tags = TaggableManager(through=UUIDTaggedItem, blank=True)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

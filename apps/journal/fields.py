@@ -106,7 +106,7 @@ class EncryptedTextField(models.TextField):
         Raises:
             DecryptionError: If decryption fails for any reason.
         """
-        if value is None:
+        if value is None or value == '':
             return value
         
         try:

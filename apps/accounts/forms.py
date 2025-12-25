@@ -143,14 +143,17 @@ class ProfileUpdateForm(forms.ModelForm):
         avatar = self.cleaned_data.get('avatar')
         
         if avatar:
-            # Check file size (max 2MB)
-            if avatar.size > 2 * 1024 * 1024:
-                raise ValidationError('Soubor je příliš velký. Maximální velikost je 2MB.')
-            
-            # Check file type
-            valid_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
-            if avatar.content_type not in valid_types:
-                raise ValidationError('Neplatný formát obrázku. Použijte JPG, PNG nebo WebP.')
+            # Only validate if it's a new upload (has content_type attribute)
+            # ImageFieldFile from existing avatar doesn't have content_type
+            if hasattr(avatar, 'content_type'):
+                # Check file size (max 2MB)
+                if avatar.size > 2 * 1024 * 1024:
+                    raise ValidationError('Soubor je příliš velký. Maximální velikost je 2MB.')
+                
+                # Check file type
+                valid_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+                if avatar.content_type not in valid_types:
+                    raise ValidationError('Neplatný formát obrázku. Použijte JPG, PNG nebo WebP.')
         
         return avatar
 

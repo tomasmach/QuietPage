@@ -13,6 +13,7 @@ from django.core.mail import send_mail
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.template.loader import render_to_string
 from django.urls import reverse
+import secrets
 
 import logging
 
@@ -98,7 +99,8 @@ def generate_email_verification_token(user_id, new_email):
     Generate a cryptographically signed token for email verification.
     
     Uses Django's TimestampSigner for security. Token contains user_id and new_email,
-    and has built-in expiration checking.
+    and has built-in expiration checking. Includes a random nonce to ensure uniqueness
+    even when multiple tokens are generated in the same second.
     
     Args:
         user_id: ID of the user requesting email change
@@ -107,8 +109,10 @@ def generate_email_verification_token(user_id, new_email):
     Returns:
         str: Signed token that can be safely sent in URLs
     """
+    # Add a random nonce to ensure token uniqueness even within the same second
+    nonce = secrets.token_hex(8)
     signer = TimestampSigner()
-    value = f"{user_id}:{new_email}"
+    value = f"{user_id}:{new_email}:{nonce}"
     token = signer.sign(value)
     return token
 
@@ -128,9 +132,14 @@ def verify_email_change_token(token, max_age=86400):
     try:
         # Unsign the token with expiration check
         original = signer.unsign(token, max_age=max_age)
-        # Parse the value
-        user_id, new_email = original.split(':', 1)
-        return int(user_id), new_email
+        # Parse the value (format: user_id:new_email:nonce)
+        parts = original.split(':', 2)
+        if len(parts) >= 2:
+            user_id = int(parts[0])
+            new_email = parts[1]
+            # parts[2] is the nonce, which we don't need for verification
+            return user_id, new_email
+        return None, None
     except (BadSignature, SignatureExpired, ValueError):
         return None, None
 
@@ -170,8 +179,8 @@ def send_email_verification(user, new_email, request):
     # Send email
     try:
         send_mail(
-            subject='QuietPage - Potvrzení změny e-mailu',
-            message=plain_message,
+            'QuietPage - Potvrzení změny e-mailu',
+            plain_message,
             from_email=from_email,
             recipient_list=[new_email],
             html_message=html_message,

@@ -202,13 +202,13 @@ class EntryDeleteView(LoginRequiredMixin, DeleteView):
         """Ensure user can only delete their own entries."""
         return Entry.objects.filter(user=self.request.user)  # type: ignore
     
-    def delete(self, request, *args, **kwargs):
-        """Show success message after deletion."""
+    def form_valid(self, form):
+        """Show success message before deletion."""
         messages.success(
             self.request,
             'Záznam byl úspěšně smazán.'
         )
-        return super().delete(request, *args, **kwargs)
+        return super().form_valid(form)
 
 
 @login_required
