@@ -318,8 +318,8 @@ class TestDeleteAvatarOnUserDelete:
         # Each avatar delete should have been attempted
         assert delete_count == 3
 
-    def test_cascade_delete_from_entry(self, sample_avatar, temp_media_dir):
-        """Test that avatar is deleted when user account is deleted."""
+    def test_avatar_deleted_via_mock_verification(self, sample_avatar, temp_media_dir):
+        """Test that avatar delete is called with correct parameters via mock."""
         user = UserFactory()
         user.avatar = sample_avatar
         user.save()
