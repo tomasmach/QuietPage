@@ -17,7 +17,6 @@ from django.conf import settings
 from django.core.signing import TimestampSigner
 from unittest.mock import patch, MagicMock
 from freezegun import freeze_time
-import time
 
 from apps.accounts.utils import (
     resize_avatar,
@@ -185,7 +184,7 @@ class TestResizeAvatar:
 class TestGetUserAvatarUrl:
     """Tests for get_user_avatar_url utility function."""
 
-    def test_returns_avatar_url_when_user_has_avatar(self, sample_avatar, temp_media_dir):
+    def test_returns_avatar_url_when_user_has_avatar(self, sample_avatar, temp_media_dir):  # noqa: ARG002 - temp_media_dir sets MEDIA_ROOT
         """Test returning user's avatar URL when they have one."""
         user = UserFactory()
         user.avatar = sample_avatar
@@ -467,14 +466,15 @@ class TestSendEmailVerification:
         new_email = 'test@example.com'
         request = rf.get('/')
         
-        # Send twice
-        send_email_verification(user, new_email, request)
-        first_html = mock_send_mail.call_args[1]['html_message']
+        # Send first email at one time
+        with freeze_time("2025-01-01 12:00:00"):
+            send_email_verification(user, new_email, request)
+            first_html = mock_send_mail.call_args[1]['html_message']
         
-        time.sleep(0.1)
-        
-        send_email_verification(user, new_email, request)
-        second_html = mock_send_mail.call_args[1]['html_message']
+        # Send second email at a later time
+        with freeze_time("2025-01-01 12:01:00"):
+            send_email_verification(user, new_email, request)
+            second_html = mock_send_mail.call_args[1]['html_message']
         
         # HTML should be different due to different tokens (with timestamps)
         assert first_html != second_html

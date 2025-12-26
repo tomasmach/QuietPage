@@ -7,6 +7,8 @@ Tests complete user journeys and cross-app interactions.
 import pytest
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+from unittest.mock import patch
+from contextlib import contextmanager
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.messages import get_messages
@@ -15,6 +17,7 @@ from django.db.models import Q
 from apps.journal.models import Entry
 from apps.journal.utils import get_user_local_date
 from apps.accounts.models import User, EmailChangeRequest
+from apps.accounts.utils import generate_email_verification_token
 from apps.journal.tests.factories import EntryFactory
 from apps.accounts.tests.factories import UserFactory, EmailChangeRequestFactory
 
@@ -118,39 +121,47 @@ class TestEmailChangeFlow:
     
     def test_email_change_request_to_verification(self, client):
         """
-        Complete flow: Request Email Change → Verify Token → Email Updated
+        Complete end-to-end flow: Request Email Change → Verify Token → Email Updated
+        
+        This test verifies the entire email change process by calling actual endpoints
+        with a valid verification token, ensuring complete integration between utils,
+        views, and models.
         """
         # Step 1: Create and login user
         user = UserFactory(email='old@example.com')
         client.force_login(user)
         
-        # Step 2: Request email change
-        response = client.post(reverse('accounts:settings-email'), {
-            'new_email': 'new@example.com',
-            'password': 'testpass123',  # Email change requires password confirmation
-        })
+        # Step 2: Request email change (mock email sending to avoid actual email dispatch)
+        with patch('apps.accounts.views.send_email_verification') as mock_send_email:
+            mock_send_email.return_value = True
+            
+            response = client.post(reverse('accounts:settings-email'), {
+                'new_email': 'new@example.com',
+                'password': 'testpass123',  # Email change requires password confirmation
+            })
         
         # Verify email change request was created
         email_request = EmailChangeRequest.objects.get(user=user)
         assert email_request.new_email == 'new@example.com'
         assert email_request.is_verified is False
         
-        # Step 3: Verify email with token (simulate clicking verification link)
-        # Note: This would require accessing the verification view with the token
-        # For now, we'll verify the model behavior
-        email_request.is_verified = True
-        email_request.verified_at = timezone.now()
-        email_request.save()
+        # Step 3: Verify email with token by calling the actual verification endpoint
+        # Generate a valid token (same as what would be in the email)
+        token = generate_email_verification_token(user.id, 'new@example.com')
         
-        # Update user email
-        user.email = email_request.new_email
-        user.save()
+        # Call the verification endpoint (simulates user clicking verification link)
+        response = client.get(reverse('accounts:email-verify', kwargs={'token': token}))
         
-        # Step 4: Verify email was updated
+        # Verify successful verification response
+        assert response.status_code == 200
+        assert response.context['success'] is True
+        assert response.context['new_email'] == 'new@example.com'
+        
+        # Step 4: Verify email was automatically updated by the endpoint
         user.refresh_from_db()
         assert user.email == 'new@example.com'
         
-        # Step 5: Verify request is marked as verified
+        # Step 5: Verify request is marked as verified by the endpoint
         email_request.refresh_from_db()
         assert email_request.is_verified is True
         assert email_request.verified_at is not None
@@ -160,7 +171,7 @@ class TestEmailChangeFlow:
 class TestAccountDeletionCascade:
     """Test that deleting account cascades to all entries."""
     
-    def test_delete_user_cascades_to_entries(self, client):
+    def test_delete_user_cascades_to_entries(self):
         """
         Verify that deleting a user also deletes all their entries.
         """
@@ -184,7 +195,7 @@ class TestAccountDeletionCascade:
             assert not Entry.objects.filter(pk=entry_id).exists()
         assert Entry.objects.filter(id__in=entry_ids).count() == 0
     
-    def test_delete_user_with_email_change_requests(self, client):
+    def test_delete_user_with_email_change_requests(self):
         """
         Verify that deleting a user also deletes their email change requests.
         """
@@ -319,7 +330,7 @@ class TestUserIsolation:
         user_a = UserFactory()
         user_b = UserFactory()
         
-        entry_a = EntryFactory(user=user_a, title='User A Entry')
+        EntryFactory(user=user_a, title='User A Entry')  # Created but not accessed in this test
         entry_b = EntryFactory(user=user_b, title='User B Entry')
         
         # User A tries to access User B's entry (detail view)
@@ -570,10 +581,6 @@ class TestTagging:
         assert 'tags' in tag_names
         assert 'old' not in tag_names
 
-
-# Helper function for patching entry created_at in tests
-from unittest.mock import patch
-from contextlib import contextmanager
 
 @contextmanager
 def patch_entry_created_at(created_at):

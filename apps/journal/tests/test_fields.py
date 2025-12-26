@@ -124,7 +124,7 @@ class TestEncryptedTextField:
     def test_field_deconstruct(self):
         """Test field deconstruct for migrations."""
         field = EncryptedTextField(help_text="Test field")
-        name, path, args, kwargs = field.deconstruct()
+        _name, _path, _args, kwargs = field.deconstruct()
         
         assert 'max_length' not in kwargs
         assert kwargs.get('help_text') == "Test field"

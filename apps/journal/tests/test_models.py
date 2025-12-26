@@ -51,7 +51,7 @@ class TestEntryModel:
     
     def test_uuid_is_not_editable(self):
         """Test that UUID field is marked as not editable."""
-        entry = EntryFactory()
+        _entry = EntryFactory()
         id_field = Entry._meta.get_field('id')
         
         assert id_field.editable is False
@@ -231,7 +231,7 @@ class TestEntryTags:
         
         # django-taggit normalizes to lowercase
         assert entry.tags.count() == 1
-        assert list(entry.tags.names())[0].lower() == 'work'
+        assert next(iter(entry.tags.names())).lower() == 'work'
     
     def test_tags_with_czech_characters(self):
         """Test tags with Czech characters."""

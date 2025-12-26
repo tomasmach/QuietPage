@@ -10,6 +10,7 @@ This module tests the User and EmailChangeRequest models, covering:
 
 import pytest
 from datetime import timedelta
+from freezegun import freeze_time
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -267,15 +268,15 @@ class TestUserModel:
         Why: Validates that the auto_now field works correctly for tracking
         when user data was last modified.
         """
-        user = UserFactory()
-        original_updated = user.updated_at
+        # Create user at a specific time
+        with freeze_time("2025-01-01 12:00:00"):
+            user = UserFactory()
+            original_updated = user.updated_at
         
-        # Small delay to ensure timestamp difference
-        import time
-        time.sleep(0.01)
-        
-        user.bio = 'Updated bio'
-        user.save()
+        # Update user at a later time
+        with freeze_time("2025-01-01 12:01:00"):
+            user.bio = 'Updated bio'
+            user.save()
         
         assert user.updated_at > original_updated
 
@@ -532,13 +533,15 @@ class TestEmailChangeRequestModel:
         """
         user = UserFactory()
         
-        # Create requests with slight time differences
-        import time
-        request1 = EmailChangeRequestFactory(user=user)
-        time.sleep(0.01)
-        request2 = EmailChangeRequestFactory(user=user)
-        time.sleep(0.01)
-        request3 = EmailChangeRequestFactory(user=user)
+        # Create requests at different times
+        with freeze_time("2025-01-01 12:00:00"):
+            request1 = EmailChangeRequestFactory(user=user)
+        
+        with freeze_time("2025-01-01 12:01:00"):
+            request2 = EmailChangeRequestFactory(user=user)
+        
+        with freeze_time("2025-01-01 12:02:00"):
+            request3 = EmailChangeRequestFactory(user=user)
         
         requests = EmailChangeRequest.objects.all()
         # Should be ordered newest first

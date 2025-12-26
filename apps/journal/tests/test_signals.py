@@ -32,7 +32,7 @@ class TestUpdateStreakOnEntryCreate:
         )
         
         # Create entry (should trigger signal)
-        entry = EntryFactory(user=user)
+        _entry = EntryFactory(user=user)
         
         # Refresh user to see changes
         user.refresh_from_db()
@@ -208,7 +208,7 @@ class TestSignalIntegration:
         
         # Check that our receiver is connected
         # _live_receivers returns ([receivers], [weak_refs])
-        receivers, weak_refs = post_save._live_receivers(Entry)
+        receivers, _weak_refs = post_save._live_receivers(Entry)
         
         # Should have at least one receiver (our signal handler)
         assert len(receivers) > 0

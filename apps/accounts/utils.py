@@ -133,12 +133,15 @@ def verify_email_change_token(token, max_age=86400):
         # Unsign the token with expiration check
         original = signer.unsign(token, max_age=max_age)
         # Parse the value (format: user_id:new_email:nonce)
-        parts = original.split(':', 2)
-        if len(parts) >= 2:
-            user_id = int(parts[0])
-            new_email = parts[1]
-            # parts[2] is the nonce, which we don't need for verification
-            return user_id, new_email
+        # Use rsplit to handle emails that might contain ':'
+        parts = original.rsplit(':', 1)  # Split off nonce first
+        if len(parts) == 2:
+            user_id_and_email = parts[0]
+            id_parts = user_id_and_email.split(':', 1)  # Split user_id from email
+            if len(id_parts) == 2:
+                user_id = int(id_parts[0])
+                new_email = id_parts[1]
+                return user_id, new_email
         return None, None
     except (BadSignature, SignatureExpired, ValueError):
         return None, None
