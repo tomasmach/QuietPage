@@ -41,6 +41,113 @@
 
 ---
 
+## 📦 Instalace a nastavení pro vývojáře
+
+### Požadavky
+- Python 3.14+
+- pip
+- virtualenv (doporučeno)
+- Git
+
+### Kroky instalace
+
+1. **Naklonujte repozitář**
+   ```bash
+   git clone https://github.com/your-username/QuietPage.git
+   cd QuietPage
+   ```
+
+2. **Vytvořte a aktivujte virtuální prostředí**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Na Windows: venv\Scripts\activate
+   ```
+
+3. **Nainstalujte závislosti**
+   ```bash
+   pip install -r requirements/development.txt
+   ```
+
+4. **Nastavte proměnné prostředí**
+
+   Vytvořte soubor `.env` v kořenovém adresáři projektu:
+   ```bash
+   # Django nastavení
+   SECRET_KEY=your-secret-key-here
+   DJANGO_SETTINGS_MODULE=config.settings.development
+
+   # Šifrovací klíč pro deníkové záznamy
+   FERNET_KEY_PRIMARY=your-fernet-key-here
+   ```
+
+   Pro vygenerování Fernet klíče použijte:
+   ```python
+   from cryptography.fernet import Fernet
+   print(Fernet.generate_key().decode())
+   ```
+
+5. **Dokončete setup databáze**
+
+   **Možnost A: Automatický setup (doporučeno)**
+   ```bash
+   make setup
+   ```
+   Tento příkaz automaticky:
+   - Aplikuje všechny migrace
+   - Vytvoří cache tabulku
+   - Vytvoří superuživatelský účet
+
+   **Možnost B: Manuální setup (krok po kroku)**
+
+   a) Aplikujte migrace databáze
+   ```bash
+   python manage.py migrate
+   ```
+
+   b) **Vytvořte cache tabulku** ⚠️ **DŮLEŽITÉ**
+
+   Projekt používá databázovou cache, která vyžaduje vytvoření speciální tabulky:
+   ```bash
+   python manage.py createcachetable
+   # nebo: make cache
+   ```
+
+   Tento krok je **povinný** - bez něj nebude cache fungovat správně a můžete narazit na chyby.
+
+   c) Vytvořte superuživatele (admin účet)
+   ```bash
+   python manage.py createsuperuser
+   # nebo: make superuser
+   ```
+
+6. **Spusťte vývojový server**
+   ```bash
+   python manage.py runserver
+   # nebo: make run
+   ```
+
+7. **Otevřete aplikaci v prohlížeči**
+
+   Přejděte na: http://127.0.0.1:8000/
+
+### Další užitečné příkazy
+
+```bash
+# Spuštění testů
+pytest
+
+# Spuštění testů s pokrytím
+pytest --cov=apps --cov-report=html
+
+# Kontrola kódu
+python manage.py check
+
+# Django shell
+python manage.py shell
+```
+
+---
+
 ## 💡 Project Goals
 
 1. Provide a calm and intuitive platform for journaling and self-reflection.
