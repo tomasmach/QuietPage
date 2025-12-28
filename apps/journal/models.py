@@ -83,8 +83,12 @@ class Entry(models.Model):
 
     def save(self, *args, **kwargs):
         """Auto-calculate word count and run validation before saving."""
-        # Run full model validation (including clean())
-        self.full_clean()
+        # Allow callers to skip validation for non-form contexts
+        skip_validation = kwargs.pop('skip_validation', False)
+
+        # Run full model validation (including clean()) unless explicitly skipped
+        if not skip_validation:
+            self.full_clean()
 
         # Calculate word count from content (ensure non-negative)
         if self.content:
