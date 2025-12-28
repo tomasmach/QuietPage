@@ -177,23 +177,26 @@ class TestUpdateStreakOnEntryCreate:
     
     def test_backdated_entry_preserves_streak(self):
         """Test that backdated entries don't affect current streak."""
+        now = timezone.now()
+        today = now.date()
+
         user = UserFactory(
             current_streak=5,
             longest_streak=10,
-            last_entry_date=timezone.now().date(),
+            last_entry_date=today,
             timezone='Europe/Prague'
         )
-        
+
         # Create backdated entry (3 days ago)
-        backdated = timezone.now() - timedelta(days=3)
+        backdated = now - timedelta(days=3)
         EntryFactory(user=user, created_at=backdated)
-        
+
         user.refresh_from_db()
         # Streak should remain unchanged
         assert user.current_streak == 5
         assert user.longest_streak == 10
         # Last entry date should still be today
-        assert user.last_entry_date == timezone.now().date()
+        assert user.last_entry_date == today
 
 
 @pytest.mark.integration
