@@ -411,7 +411,7 @@ class TestEncryptedContent:
         with connection.cursor() as cursor:
             cursor.execute(
                 'SELECT content FROM journal_entry WHERE id = %s',
-                [entry.id.hex]
+                [str(entry.id)]
             )
             row = cursor.fetchone()
             encrypted_value = row[0]
