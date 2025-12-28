@@ -431,13 +431,14 @@ class TestSendEmailVerification:
         user = UserFactory()
         new_email = 'test@example.com'
         request = rf.get('/')
-        
+
         send_email_verification(user, new_email, request)
-        
-        call_kwargs = mock_send_mail.call_args[1]
-        assert 'from_email' in call_kwargs
+
+        args = mock_send_mail.call_args[0]
+        kwargs = mock_send_mail.call_args[1]
+        from_email = args[2] if len(args) > 2 else kwargs.get('from_email')
         # Should use settings.DEFAULT_FROM_EMAIL or fallback
-        assert '@' in call_kwargs['from_email']
+        assert '@' in from_email
 
     @patch('apps.accounts.utils.send_mail')
     def test_email_includes_both_html_and_plain_text(self, mock_send_mail, rf):
