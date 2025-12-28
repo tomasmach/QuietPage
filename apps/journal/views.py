@@ -19,6 +19,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Count, Q, Sum
 from django.shortcuts import redirect
+from django.core.cache import cache
 
 from .models import Entry
 from .utils import get_random_quote
@@ -78,14 +79,22 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             messages.error(self.request, 'Chyba při načítání záznamů. Kontaktujte podporu.')
             context['recent_entries'] = []
 
-        # Statistics - use aggregation to avoid loading encrypted content
-        context['stats'] = {
-            'total_entries': Entry.objects.filter(user=user).count(),  # type: ignore
-            'current_streak': user.current_streak,  # type: ignore
-            'total_words': Entry.objects.filter(user=user).aggregate(  # type: ignore
-                total=Sum('word_count')
-            )['total'] or 0,
-        }
+        # Statistics - cached for 5 minutes to reduce database load
+        cache_key = f'dashboard_stats_{user.id}'
+        stats = cache.get(cache_key)
+
+        if not stats:
+            # Cache miss - compute stats and cache them
+            stats = {
+                'total_entries': Entry.objects.filter(user=user).count(),  # type: ignore
+                'current_streak': user.current_streak,  # type: ignore
+                'total_words': Entry.objects.filter(user=user).aggregate(  # type: ignore
+                    total=Sum('word_count')
+                )['total'] or 0,
+            }
+            cache.set(cache_key, stats, 300)  # Cache for 5 minutes
+
+        context['stats'] = stats
 
         # Inspirational quote for empty state
         context['quote'] = get_random_quote()

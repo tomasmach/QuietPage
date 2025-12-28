@@ -144,6 +144,19 @@ STORAGES = {
     },
 }
 
+# Caching Configuration (Database-backed - no Redis required)
+# https://docs.djangoproject.com/en/5.2/topics/cache/
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,  # Limit cache size
+            'CULL_FREQUENCY': 3,  # Delete 1/3 of entries when MAX_ENTRIES is reached
+        }
+    }
+}
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
