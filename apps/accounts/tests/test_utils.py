@@ -374,11 +374,11 @@ class TestSendEmailVerification:
         user = UserFactory()
         new_email = 'recipient@example.com'
         request = rf.get('/')
-        
+
         send_email_verification(user, new_email, request)
-        
-        call_kwargs = mock_send_mail.call_args[1]
-        assert call_kwargs['recipient_list'] == [new_email]
+
+        call_args = mock_send_mail.call_args[0]
+        assert call_args[3] == [new_email]
 
     @patch('apps.accounts.utils.send_mail')
     def test_email_contains_verification_url(self, mock_send_mail, rf):
