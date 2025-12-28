@@ -184,8 +184,8 @@ def send_email_verification(user, new_email, request):
         send_mail(
             'QuietPage - Potvrzení změny e-mailu',
             plain_message,
-            from_email,
-            [new_email],
+            from_email=from_email,
+            recipient_list=[new_email],
             html_message=html_message,
             fail_silently=False,
         )

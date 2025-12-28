@@ -377,8 +377,8 @@ class TestSendEmailVerification:
 
         send_email_verification(user, new_email, request)
 
-        call_args = mock_send_mail.call_args[0]
-        assert call_args[3] == [new_email]
+        call_kwargs = mock_send_mail.call_args[1]
+        assert call_kwargs['recipient_list'] == [new_email]
 
     @patch('apps.accounts.utils.send_mail')
     def test_email_contains_verification_url(self, mock_send_mail, rf):
@@ -434,11 +434,10 @@ class TestSendEmailVerification:
 
         send_email_verification(user, new_email, request)
 
-        args = mock_send_mail.call_args[0]
-        kwargs = mock_send_mail.call_args[1]
-        from_email = args[2] if len(args) > 2 else kwargs.get('from_email')
+        call_kwargs = mock_send_mail.call_args[1]
+        assert 'from_email' in call_kwargs
         # Should use settings.DEFAULT_FROM_EMAIL or fallback
-        assert '@' in from_email
+        assert '@' in call_kwargs['from_email']
 
     @patch('apps.accounts.utils.send_mail')
     def test_email_includes_both_html_and_plain_text(self, mock_send_mail, rf):
