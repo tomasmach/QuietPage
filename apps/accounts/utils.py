@@ -67,15 +67,14 @@ def resize_avatar(image_file, size=(512, 512)):
         logger.error(f"Avatar validation failed: {e}")
         raise ValidationError('Soubor není platný obrázek.')
 
-    # Convert all to RGBA first for consistent handling
-    if img.mode != 'RGBA':
+    # Handle transparency: convert to RGBA first if needed, then composite onto white
+    if img.mode in ('RGBA', 'LA', 'P', 'PA'):
         img = img.convert('RGBA')
-
-    # Convert RGBA to RGB if necessary (for PNG with transparency)
-    if img.mode in ('RGBA', 'LA', 'P'):
         background = Image.new('RGB', img.size, (255, 255, 255))
         background.paste(img, mask=img.split()[3])  # Alpha channel
         img = background
+    elif img.mode != 'RGB':
+        img = img.convert('RGB')
 
     # Resize using high-quality Lanczos filter
     # Use thumbnail to maintain aspect ratio, then crop to exact size
