@@ -197,8 +197,8 @@ class EntryUpdateView(LoginRequiredMixin, UpdateView):
         try:
             return super().get_object(queryset)
         except DecryptionError as e:
-            logger.error(f"Decryption failed for entry {self.kwargs.get('pk')}: {e}")
-            raise Http404("Tento záznam nelze načíst. Možná byla změněna šifrovací klíč.")
+            logger.exception(f"Decryption failed for entry {self.kwargs.get('pk')}")
+            raise Http404("Tento záznam nelze načíst. Možná byla změněna šifrovací klíč.") from e
 
     def form_valid(self, form):
         """Show success message after update."""
