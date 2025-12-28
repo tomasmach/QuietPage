@@ -91,8 +91,7 @@ class Command(BaseCommand):
                 )
             )
         else:
-            total = (deleted_count if not dry_run else count_expired) + \
-                    (deleted_tags if not dry_run else count_unused)
+            total = deleted_count + deleted_tags
             self.stdout.write(
                 self.style.SUCCESS(f'✓ Cleanup complete: {total} items removed')
             )
