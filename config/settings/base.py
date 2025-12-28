@@ -7,6 +7,7 @@ Environment-specific settings should be placed in development.py or production.p
 
 from pathlib import Path
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
 
@@ -34,13 +35,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',  # Required by allauth
-    
+
     # Third-party
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'taggit',
-    
+    'axes',  # Brute force protection
+
     # Local apps
     'apps.accounts',
     'apps.journal',
@@ -57,6 +59,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',  # MUST be after AuthenticationMiddleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',  # Required by django-allauth
@@ -182,6 +185,7 @@ TAGGIT_STRIP_UNICODE_WHEN_SLUGIFYING = False  # Support Czech characters
 
 # Django AllAuth Configuration
 AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',  # MUST be first for rate limiting
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
@@ -207,3 +211,12 @@ LOGIN_URL = '/accounts/login/'
 SESSION_COOKIE_AGE = 1209600  # 14 days in seconds
 SESSION_SAVE_EVERY_REQUEST = True  # Prodlouží session při každé aktivitě
 SESSION_COOKIE_NAME = 'quietpage_sessionid'
+
+# Django Axes - Brute Force Protection Configuration
+# https://django-axes.readthedocs.io/
+AXES_FAILURE_LIMIT = 5  # Lock after 5 failed login attempts
+AXES_COOLOFF_TIME = timedelta(minutes=15)  # 15-minute lockout period
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by user+IP combination (nested list!)
+AXES_RESET_ON_SUCCESS = True  # Reset failure counter on successful login
+AXES_LOCKOUT_TEMPLATE = None  # Use default lockout response (403 Forbidden)
+AXES_VERBOSE = True  # Log lockout events for debugging
