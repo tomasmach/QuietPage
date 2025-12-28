@@ -26,6 +26,7 @@ from .forms import (
 )
 from .models import User, EmailChangeRequest
 from .utils import resize_avatar, send_email_verification, verify_email_change_token
+from .middleware import log_security_event
 
 
 class SettingsOverviewView(LoginRequiredMixin, RedirectView):
@@ -181,6 +182,10 @@ class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
         response = super().form_valid(form)
         # Keep user logged in after password change
         update_session_auth_hash(self.request, form.user)
+
+        # Log security event
+        log_security_event('PASSWORD_CHANGE', self.request.user, self.request)
+
         messages.success(self.request, 'Heslo bylo úspěšně změněno.')
         return response
     
@@ -241,6 +246,14 @@ class EmailChangeView(LoginRequiredMixin, FormView):
         email_sent = send_email_verification(user, new_email, self.request)
 
         if email_sent:
+            # Log security event
+            log_security_event(
+                'EMAIL_CHANGE_REQUEST',
+                user,
+                self.request,
+                {'new_email': new_email}
+            )
+
             messages.success(
                 self.request,
                 f'Poslali jsme verifikační odkaz na {new_email}. '
@@ -348,6 +361,14 @@ class EmailVerifyView(TemplateView):
             email_request.is_verified = True
             email_request.verified_at = timezone.now()
             email_request.save(update_fields=['is_verified', 'verified_at'])
+
+        # Log security event
+        log_security_event(
+            'EMAIL_CHANGE_VERIFIED',
+            user,
+            request,
+            {'new_email': new_email}
+        )
 
         return self.render_to_response({
             'success': True,
@@ -464,6 +485,14 @@ class AccountDeleteView(LoginRequiredMixin, FormView):
         """
         user = self.request.user
         username = user.username
+
+        # Log security event BEFORE deletion
+        log_security_event(
+            'ACCOUNT_DELETION',
+            user,
+            self.request,
+            {'username': username}
+        )
 
         # Atomic transaction to ensure logout + delete happen together
         with transaction.atomic():
