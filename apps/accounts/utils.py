@@ -6,8 +6,10 @@ including avatar processing, display, and email verification.
 """
 
 from io import BytesIO
+import os
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
@@ -20,42 +22,76 @@ logger = logging.getLogger(__name__)
 
 def resize_avatar(image_file, size=(512, 512)):
     """
-    Resize uploaded avatar to specified dimensions.
-    
+    Resize uploaded avatar to specified dimensions with comprehensive security checks.
+
+    Security measures:
+    - File size validation (max 5MB)
+    - Extension whitelist (jpg, jpeg, png, gif, webp)
+    - Image verification to prevent polyglot attacks
+    - Safe image mode validation
+
     Args:
         image_file: Django UploadedFile object
         size: Tuple of (width, height) for the output image
-        
+
     Returns:
         InMemoryUploadedFile: Resized image ready for saving
+
+    Raises:
+        ValidationError: If file fails security checks
     """
-    # Open the image
-    img = Image.open(image_file)
+    # Security check 1: File size limit (max 5MB)
+    if image_file.size > 5 * 1024 * 1024:
+        raise ValidationError('Obrázek je příliš velký (max 5MB).')
+
+    # Security check 2: Extension whitelist
+    allowed_ext = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+    ext = os.path.splitext(image_file.name)[1].lower()
+    if ext not in allowed_ext:
+        raise ValidationError(f'Nepovolený formát. Použijte: {", ".join(allowed_ext)}')
+
+    try:
+        # Security check 3: Verify it's a real image (prevents polyglot attacks)
+        img = Image.open(image_file)
+        img.verify()
+
+        # Re-open after verify() because verify() closes the file
+        image_file.seek(0)
+        img = Image.open(image_file)
+
+        # Security check 4: Only allow safe image modes
+        if img.mode not in ('RGB', 'RGBA', 'L', 'LA', 'P'):
+            raise ValidationError('Neplatný formát obrázku.')
+
+    except Exception as e:
+        logger.error(f"Avatar validation failed: {e}")
+        raise ValidationError('Soubor není platný obrázek.')
+
     # Convert all to RGBA first for consistent handling
     if img.mode != 'RGBA':
         img = img.convert('RGBA')
-    
+
     # Convert RGBA to RGB if necessary (for PNG with transparency)
     if img.mode in ('RGBA', 'LA', 'P'):
         background = Image.new('RGB', img.size, (255, 255, 255))
         background.paste(img, mask=img.split()[3])  # Alpha channel
         img = background
-    
+
     # Resize using high-quality Lanczos filter
     # Use thumbnail to maintain aspect ratio, then crop to exact size
     img.thumbnail(size, Image.Resampling.LANCZOS)
-    
+
     # Create a square image with the resized image centered
     output_img = Image.new('RGB', size, (255, 255, 255))
     offset = ((size[0] - img.size[0]) // 2, (size[1] - img.size[1]) // 2)
     output_img.paste(img, offset)
-    
+
     # Save to BytesIO
     output = BytesIO()
     output_img.save(output, format='JPEG', quality=90, optimize=True)
     output_size = output.tell()
     output.seek(0)
-    
+
     # Create InMemoryUploadedFile
     return InMemoryUploadedFile(
         output,

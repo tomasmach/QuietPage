@@ -270,17 +270,29 @@ class EmailChangeForm(forms.Form):
     def clean_new_email(self):
         """
         Validate that new email is different and not already in use.
+        Includes additional security checks.
         """
         new_email = self.cleaned_data.get('new_email')
-        
+
         # Check if email is the same as current
         if new_email == self.user.email:
             raise ValidationError('Nový e-mail je stejný jako současný.')
-        
+
         # Check if email is already in use by another user
         if User.objects.filter(email=new_email).exists():
             raise ValidationError('Tento e-mail je již používán jiným účtem.')
-        
+
+        # Block plus-addressing tricks (user+test@example.com)
+        # This prevents users from creating multiple accounts with same base email
+        if '+' in new_email.split('@')[0]:
+            raise ValidationError('E-mail s "+" není povolen.')
+
+        # Optional: Block disposable email domains (uncomment if needed)
+        # disposable_domains = ['tempmail.com', 'guerrillamail.com', '10minutemail.com']
+        # domain = new_email.split('@')[1].lower()
+        # if domain in disposable_domains:
+        #     raise ValidationError('Dočasné e-mailové adresy nejsou povoleny.')
+
         return new_email
     
     def clean_password(self):

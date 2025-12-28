@@ -8,6 +8,7 @@ import uuid
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 from .fields import EncryptedTextField
 from taggit.managers import TaggableManager
 
@@ -63,15 +64,34 @@ class Entry(models.Model):
         indexes = [
             models.Index(fields=['user', '-created_at']),
         ]
-    
+
+    def clean(self):
+        """
+        Model-level validation (belt-and-suspenders approach).
+        Validates data even when forms are bypassed (API, admin, shell).
+        """
+        super().clean()
+
+        # Empty content check
+        if not self.content or not self.content.strip():
+            raise ValidationError({'content': 'Obsah nemůže být prázdný.'})
+
+        # Mood rating bounds (double-check validators)
+        if self.mood_rating is not None:
+            if not (1 <= self.mood_rating <= 5):
+                raise ValidationError({'mood_rating': 'Hodnocení musí být mezi 1 a 5.'})
+
     def save(self, *args, **kwargs):
-        """Auto-calculate word count before saving."""
-        # Calculate word count from content
+        """Auto-calculate word count and run validation before saving."""
+        # Run full model validation (including clean())
+        self.full_clean()
+
+        # Calculate word count from content (ensure non-negative)
         if self.content:
-            self.word_count = len(self.content.split())
+            self.word_count = max(0, len(self.content.split()))
         else:
             self.word_count = 0
-        
+
         super().save(*args, **kwargs)
     
     def get_absolute_url(self):
