@@ -65,7 +65,8 @@ class TestEntryModel:
     
     def test_entry_requires_user(self):
         """Test that entry requires a user (cannot be None)."""
-        with pytest.raises(IntegrityError):
+        # Note: ValidationError is raised by full_clean() before DB constraint
+        with pytest.raises(ValidationError):
             Entry.objects.create(
                 user=None,
                 content="Test content"
@@ -98,8 +99,9 @@ class TestEntryWordCount:
         # Create entry bypassing validation
         entry = Entry.objects.create(user=user, content="Test")
         entry.content = ""
-        entry.save()
-        
+        # Skip validation since empty content is now validated in clean()
+        entry.save(skip_validation=True)
+
         assert entry.word_count == 0
     
     def test_word_count_with_single_word(self):

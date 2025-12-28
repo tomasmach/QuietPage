@@ -338,10 +338,10 @@ class TestSignalErrorHandling:
         """Test signal handler when entry has no user (edge case)."""
         # This is mostly a theoretical test since user is required
         # But tests signal robustness
-        
-        # Note: This will raise IntegrityError before signal fires
-        # because user field is required
-        from django.db import IntegrityError
-        
-        with pytest.raises(IntegrityError):
+
+        # Note: ValidationError is raised by full_clean() before DB constraint
+        # (and before signal fires) because user field is required
+        from django.core.exceptions import ValidationError
+
+        with pytest.raises(ValidationError):
             Entry.objects.create(user=None, content="Test")

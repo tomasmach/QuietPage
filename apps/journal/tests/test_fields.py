@@ -148,13 +148,14 @@ class TestEncryptionDecryption:
     def test_empty_string_handling(self):
         """Test that empty string is not encrypted."""
         user = UserFactory()
-        
+
         # Create with valid content first, then update to empty
         entry = Entry.objects.create(user=user, content="Initial")
         entry.content = ""
-        entry.save()
+        # Skip validation since empty content is now validated in clean()
+        entry.save(skip_validation=True)
         entry.refresh_from_db()
-        
+
         assert entry.content == ""
     
     def test_none_value_handling(self):

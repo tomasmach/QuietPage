@@ -556,9 +556,13 @@ class TestEmailChangeRequestModel:
         """
         # Verify the model has indexes defined in Meta
         # The actual index names may vary by database backend
-        assert len(EmailChangeRequest._meta.indexes) == 2
-        
+        # Note: code-fixes branch added 2 more performance indexes (4 total)
+        assert len(EmailChangeRequest._meta.indexes) == 4
+
         # Verify index field names
         index_fields = [tuple(idx.fields) for idx in EmailChangeRequest._meta.indexes]
         assert ('user', '-created_at') in index_fields
         assert ('new_email', 'is_verified') in index_fields
+        # Additional performance indexes from code-fixes:
+        assert ('user', 'is_verified', '-created_at') in index_fields
+        assert ('is_verified', 'expires_at') in index_fields
