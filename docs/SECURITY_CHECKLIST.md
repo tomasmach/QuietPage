@@ -364,7 +364,7 @@ tail -f /path/to/QuietPage/logs/django.log
 **✅ Checklist:**
 - [ ] Logs jsou writable by Django
 - [ ] Log rotation je configured (max 10MB per file)
-- [ ] Security events jsou logged (viz `apps/accounts/security_logger.py`)
+- [ ] Security events jsou logged (viz `apps/accounts/middleware.py`)
 - [ ] Logs NEOBSAHUJÍ sensitive data (passwords, encryption keys)
 
 ---
@@ -477,6 +477,6 @@ tail -f /path/to/QuietPage/logs/django.log
 
 ---
 
-**Poslední update:** 2024-01-XX
+**Poslední update:** 2025-12-28
 **Autor:** Tomas Mach
 **Status:** Pre-launch security hardening complete ✅

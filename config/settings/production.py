@@ -8,10 +8,11 @@ These settings are optimized for production deployment.
 - All sensitive data from environment variables
 """
 
+import os
+
 from .base import *
 from django.core.exceptions import ImproperlyConfigured
 from csp.constants import SELF, NONE
-import os
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
