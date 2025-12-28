@@ -67,7 +67,7 @@ class Command(BaseCommand):
 
         # Cleanup 2: Delete unused tags
         unused_tags = Tag.objects.annotate(
-            num_entries=Count('taggit_taggeditem_items')
+            num_entries=Count('journal_uuidtaggeditem_items')
         ).filter(num_entries=0)
 
         count_unused = unused_tags.count()
