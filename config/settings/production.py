@@ -9,6 +9,7 @@ These settings are optimized for production deployment.
 """
 
 from .base import *
+from django.core.exceptions import ImproperlyConfigured
 import os
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -16,6 +17,11 @@ DEBUG = False
 
 # Parse ALLOWED_HOSTS from environment variable (comma-separated)
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '').split(',') if host.strip()]
+if not ALLOWED_HOSTS:
+    raise ImproperlyConfigured(
+        'ALLOWED_HOSTS must be set in production.\n'
+        'Example: export ALLOWED_HOSTS="example.com,www.example.com"'
+    )
 
 # Database - PostgreSQL for production
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -38,6 +44,11 @@ SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True  # Prevent JavaScript access to CSRF token
+
+# Session and CSRF cookie security (defense in depth)
+SESSION_COOKIE_HTTPONLY = True  # Prevent XSS access to session cookie
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+CSRF_COOKIE_SAMESITE = 'Lax'  # CSRF protection
 
 # HSTS (HTTP Strict Transport Security)
 SECURE_HSTS_SECONDS = 31536000  # 1 year

@@ -17,8 +17,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# This should be overridden in development.py and production.py
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-please-change-this-in-env-file')
+# SECRET_KEY must be set in environment variables - no fallback for security
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ImproperlyConfigured(
+        'SECRET_KEY environment variable is required.\n'
+        'Generate with: python -c "import secrets; print(secrets.token_urlsafe(50))"'
+    )
 
 # Application definition
 INSTALLED_APPS = [
@@ -149,9 +154,27 @@ AUTH_USER_MODEL = 'accounts.User'
 FIELD_ENCRYPTION_KEY = os.getenv('FERNET_KEY_PRIMARY')
 if not FIELD_ENCRYPTION_KEY:
     raise ImproperlyConfigured(
-        'FERNET_KEY_PRIMARY environment variable is required. '
-        'Generate a key with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"'
+        'FERNET_KEY_PRIMARY environment variable is required.\n'
+        'Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"'
     )
+
+# Validate encryption key format and length
+if isinstance(FIELD_ENCRYPTION_KEY, str):
+    FIELD_ENCRYPTION_KEY = FIELD_ENCRYPTION_KEY.encode('utf-8')
+
+# Must be exactly 44 bytes (32 bytes base64-encoded)
+if len(FIELD_ENCRYPTION_KEY) != 44:
+    raise ImproperlyConfigured(
+        f'FERNET_KEY_PRIMARY must be 44 bytes (got {len(FIELD_ENCRYPTION_KEY)}).\n'
+        'Ensure you copied the entire base64-encoded key.'
+    )
+
+# Validate it's a valid Fernet key
+try:
+    from cryptography.fernet import Fernet
+    Fernet(FIELD_ENCRYPTION_KEY)
+except Exception as e:
+    raise ImproperlyConfigured(f'Invalid FERNET_KEY_PRIMARY: {e}')
 
 # Django Taggit Configuration
 TAGGIT_CASE_INSENSITIVE = True
