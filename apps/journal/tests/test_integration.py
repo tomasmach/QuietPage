@@ -460,7 +460,7 @@ class TestEncryptedContent:
         with connection.cursor() as cursor:
             cursor.execute(
                 'SELECT content FROM journal_entry WHERE id IN (%s, %s)',
-                [entry1.id.hex, entry2.id.hex]
+                [str(entry1.id), str(entry2.id)]
             )
             rows = cursor.fetchall()
             encrypted1 = rows[0][0]
