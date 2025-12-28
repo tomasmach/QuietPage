@@ -21,6 +21,9 @@ django-allauth==65.13.1
 # Rate limiting / Brute force protection
 django-axes==8.1.0
 
+# Content Security Policy
+django-csp==4.0
+
 # Image processing (for avatars)
 Pillow>=11.0.0
 

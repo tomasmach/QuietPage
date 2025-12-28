@@ -10,10 +10,14 @@ These settings are optimized for production deployment.
 
 from .base import *
 from django.core.exceptions import ImproperlyConfigured
+from csp.constants import SELF, NONE
 import os
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
+
+# Add CSP middleware (Content Security Policy)
+MIDDLEWARE += ['csp.middleware.CSPMiddleware']
 
 # Parse ALLOWED_HOSTS from environment variable (comma-separated)
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '').split(',') if host.strip()]
@@ -109,5 +113,23 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+    },
+}
+
+# Content Security Policy (CSP)
+# https://django-csp.readthedocs.io/
+# Note: 'unsafe-inline' is used temporarily for scripts and styles
+# TODO: Refactor inline scripts/styles to use nonces or hashes for better security
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": [SELF],
+        "script-src": [SELF, "'unsafe-inline'"],  # TODO: Remove unsafe-inline, use nonces
+        "style-src": [SELF, "'unsafe-inline'"],   # TODO: Remove unsafe-inline, use nonces
+        "img-src": [SELF, "data:", "https:"],     # Allow data URIs and HTTPS images
+        "font-src": [SELF],
+        "connect-src": [SELF],
+        "frame-ancestors": [NONE],                # Prevent clickjacking (more strict than X-Frame-Options)
+        "base-uri": [SELF],                       # Prevent base tag injection attacks
+        "form-action": [SELF],                    # Prevent form hijacking attacks
     },
 }
