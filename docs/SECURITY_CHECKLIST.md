@@ -258,7 +258,7 @@ send_mail(
 pip list | grep django-axes
 ```
 
-**✅ Očekávaný výstup:** `django-axes==6.5.1` (nebo novější)
+**✅ Očekávaný výstup:** `django-axes==8.1.0` (nebo novější)
 
 ### 8.2 Test Rate Limiting
 
