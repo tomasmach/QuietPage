@@ -96,7 +96,8 @@ class User(AbstractUser):
     last_entry_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Date of last journal entry (in user timezone)"
+        help_text="Date of last journal entry (in user timezone)",
+        db_index=True
     )
     
     # Metadata
@@ -164,6 +165,8 @@ class EmailChangeRequest(models.Model):
         indexes = [
             models.Index(fields=['user', '-created_at']),
             models.Index(fields=['new_email', 'is_verified']),
+            models.Index(fields=['user', 'is_verified', '-created_at']),
+            models.Index(fields=['is_verified', 'expires_at']),
         ]
     
     def save(self, *args, **kwargs):

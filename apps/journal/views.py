@@ -19,6 +19,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Count, Q, Sum
 from django.shortcuts import redirect
+from django.db import transaction
+from django.core.cache import cache
 
 from .models import Entry
 from .utils import get_random_quote
@@ -57,30 +59,47 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         """Add dashboard data to context."""
+        from apps.journal.fields import DecryptionError
+
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        
+
         # Time-based greeting
         context['greeting'] = self.get_greeting()
         context['user_first_name'] = user.first_name or user.username
-        
-        # Recent entries (all entries for MVP) - only select needed fields to avoid decryption issues
-        context['recent_entries'] = Entry.objects.filter(  # type: ignore
-            user=user
-        ).only('id', 'title', 'created_at', 'mood_rating', 'word_count').order_by('-created_at')
-        
-        # Statistics - use aggregation to avoid loading encrypted content
-        context['stats'] = {
-            'total_entries': Entry.objects.filter(user=user).count(),  # type: ignore
-            'current_streak': user.current_streak,  # type: ignore
-            'total_words': Entry.objects.filter(user=user).aggregate(  # type: ignore
-                total=Sum('word_count')
-            )['total'] or 0,
-        }
-        
+
+        # Recent entries - LIMIT to 10 to prevent memory exhaustion
+        # Only select needed fields to avoid loading encrypted content
+        try:
+            context['recent_entries'] = Entry.objects.filter(  # type: ignore
+                user=user
+            ).only('id', 'title', 'created_at', 'mood_rating', 'word_count'
+            ).order_by('-created_at')[:10]  # CRITICAL: Limit to prevent loading all entries
+        except DecryptionError as e:
+            logger.error(f"Decryption failed for user {user.id}: {e}")
+            messages.error(self.request, 'Chyba při načítání záznamů. Kontaktujte podporu.')
+            context['recent_entries'] = []
+
+        # Statistics - cached for 5 minutes to reduce database load
+        cache_key = f'dashboard_stats_{user.id}'
+        stats = cache.get(cache_key)
+
+        if not stats:
+            # Cache miss - compute stats and cache them
+            stats = {
+                'total_entries': Entry.objects.filter(user=user).count(),  # type: ignore
+                'current_streak': user.current_streak,  # type: ignore
+                'total_words': Entry.objects.filter(user=user).aggregate(  # type: ignore
+                    total=Sum('word_count')
+                )['total'] or 0,
+            }
+            cache.set(cache_key, stats, 300)  # Cache for 5 minutes
+
+        context['stats'] = stats
+
         # Inspirational quote for empty state
         context['quote'] = get_random_quote()
-        
+
         return context
 
 
@@ -156,30 +175,42 @@ class EntryDetailView(LoginRequiredMixin, DetailView):
 class EntryUpdateView(LoginRequiredMixin, UpdateView):
     """
     Edit existing journal entry.
-    
+
     - Only allows editing user's own entries (404 otherwise)
     - Shows success message after update
+    - Handles decryption errors gracefully with 404
     """
     model = Entry
     template_name = 'journal/entry_form.html'
     fields = ['title', 'content', 'mood_rating', 'tags']
     context_object_name = 'entry'
-    
+
     def get_queryset(self):
         """Ensure user can only edit their own entries."""
         return Entry.objects.filter(user=self.request.user)  # type: ignore
-    
+
+    def get_object(self, queryset=None):
+        """Get entry with graceful handling of decryption errors."""
+        from apps.journal.fields import DecryptionError
+        from django.http import Http404
+
+        try:
+            return super().get_object(queryset)
+        except DecryptionError as e:
+            logger.exception(f"Decryption failed for entry {self.kwargs.get('pk')}")
+            raise Http404("Tento záznam nelze načíst. Možná byla změněna šifrovací klíč.") from e
+
     def form_valid(self, form):
         """Show success message after update."""
         response = super().form_valid(form)
-        
+
         messages.success(
             self.request,
             'Záznam byl úspěšně upraven.'
         )
-        
+
         return response
-    
+
     def get_success_url(self):
         """Redirect to dashboard after successful update."""
         return reverse('journal:dashboard')
@@ -216,9 +247,12 @@ class EntryDeleteView(LoginRequiredMixin, DeleteView):
 def autosave_entry(request):
     """
     AJAX endpoint for auto-saving journal entries.
-    
+
     Creates a new entry or updates existing one based on entry_id.
     Returns JSON response with status and entry ID.
+
+    Uses atomic transaction with row-level locking to prevent race conditions
+    when user has same entry open in multiple tabs.
     """
     try:
         data = json.loads(request.body)
@@ -241,57 +275,60 @@ def autosave_entry(request):
                 }, status=400)
         tags_str = (data.get('tags') or '').strip()
         entry_id = data.get('entry_id', None)
-        
+
         # Content is required for saving
         if not content:
             return JsonResponse({
                 'status': 'error',
                 'message': 'Obsah nemůže být prázdný'
             }, status=400)
-        
-        # Update existing entry or create new one
-        if entry_id:
-            try:
-                entry = Entry.objects.get(id=entry_id, user=request.user)  # type: ignore
-                entry.title = title
-                entry.content = content
-                entry.mood_rating = mood_rating
-                entry.save()
-                
-                # Update tags (clear if empty, set if provided)
-                entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
-                
+
+        # Atomic transaction to prevent data loss from concurrent updates
+        with transaction.atomic():
+            # Update existing entry or create new one
+            if entry_id:
+                try:
+                    # Lock row for update to prevent race conditions
+                    entry = Entry.objects.select_for_update().get(id=entry_id, user=request.user)  # type: ignore
+                    entry.title = title
+                    entry.content = content
+                    entry.mood_rating = mood_rating
+                    entry.save()
+
+                    # Update tags (clear if empty, set if provided)
+                    entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
+
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Uloženo',
+                        'entry_id': str(entry.id),
+                        'is_new': False
+                    })
+                except Entry.DoesNotExist:  # type: ignore
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Záznam nenalezen'
+                    }, status=404)
+            else:
+                # Create new entry
+                entry = Entry.objects.create(  # type: ignore
+                    user=request.user,
+                    title=title,
+                    content=content,
+                    mood_rating=mood_rating
+                )
+
+                # Add tags if provided
+                if tags_str:
+                    entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
+
                 return JsonResponse({
                     'status': 'success',
                     'message': 'Uloženo',
                     'entry_id': str(entry.id),
-                    'is_new': False
+                    'is_new': True
                 })
-            except Entry.DoesNotExist:  # type: ignore
-                return JsonResponse({
-                    'status': 'error',
-                    'message': 'Záznam nenalezen'
-                }, status=404)
-        else:
-            # Create new entry
-            entry = Entry.objects.create(  # type: ignore
-                user=request.user,
-                title=title,
-                content=content,
-                mood_rating=mood_rating
-            )
-            
-            # Add tags if provided
-            if tags_str:
-                entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
-            
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Uloženo',
-                'entry_id': str(entry.id),
-                'is_new': True
-            })
-            
+
     except json.JSONDecodeError:
         return JsonResponse({
             'status': 'error',
@@ -300,7 +337,7 @@ def autosave_entry(request):
     except Exception:
         # Log the full exception with stack trace on the server
         logger.exception('Unexpected error during auto-save')
-        
+
         # Return generic error message to the client (don't expose internal details)
         return JsonResponse({
             'status': 'error',

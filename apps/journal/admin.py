@@ -39,7 +39,7 @@ class EntryAdmin(admin.ModelAdmin):
         Admin users see only their own entries (unless superuser).
         Privacy protection.
         """
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request).select_related('user')
         if request.user.is_superuser:
             return qs
         return qs.filter(user=request.user)
