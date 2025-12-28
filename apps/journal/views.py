@@ -19,6 +19,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Count, Q, Sum
 from django.shortcuts import redirect
+from django.db import transaction
 from django.core.cache import cache
 
 from .models import Entry
