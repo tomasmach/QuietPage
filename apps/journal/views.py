@@ -216,9 +216,12 @@ class EntryDeleteView(LoginRequiredMixin, DeleteView):
 def autosave_entry(request):
     """
     AJAX endpoint for auto-saving journal entries.
-    
+
     Creates a new entry or updates existing one based on entry_id.
     Returns JSON response with status and entry ID.
+
+    Uses atomic transaction with row-level locking to prevent race conditions
+    when user has same entry open in multiple tabs.
     """
     try:
         data = json.loads(request.body)
@@ -241,57 +244,60 @@ def autosave_entry(request):
                 }, status=400)
         tags_str = (data.get('tags') or '').strip()
         entry_id = data.get('entry_id', None)
-        
+
         # Content is required for saving
         if not content:
             return JsonResponse({
                 'status': 'error',
                 'message': 'Obsah nemůže být prázdný'
             }, status=400)
-        
-        # Update existing entry or create new one
-        if entry_id:
-            try:
-                entry = Entry.objects.get(id=entry_id, user=request.user)  # type: ignore
-                entry.title = title
-                entry.content = content
-                entry.mood_rating = mood_rating
-                entry.save()
-                
-                # Update tags (clear if empty, set if provided)
-                entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
-                
+
+        # Atomic transaction to prevent data loss from concurrent updates
+        with transaction.atomic():
+            # Update existing entry or create new one
+            if entry_id:
+                try:
+                    # Lock row for update to prevent race conditions
+                    entry = Entry.objects.select_for_update().get(id=entry_id, user=request.user)  # type: ignore
+                    entry.title = title
+                    entry.content = content
+                    entry.mood_rating = mood_rating
+                    entry.save()
+
+                    # Update tags (clear if empty, set if provided)
+                    entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
+
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Uloženo',
+                        'entry_id': str(entry.id),
+                        'is_new': False
+                    })
+                except Entry.DoesNotExist:  # type: ignore
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Záznam nenalezen'
+                    }, status=404)
+            else:
+                # Create new entry
+                entry = Entry.objects.create(  # type: ignore
+                    user=request.user,
+                    title=title,
+                    content=content,
+                    mood_rating=mood_rating
+                )
+
+                # Add tags if provided
+                if tags_str:
+                    entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
+
                 return JsonResponse({
                     'status': 'success',
                     'message': 'Uloženo',
                     'entry_id': str(entry.id),
-                    'is_new': False
+                    'is_new': True
                 })
-            except Entry.DoesNotExist:  # type: ignore
-                return JsonResponse({
-                    'status': 'error',
-                    'message': 'Záznam nenalezen'
-                }, status=404)
-        else:
-            # Create new entry
-            entry = Entry.objects.create(  # type: ignore
-                user=request.user,
-                title=title,
-                content=content,
-                mood_rating=mood_rating
-            )
-            
-            # Add tags if provided
-            if tags_str:
-                entry.tags.set([tag.strip() for tag in tags_str.split(',') if tag.strip()])  # type: ignore
-            
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Uloženo',
-                'entry_id': str(entry.id),
-                'is_new': True
-            })
-            
+
     except json.JSONDecodeError:
         return JsonResponse({
             'status': 'error',
@@ -300,7 +306,7 @@ def autosave_entry(request):
     except Exception:
         # Log the full exception with stack trace on the server
         logger.exception('Unexpected error during auto-save')
-        
+
         # Return generic error message to the client (don't expose internal details)
         return JsonResponse({
             'status': 'error',

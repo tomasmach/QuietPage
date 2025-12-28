@@ -29,54 +29,65 @@ def get_user_local_date(utc_datetime, user_timezone):
 def update_user_streak(user, entry_created_at):
     """
     Update user's writing streak when new entry is created.
-    
+
     Logic:
     - First entry ever: streak = 1
     - Same day entry: no change (multiple entries per day don't extend streak)
     - Backdated entry: ignore (entry_date < last_entry_date, preserves current streak)
     - Consecutive day: increment streak (entry_date = last_entry_date + 1)
     - Gap detected: reset to 1 (entry_date > last_entry_date + 1)
-    
+
     Backdated entries are ignored to allow users to journal about past events
     without breaking their current streak. Only future-dated entries that create
     gaps will reset the streak.
-    
+
+    Uses atomic transaction with row-level locking to prevent race conditions
+    when multiple entries are created concurrently.
+
     Args:
         user: User instance
         entry_created_at: DateTime when entry was created (UTC, timezone-aware)
-    
+
     Note:
         All comparisons use date-only values in the user's local timezone to
         avoid timezone-related edge cases (e.g., 11:59pm vs 12:01am).
     """
+    from django.db import transaction
+    from apps.accounts.models import User
+
     # Convert to user's local date (ensures date-only comparison)
     entry_date = get_user_local_date(entry_created_at, user.timezone)
-    
-    if user.last_entry_date is None:
-        # First entry ever
-        user.current_streak = 1
-        user.longest_streak = 1
-        user.last_entry_date = entry_date
-    elif entry_date == user.last_entry_date:
-        # Same day - multiple entries don't extend streak
-        return  # No update needed
-    elif entry_date < user.last_entry_date:
-        # Backdated entry - ignore for streak computation
-        # User is adding old entries, don't break their current streak
-        return  # No update needed
-    elif entry_date == user.last_entry_date + timedelta(days=1):
-        # Consecutive day - increment streak
-        user.current_streak += 1
-        # Update longest if we broke the record
-        if user.current_streak > user.longest_streak:
-            user.longest_streak = user.current_streak
-        user.last_entry_date = entry_date
-    else:
-        # Gap detected (entry_date > last_entry_date + 1 day) - streak broken
-        user.current_streak = 1
-        user.last_entry_date = entry_date
-    
-    user.save(update_fields=['current_streak', 'longest_streak', 'last_entry_date'])
+
+    # Atomic transaction with row lock to prevent concurrent update issues
+    with transaction.atomic():
+        # Refresh user from database with exclusive lock
+        user = User.objects.select_for_update().get(pk=user.pk)
+
+        if user.last_entry_date is None:
+            # First entry ever
+            user.current_streak = 1
+            user.longest_streak = 1
+            user.last_entry_date = entry_date
+        elif entry_date == user.last_entry_date:
+            # Same day - multiple entries don't extend streak
+            return  # No update needed
+        elif entry_date < user.last_entry_date:
+            # Backdated entry - ignore for streak computation
+            # User is adding old entries, don't break their current streak
+            return  # No update needed
+        elif entry_date == user.last_entry_date + timedelta(days=1):
+            # Consecutive day - increment streak
+            user.current_streak += 1
+            # Update longest if we broke the record
+            if user.current_streak > user.longest_streak:
+                user.longest_streak = user.current_streak
+            user.last_entry_date = entry_date
+        else:
+            # Gap detected (entry_date > last_entry_date + 1 day) - streak broken
+            user.current_streak = 1
+            user.last_entry_date = entry_date
+
+        user.save(update_fields=['current_streak', 'longest_streak', 'last_entry_date'])
 
 
 def recalculate_user_streak(user):

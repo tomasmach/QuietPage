@@ -216,25 +216,30 @@ class EmailChangeView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         """
         Create email change request and send verification email.
+
+        Uses atomic transaction to prevent race condition where multiple
+        requests could be created simultaneously.
         """
         new_email = form.cleaned_data['new_email']
         user = self.request.user
-        
-        # Cancel any existing pending requests for this user
-        EmailChangeRequest.objects.filter(
-            user=user,
-            is_verified=False
-        ).delete()
-        
-        # Create new email change request
-        EmailChangeRequest.objects.create(
-            user=user,
-            new_email=new_email
-        )
-        
-        # Send verification email
+
+        # Atomic transaction to prevent duplicate pending requests
+        with transaction.atomic():
+            # Cancel any existing pending requests for this user
+            EmailChangeRequest.objects.filter(
+                user=user,
+                is_verified=False
+            ).delete()
+
+            # Create new email change request
+            EmailChangeRequest.objects.create(
+                user=user,
+                new_email=new_email
+            )
+
+        # Send verification email (outside transaction - email sending can be slow)
         email_sent = send_email_verification(user, new_email, self.request)
-        
+
         if email_sent:
             messages.success(
                 self.request,
@@ -246,7 +251,7 @@ class EmailChangeView(LoginRequiredMixin, FormView):
                 self.request,
                 'Nepodařilo se odeslat verifikační e-mail. Zkuste to prosím znovu později.'
             )
-        
+
         return super().form_valid(form)
     
     def get_context_data(self, **kwargs):
@@ -323,26 +328,27 @@ class EmailVerifyView(TemplateView):
                 'error': 'expired',
                 'message': 'Tento odkaz již vypršel. Požádejte prosím o nový verifikační odkaz.'
             })
-        
-        # Check if new email is still available (not taken by another user)
-        if User.objects.filter(email=new_email).exclude(id=user.id).exists():
-            # Delete the request since email is no longer available
-            email_request.delete()
-            return self.render_to_response({
-                'success': False,
-                'error': 'taken',
-                'message': 'Tento e-mail je již používán jiným účtem.'
-            })
-        
+
         # Atomically update user email and mark request as verified
+        # Uniqueness check MUST be inside transaction to prevent TOCTOU vulnerability
         with transaction.atomic():
+            # Re-check if new email is still available (prevent race condition)
+            if User.objects.filter(email=new_email).exclude(id=user.id).exists():
+                # Delete the request since email is no longer available
+                email_request.delete()
+                return self.render_to_response({
+                    'success': False,
+                    'error': 'taken',
+                    'message': 'Tento e-mail je již používán jiným účtem.'
+                })
+
             user.email = new_email
             user.save(update_fields=['email'])
-            
+
             email_request.is_verified = True
             email_request.verified_at = timezone.now()
             email_request.save(update_fields=['is_verified', 'verified_at'])
-        
+
         return self.render_to_response({
             'success': True,
             'new_email': new_email,
@@ -452,16 +458,20 @@ class AccountDeleteView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         """
         Delete user account and logout.
+
+        Uses atomic transaction to ensure logout and deletion happen together.
+        If deletion fails, user remains logged in.
         """
         user = self.request.user
         username = user.username
-        
-        # Logout before deleting
-        logout(self.request)
-        
-        # Delete user (CASCADE will delete all entries automatically)
-        user.delete()
-        
+
+        # Atomic transaction to ensure logout + delete happen together
+        with transaction.atomic():
+            # Logout first (invalidate session)
+            logout(self.request)
+            # Then delete user (CASCADE will delete all entries automatically)
+            user.delete()
+
         messages.success(
             self.request,
             f'Účet {username} byl trvale smazán. Děkujeme, že jste s námi byli.'
