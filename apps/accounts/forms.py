@@ -9,6 +9,7 @@ from allauth.account.forms import LoginForm, SignupForm
 from django import forms
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
+import pytz
 from .models import User
 
 
@@ -159,7 +160,7 @@ class GoalsUpdateForm(forms.ModelForm):
     """
     Form for updating writing goals and preferences.
     """
-    
+
     class Meta:
         model = User
         fields = ['daily_word_goal', 'preferred_writing_time', 'reminder_enabled', 'reminder_time', 'timezone']
@@ -198,6 +199,19 @@ class GoalsUpdateForm(forms.ModelForm):
             'reminder_time': 'V kolik hodin chcete dostat připomínku',
             'timezone': 'Pro správné zobrazení času',
         }
+
+    def clean_timezone(self):
+        """
+        Validate that timezone is valid according to pytz.
+        Belt-and-suspenders validation (TimeZoneField should handle this, but we double-check).
+        """
+        tz = self.cleaned_data.get('timezone')
+        if tz:
+            try:
+                pytz.timezone(str(tz))
+            except pytz.UnknownTimeZoneError:
+                raise ValidationError('Neplatná časová zóna.')
+        return tz
 
 
 class PrivacySettingsForm(forms.ModelForm):

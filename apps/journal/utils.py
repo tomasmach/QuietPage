@@ -5,23 +5,33 @@ Includes streak calculation, timezone handling, and inspirational quotes.
 """
 
 from datetime import timedelta
+import logging
 import pytz
 import random
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 def get_user_local_date(utc_datetime, user_timezone):
     """
     Convert UTC datetime to user's local date.
-    
+    Handles DST transitions and invalid timezones gracefully.
+
     Args:
         utc_datetime: Timezone-aware datetime in UTC
         user_timezone: User's timezone string (e.g., 'Europe/Prague')
-    
+
     Returns:
-        date object in user's local timezone
+        date object in user's local timezone (falls back to UTC on error)
     """
-    tz = pytz.timezone(str(user_timezone))
+    try:
+        tz = pytz.timezone(str(user_timezone))
+    except pytz.UnknownTimeZoneError:
+        logger.error(f"Invalid timezone: {user_timezone}, using UTC fallback")
+        tz = pytz.UTC
+
+    # astimezone() handles DST transitions automatically
     local_dt = utc_datetime.astimezone(tz)
     return local_dt.date()
 
