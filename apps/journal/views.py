@@ -57,18 +57,27 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         """Add dashboard data to context."""
+        from apps.journal.fields import DecryptionError
+
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        
+
         # Time-based greeting
         context['greeting'] = self.get_greeting()
         context['user_first_name'] = user.first_name or user.username
-        
-        # Recent entries (all entries for MVP) - only select needed fields to avoid decryption issues
-        context['recent_entries'] = Entry.objects.filter(  # type: ignore
-            user=user
-        ).only('id', 'title', 'created_at', 'mood_rating', 'word_count').order_by('-created_at')
-        
+
+        # Recent entries - LIMIT to 10 to prevent memory exhaustion
+        # Only select needed fields to avoid loading encrypted content
+        try:
+            context['recent_entries'] = Entry.objects.filter(  # type: ignore
+                user=user
+            ).only('id', 'title', 'created_at', 'mood_rating', 'word_count'
+            ).order_by('-created_at')[:10]  # CRITICAL: Limit to prevent loading all entries
+        except DecryptionError as e:
+            logger.error(f"Decryption failed for user {user.id}: {e}")
+            messages.error(self.request, 'Chyba při načítání záznamů. Kontaktujte podporu.')
+            context['recent_entries'] = []
+
         # Statistics - use aggregation to avoid loading encrypted content
         context['stats'] = {
             'total_entries': Entry.objects.filter(user=user).count(),  # type: ignore
@@ -77,10 +86,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 total=Sum('word_count')
             )['total'] or 0,
         }
-        
+
         # Inspirational quote for empty state
         context['quote'] = get_random_quote()
-        
+
         return context
 
 
@@ -156,30 +165,42 @@ class EntryDetailView(LoginRequiredMixin, DetailView):
 class EntryUpdateView(LoginRequiredMixin, UpdateView):
     """
     Edit existing journal entry.
-    
+
     - Only allows editing user's own entries (404 otherwise)
     - Shows success message after update
+    - Handles decryption errors gracefully with 404
     """
     model = Entry
     template_name = 'journal/entry_form.html'
     fields = ['title', 'content', 'mood_rating', 'tags']
     context_object_name = 'entry'
-    
+
     def get_queryset(self):
         """Ensure user can only edit their own entries."""
         return Entry.objects.filter(user=self.request.user)  # type: ignore
-    
+
+    def get_object(self, queryset=None):
+        """Get entry with graceful handling of decryption errors."""
+        from apps.journal.fields import DecryptionError
+        from django.http import Http404
+
+        try:
+            return super().get_object(queryset)
+        except DecryptionError as e:
+            logger.error(f"Decryption failed for entry {self.kwargs.get('pk')}: {e}")
+            raise Http404("Tento záznam nelze načíst. Možná byla změněna šifrovací klíč.")
+
     def form_valid(self, form):
         """Show success message after update."""
         response = super().form_valid(form)
-        
+
         messages.success(
             self.request,
             'Záznam byl úspěšně upraven.'
         )
-        
+
         return response
-    
+
     def get_success_url(self):
         """Redirect to dashboard after successful update."""
         return reverse('journal:dashboard')
