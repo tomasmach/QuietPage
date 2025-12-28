@@ -9,6 +9,7 @@ from allauth.account.forms import LoginForm, SignupForm
 from django import forms
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
+import pytz
 from .models import User
 
 
@@ -143,14 +144,17 @@ class ProfileUpdateForm(forms.ModelForm):
         avatar = self.cleaned_data.get('avatar')
         
         if avatar:
-            # Check file size (max 2MB)
-            if avatar.size > 2 * 1024 * 1024:
-                raise ValidationError('Soubor je příliš velký. Maximální velikost je 2MB.')
-            
-            # Check file type
-            valid_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
-            if avatar.content_type not in valid_types:
-                raise ValidationError('Neplatný formát obrázku. Použijte JPG, PNG nebo WebP.')
+            # Only validate if it's a new upload (has content_type attribute)
+            # ImageFieldFile from existing avatar doesn't have content_type
+            if hasattr(avatar, 'content_type'):
+                # Check file size (max 2MB)
+                if avatar.size > 2 * 1024 * 1024:
+                    raise ValidationError('Soubor je příliš velký. Maximální velikost je 2MB.')
+                
+                # Check file type
+                valid_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+                if avatar.content_type not in valid_types:
+                    raise ValidationError('Neplatný formát obrázku. Použijte JPG, PNG nebo WebP.')
         
         return avatar
 
@@ -159,7 +163,7 @@ class GoalsUpdateForm(forms.ModelForm):
     """
     Form for updating writing goals and preferences.
     """
-    
+
     class Meta:
         model = User
         fields = ['daily_word_goal', 'preferred_writing_time', 'reminder_enabled', 'reminder_time', 'timezone']
@@ -198,6 +202,19 @@ class GoalsUpdateForm(forms.ModelForm):
             'reminder_time': 'V kolik hodin chcete dostat připomínku',
             'timezone': 'Pro správné zobrazení času',
         }
+
+    def clean_timezone(self):
+        """
+        Validate that timezone is valid according to pytz.
+        Belt-and-suspenders validation (TimeZoneField should handle this, but we double-check).
+        """
+        tz = self.cleaned_data.get('timezone')
+        if tz:
+            try:
+                pytz.timezone(str(tz))
+            except pytz.UnknownTimeZoneError:
+                raise ValidationError('Neplatná časová zóna.')
+        return tz
 
 
 class PrivacySettingsForm(forms.ModelForm):
@@ -256,17 +273,29 @@ class EmailChangeForm(forms.Form):
     def clean_new_email(self):
         """
         Validate that new email is different and not already in use.
+        Includes additional security checks.
         """
         new_email = self.cleaned_data.get('new_email')
-        
+
         # Check if email is the same as current
         if new_email == self.user.email:
             raise ValidationError('Nový e-mail je stejný jako současný.')
-        
+
         # Check if email is already in use by another user
         if User.objects.filter(email=new_email).exists():
             raise ValidationError('Tento e-mail je již používán jiným účtem.')
-        
+
+        # Block plus-addressing tricks (user+test@example.com)
+        # This prevents users from creating multiple accounts with same base email
+        if '+' in new_email.split('@')[0]:
+            raise ValidationError('E-mail s "+" není povolen.')
+
+        # Optional: Block disposable email domains (uncomment if needed)
+        # disposable_domains = ['tempmail.com', 'guerrillamail.com', '10minutemail.com']
+        # domain = new_email.split('@')[1].lower()
+        # if domain in disposable_domains:
+        #     raise ValidationError('Dočasné e-mailové adresy nejsou povoleny.')
+
         return new_email
     
     def clean_password(self):

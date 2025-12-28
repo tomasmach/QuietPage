@@ -8,8 +8,25 @@ import uuid
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 from .fields import EncryptedTextField
 from taggit.managers import TaggableManager
+from taggit.models import TaggedItemBase, GenericUUIDTaggedItemBase
+
+
+class UUIDTaggedItem(GenericUUIDTaggedItemBase, TaggedItemBase):
+    """
+    Custom TaggedItem model that supports UUID primary keys.
+    
+    This is required because django-taggit's default TaggedItem uses
+    integer primary keys, but Entry uses UUID.
+    """
+    class Meta:
+        verbose_name = "Tag"
+        verbose_name_plural = "Tags"
+        indexes = [
+            models.Index(fields=["content_type", "object_id"]),
+        ]
 
 
 class Entry(models.Model):
@@ -50,7 +67,7 @@ class Entry(models.Model):
     )
     
     # Tagging (free-form via django-taggit)
-    tags = TaggableManager(blank=True)
+    tags = TaggableManager(through=UUIDTaggedItem, blank=True)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -63,15 +80,38 @@ class Entry(models.Model):
         indexes = [
             models.Index(fields=['user', '-created_at']),
         ]
-    
+
+    def clean(self):
+        """
+        Model-level validation (belt-and-suspenders approach).
+        Validates data even when forms are bypassed (API, admin, shell).
+        """
+        super().clean()
+
+        # Empty content check
+        if not self.content or not self.content.strip():
+            raise ValidationError({'content': 'Obsah nemůže být prázdný.'})
+
+        # Mood rating bounds (double-check validators)
+        if self.mood_rating is not None:
+            if not (1 <= self.mood_rating <= 5):
+                raise ValidationError({'mood_rating': 'Hodnocení musí být mezi 1 a 5.'})
+
     def save(self, *args, **kwargs):
-        """Auto-calculate word count before saving."""
-        # Calculate word count from content
+        """Auto-calculate word count and run validation before saving."""
+        # Allow callers to skip validation for non-form contexts
+        skip_validation = kwargs.pop('skip_validation', False)
+
+        # Run full model validation (including clean()) unless explicitly skipped
+        if not skip_validation:
+            self.full_clean()
+
+        # Calculate word count from content (ensure non-negative)
         if self.content:
-            self.word_count = len(self.content.split())
+            self.word_count = max(0, len(self.content.split()))
         else:
             self.word_count = 0
-        
+
         super().save(*args, **kwargs)
     
     def get_absolute_url(self):

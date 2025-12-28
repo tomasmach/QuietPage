@@ -6,13 +6,16 @@ including avatar processing, display, and email verification.
 """
 
 from io import BytesIO
+import os
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.template.loader import render_to_string
 from django.urls import reverse
+import secrets
 
 import logging
 
@@ -20,42 +23,75 @@ logger = logging.getLogger(__name__)
 
 def resize_avatar(image_file, size=(512, 512)):
     """
-    Resize uploaded avatar to specified dimensions.
-    
+    Resize uploaded avatar to specified dimensions with comprehensive security checks.
+
+    Security measures:
+    - File size validation (max 5MB)
+    - Extension whitelist (jpg, jpeg, png, gif, webp)
+    - Image verification to prevent polyglot attacks
+    - Safe image mode validation
+
     Args:
         image_file: Django UploadedFile object
         size: Tuple of (width, height) for the output image
-        
+
     Returns:
         InMemoryUploadedFile: Resized image ready for saving
+
+    Raises:
+        ValidationError: If file fails security checks
     """
-    # Open the image
-    img = Image.open(image_file)
-    # Convert all to RGBA first for consistent handling
-    if img.mode != 'RGBA':
+    # Security check 1: File size limit (max 5MB)
+    if image_file.size > 5 * 1024 * 1024:
+        raise ValidationError('Obrázek je příliš velký (max 5MB).')
+
+    # Security check 2: Extension whitelist
+    allowed_ext = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+    ext = os.path.splitext(image_file.name)[1].lower()
+    if ext not in allowed_ext:
+        raise ValidationError(f'Nepovolený formát. Použijte: {", ".join(allowed_ext)}')
+
+    try:
+        # Security check 3: Verify it's a real image (prevents polyglot attacks)
+        img = Image.open(image_file)
+        img.verify()
+
+        # Re-open after verify() because verify() closes the file
+        image_file.seek(0)
+        img = Image.open(image_file)
+
+        # Security check 4: Only allow safe image modes
+        if img.mode not in ('RGB', 'RGBA', 'L', 'LA', 'P'):
+            raise ValidationError('Neplatný formát obrázku.')
+
+    except Exception as e:
+        logger.error(f"Avatar validation failed: {e}")
+        raise ValidationError('Soubor není platný obrázek.')
+
+    # Handle transparency: convert to RGBA first if needed, then composite onto white
+    if img.mode in ('RGBA', 'LA', 'P', 'PA'):
         img = img.convert('RGBA')
-    
-    # Convert RGBA to RGB if necessary (for PNG with transparency)
-    if img.mode in ('RGBA', 'LA', 'P'):
         background = Image.new('RGB', img.size, (255, 255, 255))
         background.paste(img, mask=img.split()[3])  # Alpha channel
         img = background
-    
+    elif img.mode != 'RGB':
+        img = img.convert('RGB')
+
     # Resize using high-quality Lanczos filter
     # Use thumbnail to maintain aspect ratio, then crop to exact size
     img.thumbnail(size, Image.Resampling.LANCZOS)
-    
+
     # Create a square image with the resized image centered
     output_img = Image.new('RGB', size, (255, 255, 255))
     offset = ((size[0] - img.size[0]) // 2, (size[1] - img.size[1]) // 2)
     output_img.paste(img, offset)
-    
+
     # Save to BytesIO
     output = BytesIO()
     output_img.save(output, format='JPEG', quality=90, optimize=True)
     output_size = output.tell()
     output.seek(0)
-    
+
     # Create InMemoryUploadedFile
     return InMemoryUploadedFile(
         output,
@@ -98,7 +134,8 @@ def generate_email_verification_token(user_id, new_email):
     Generate a cryptographically signed token for email verification.
     
     Uses Django's TimestampSigner for security. Token contains user_id and new_email,
-    and has built-in expiration checking.
+    and has built-in expiration checking. Includes a random nonce to ensure uniqueness
+    even when multiple tokens are generated in the same second.
     
     Args:
         user_id: ID of the user requesting email change
@@ -107,8 +144,10 @@ def generate_email_verification_token(user_id, new_email):
     Returns:
         str: Signed token that can be safely sent in URLs
     """
+    # Add a random nonce to ensure token uniqueness even within the same second
+    nonce = secrets.token_hex(8)
     signer = TimestampSigner()
-    value = f"{user_id}:{new_email}"
+    value = f"{user_id}:{new_email}:{nonce}"
     token = signer.sign(value)
     return token
 
@@ -128,9 +167,17 @@ def verify_email_change_token(token, max_age=86400):
     try:
         # Unsign the token with expiration check
         original = signer.unsign(token, max_age=max_age)
-        # Parse the value
-        user_id, new_email = original.split(':', 1)
-        return int(user_id), new_email
+        # Parse the value (format: user_id:new_email:nonce)
+        # Use rsplit to handle emails that might contain ':'
+        parts = original.rsplit(':', 1)  # Split off nonce first
+        if len(parts) == 2:
+            user_id_and_email = parts[0]
+            id_parts = user_id_and_email.split(':', 1)  # Split user_id from email
+            if len(id_parts) == 2:
+                user_id = int(id_parts[0])
+                new_email = id_parts[1]
+                return user_id, new_email
+        return None, None
     except (BadSignature, SignatureExpired, ValueError):
         return None, None
 
@@ -170,8 +217,8 @@ def send_email_verification(user, new_email, request):
     # Send email
     try:
         send_mail(
-            subject='QuietPage - Potvrzení změny e-mailu',
-            message=plain_message,
+            'QuietPage - Potvrzení změny e-mailu',
+            plain_message,
             from_email=from_email,
             recipient_list=[new_email],
             html_message=html_message,

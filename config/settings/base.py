@@ -7,6 +7,7 @@ Environment-specific settings should be placed in development.py or production.p
 
 from pathlib import Path
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
 
@@ -17,8 +18,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# This should be overridden in development.py and production.py
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-please-change-this-in-env-file')
+# SECRET_KEY must be set in environment variables - no fallback for security
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ImproperlyConfigured(
+        'SECRET_KEY environment variable is required.\n'
+        'Generate with: python -c "import secrets; print(secrets.token_urlsafe(50))"'
+    )
 
 # Application definition
 INSTALLED_APPS = [
@@ -29,13 +35,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',  # Required by allauth
-    
+
     # Third-party
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'taggit',
-    
+    'axes',  # Brute force protection
+
     # Local apps
     'apps.accounts',
     'apps.journal',
@@ -52,6 +59,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',  # MUST be after AuthenticationMiddleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',  # Required by django-allauth
@@ -136,6 +144,19 @@ STORAGES = {
     },
 }
 
+# Caching Configuration (Database-backed - no Redis required)
+# https://docs.djangoproject.com/en/5.2/topics/cache/
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,  # Limit cache size
+            'CULL_FREQUENCY': 3,  # Delete 1/3 of entries when MAX_ENTRIES is reached
+        }
+    }
+}
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -149,9 +170,27 @@ AUTH_USER_MODEL = 'accounts.User'
 FIELD_ENCRYPTION_KEY = os.getenv('FERNET_KEY_PRIMARY')
 if not FIELD_ENCRYPTION_KEY:
     raise ImproperlyConfigured(
-        'FERNET_KEY_PRIMARY environment variable is required. '
-        'Generate a key with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"'
+        'FERNET_KEY_PRIMARY environment variable is required.\n'
+        'Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"'
     )
+
+# Validate encryption key format and length
+if isinstance(FIELD_ENCRYPTION_KEY, str):
+    FIELD_ENCRYPTION_KEY = FIELD_ENCRYPTION_KEY.encode('utf-8')
+
+# Must be exactly 44 bytes (32 bytes base64-encoded)
+if len(FIELD_ENCRYPTION_KEY) != 44:
+    raise ImproperlyConfigured(
+        f'FERNET_KEY_PRIMARY must be 44 bytes (got {len(FIELD_ENCRYPTION_KEY)}).\n'
+        'Ensure you copied the entire base64-encoded key.'
+    )
+
+# Validate it's a valid Fernet key
+try:
+    from cryptography.fernet import Fernet
+    Fernet(FIELD_ENCRYPTION_KEY)
+except Exception as e:
+    raise ImproperlyConfigured(f'Invalid FERNET_KEY_PRIMARY: {e}')
 
 # Django Taggit Configuration
 TAGGIT_CASE_INSENSITIVE = True
@@ -159,6 +198,7 @@ TAGGIT_STRIP_UNICODE_WHEN_SLUGIFYING = False  # Support Czech characters
 
 # Django AllAuth Configuration
 AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',  # MUST be first for rate limiting
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
@@ -184,3 +224,12 @@ LOGIN_URL = '/accounts/login/'
 SESSION_COOKIE_AGE = 1209600  # 14 days in seconds
 SESSION_SAVE_EVERY_REQUEST = True  # Prodlouží session při každé aktivitě
 SESSION_COOKIE_NAME = 'quietpage_sessionid'
+
+# Django Axes - Brute Force Protection Configuration
+# https://django-axes.readthedocs.io/
+AXES_FAILURE_LIMIT = 5  # Lock after 5 failed login attempts
+AXES_COOLOFF_TIME = timedelta(minutes=15)  # 15-minute lockout period
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by user+IP combination (nested list!)
+AXES_RESET_ON_SUCCESS = True  # Reset failure counter on successful login
+AXES_LOCKOUT_TEMPLATE = None  # Use default lockout response (403 Forbidden)
+AXES_VERBOSE = True  # Log lockout events for debugging

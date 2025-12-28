@@ -8,14 +8,25 @@ These settings are optimized for production deployment.
 - All sensitive data from environment variables
 """
 
-from .base import *
 import os
+
+from .base import *
+from django.core.exceptions import ImproperlyConfigured
+from csp.constants import SELF, NONE
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+# Add CSP middleware (Content Security Policy)
+MIDDLEWARE += ['csp.middleware.CSPMiddleware']
+
 # Parse ALLOWED_HOSTS from environment variable (comma-separated)
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '').split(',') if host.strip()]
+if not ALLOWED_HOSTS:
+    raise ImproperlyConfigured(
+        'ALLOWED_HOSTS must be set in production.\n'
+        'Example: export ALLOWED_HOSTS="example.com,www.example.com"'
+    )
 
 # Database - PostgreSQL for production
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -38,6 +49,11 @@ SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True  # Prevent JavaScript access to CSRF token
+
+# Session and CSRF cookie security (defense in depth)
+SESSION_COOKIE_HTTPONLY = True  # Prevent XSS access to session cookie
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+CSRF_COOKIE_SAMESITE = 'Lax'  # CSRF protection
 
 # HSTS (HTTP Strict Transport Security)
 SECURE_HSTS_SECONDS = 31536000  # 1 year
@@ -98,5 +114,23 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+    },
+}
+
+# Content Security Policy (CSP)
+# https://django-csp.readthedocs.io/
+# Note: 'unsafe-inline' is used temporarily for scripts and styles
+# TODO: Refactor inline scripts/styles to use nonces or hashes for better security
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": [SELF],
+        "script-src": [SELF, "'unsafe-inline'"],  # TODO: Remove unsafe-inline, use nonces
+        "style-src": [SELF, "'unsafe-inline'"],   # TODO: Remove unsafe-inline, use nonces
+        "img-src": [SELF, "data:", "https:"],     # Allow data URIs and HTTPS images
+        "font-src": [SELF],
+        "connect-src": [SELF],
+        "frame-ancestors": [NONE],                # Prevent clickjacking (more strict than X-Frame-Options)
+        "base-uri": [SELF],                       # Prevent base tag injection attacks
+        "form-action": [SELF],                    # Prevent form hijacking attacks
     },
 }
