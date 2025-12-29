@@ -1,4 +1,42 @@
-export const cs = {
+export interface Translations {
+  nav: {
+    write: string;
+    stats: string;
+    archive: string;
+    settings: string;
+  };
+  meta: {
+    version: string;
+    wordsToday: string;
+    progress: string;
+    goalMet: string;
+    currentStreak: string;
+    moodCheck: string;
+    recentDays: string;
+    wordsSuffix: string;
+  };
+  auth: {
+    login: string;
+    logout: string;
+    register: string;
+    username: string;
+    email: string;
+    password: string;
+    passwordConfirm: string;
+  };
+  themes: {
+    paper: string;
+    midnight: string;
+  };
+  common: {
+    save: string;
+    cancel: string;
+    delete: string;
+    loading: string;
+  };
+}
+
+export const cs: Translations = {
   nav: {
     write: 'Psát',
     stats: 'Statistiky',
@@ -34,6 +72,4 @@ export const cs = {
     delete: 'Smazat',
     loading: 'Načítání...',
   },
-} as const;
-
-export type Translations = typeof cs;
+};

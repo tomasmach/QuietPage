@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { translations, Language } from '../locales';
+import { createContext, useContext, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { translations } from '../locales';
+import type { Language } from '../locales';
 
 type TranslationKey = string;
 
@@ -39,11 +41,11 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
    */
   const t = (key: TranslationKey): string => {
     const keys = key.split('.');
-    let value: Record<string, unknown> | string = translations[language];
+    let value: unknown = translations[language];
 
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+        value = (value as Record<string, unknown>)[k];
       } else {
         // Fallback to key if translation not found
         console.warn(`Translation key not found: ${key}`);

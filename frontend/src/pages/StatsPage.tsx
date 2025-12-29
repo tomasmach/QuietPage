@@ -1,4 +1,3 @@
-import React from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Sidebar } from '../components/layout/Sidebar';
 import { ContextPanel } from '../components/layout/ContextPanel';
