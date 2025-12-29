@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   CSS VARIABLES - THEME SYSTEM
+   ============================================ */
+
+:root {
+  /* Midnight (Dark) - DEFAULT */
+  --color-bg-app: #111111;
+  --color-bg-panel: #1A1A1A;
+  --color-text-main: #E5E5E5;
+  --color-text-muted: #888888;
+  --color-border: #444444;
+  --color-accent: #E5E5E5;
+  --color-accent-fg: #111111;
+  --color-shadow: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='paper'] {
+  /* Paper (Light) */
+  --color-bg-app: #FFFCF5;
+  --color-bg-panel: #FFFFFF;
+  --color-text-main: #1A1A1A;
+  --color-text-muted: #666666;
+  --color-border: #1A1A1A;
+  --color-accent: #1A1A1A;
+  --color-accent-fg: #FFFFFF;
+  --color-shadow: rgba(0, 0, 0, 1);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+body {
+  @apply font-mono;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--color-bg-app);
+  color: var(--color-text-main);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ============================================
+   THEME TRANSITIONS
+   ============================================ */
+
+body,
+[data-theme] {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border: 2px solid var(--color-bg-app);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) var(--color-bg-app);
+}
+
+/* ============================================
+   PROGRESS BAR STRIPED ANIMATION
+   ============================================ */
+
+@keyframes striped-progress {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 0;
+  }
+}
+
+.progress-striped {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 40px 40px;
+  animation: striped-progress 1s linear infinite;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.panel {
+  @apply bg-bg-panel border-2 border-border;
+}
+
+.btn-primary {
+  @apply bg-accent text-accent-fg border-2 border-border px-4 py-2 font-medium;
+  @apply hover:translate-x-[2px] hover:translate-y-[2px];
+  @apply transition-transform duration-150;
+  box-shadow: 4px 4px 0px 0px var(--color-shadow);
+}
+
+.btn-primary:hover {
+  box-shadow: 2px 2px 0px 0px var(--color-shadow);
+}
+
+.btn-secondary {
+  @apply bg-bg-panel text-text-main border-2 border-border px-4 py-2 font-medium;
+  @apply hover:translate-x-[2px] hover:translate-y-[2px];
+  @apply transition-transform duration-150;
+  box-shadow: 4px 4px 0px 0px var(--color-shadow);
+}
+
+.btn-secondary:hover {
+  box-shadow: 2px 2px 0px 0px var(--color-shadow);
+}
+
+.input-field {
+  @apply bg-bg-panel text-text-main border-2 border-border px-3 py-2;
+  @apply focus:outline-none focus:border-accent;
+  @apply transition-colors duration-150;
+}
+
+.link-primary {
+  @apply text-accent underline;
+  @apply hover:text-text-main;
+  @apply transition-colors duration-150;
+}

@@ -50,3 +50,10 @@ CSRF_COOKIE_SECURE = False     # Allow HTTP in development
 # Email backend - print emails to console
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'QuietPage <noreply@quietpage.com>'
+
+# CORS Configuration for Development (React frontend)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+CORS_ALLOW_CREDENTIALS = True

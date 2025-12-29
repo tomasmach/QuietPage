@@ -26,6 +26,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('accounts/', include('apps.accounts.urls', namespace='accounts')),
     path('journal/', include('apps.journal.urls', namespace='journal')),
+    path('api/v1/', include('apps.api.urls', namespace='api')),
 ]
 
 # Django Debug Toolbar URLs (only in development)

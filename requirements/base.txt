@@ -29,3 +29,7 @@ Pillow>=11.0.0
 
 # Database
 psycopg2-binary==2.9.11  # PostgreSQL adapter (for production)
+
+# REST API
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0

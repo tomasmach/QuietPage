@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sites',  # Required by allauth
 
     # Third-party
+    'rest_framework',
+    'corsheaders',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     # Local apps
     'apps.accounts',
     'apps.journal',
+    'apps.api',
 ]
 
 # Sites framework (required by allauth)
@@ -55,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS - must be before CommonMiddleware
     'django.middleware.locale.LocaleMiddleware',  # i18n support
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -233,3 +237,21 @@ AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by user+IP combin
 AXES_RESET_ON_SUCCESS = True  # Reset failure counter on successful login
 AXES_LOCKOUT_TEMPLATE = None  # Use default lockout response (403 Forbidden)
 AXES_VERBOSE = True  # Log lockout events for debugging
+
+# Django REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
