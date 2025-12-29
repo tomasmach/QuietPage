@@ -36,4 +36,28 @@ export const en: Translations = {
     delete: 'Delete',
     loading: 'Loading...',
   },
+  dashboard: {
+    greeting: {
+      morning: 'Good morning',
+      afternoon: 'Good afternoon',
+      evening: 'Good evening',
+    },
+    todayWords: 'Words today',
+    newEntry: 'New entry',
+    noEntries: 'No entries yet. Start writing!',
+    recentEntries: 'Recent entries',
+    viewAll: 'View all',
+  },
+  entry: {
+    titlePlaceholder: 'Title (optional)',
+    contentPlaceholder: 'Start writing...',
+    saving: 'Saving',
+    saved: 'Saved',
+    delete: 'Delete entry',
+    deleteTitle: 'Delete entry',
+    confirmDelete: 'Are you sure you want to delete this entry? This action cannot be undone.',
+    newEntry: 'New entry',
+    editEntry: 'Edit entry',
+    tags: 'Tags',
+  },
 };

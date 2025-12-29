@@ -1,16 +1,113 @@
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Sidebar } from '../components/layout/Sidebar';
 import { ContextPanel } from '../components/layout/ContextPanel';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
+import { Button } from '../components/ui/Button';
+import { Spinner } from '../components/ui/Spinner';
+import { Card } from '../components/ui/Card';
+import { EntryCard } from '../components/dashboard/EntryCard';
+import { useEntries } from '../hooks/useEntries';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function ArchivePage() {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { entries, isLoading, error, page, setPage, hasMore, totalCount } = useEntries(20);
+
+  const handleNewEntry = () => {
+    navigate('/entries/new');
+  };
+
+  const handlePreviousPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasMore) {
+      setPage(page + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
       <div className="p-8">
-        <h1 className="text-4xl font-bold text-primary mb-8">Archive</h1>
-        <div className="border-2 border-border p-8 bg-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <p className="text-muted">Archive page coming soon...</p>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-primary mb-2">
+              {t('nav.archive')}
+            </h1>
+            {totalCount > 0 && (
+              <p className="text-muted">
+                {totalCount} {totalCount === 1 ? 'záznam' : 'záznamů'}
+              </p>
+            )}
+          </div>
+          <Button onClick={handleNewEntry}>{t('dashboard.newEntry')}</Button>
         </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <Card>
+            <p className="text-error">
+              Chyba při načítání záznamů: {error.message}
+            </p>
+          </Card>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !error && entries.length === 0 && (
+          <Card className="text-center py-12">
+            <p className="text-muted mb-4">{t('dashboard.noEntries')}</p>
+            <Button onClick={handleNewEntry}>{t('dashboard.newEntry')}</Button>
+          </Card>
+        )}
+
+        {/* Entries Grid */}
+        {!isLoading && !error && entries.length > 0 && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {entries.map((entry) => (
+                <EntryCard key={entry.id} entry={entry} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {(page > 1 || hasMore) && (
+              <div className="flex items-center justify-center gap-4 mt-8">
+                <Button
+                  onClick={handlePreviousPage}
+                  disabled={page === 1}
+                  variant="secondary"
+                >
+                  ← Předchozí
+                </Button>
+                <span className="text-muted">
+                  Stránka {page}
+                </span>
+                <Button
+                  onClick={handleNextPage}
+                  disabled={!hasMore}
+                  variant="secondary"
+                >
+                  Další →
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </div>
       <ThemeToggle />
     </AppLayout>

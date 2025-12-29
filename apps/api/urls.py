@@ -14,20 +14,21 @@ from apps.api.auth_views import (
     CurrentUserView,
     CSRFTokenView,
 )
+from apps.api.views import (
+    EntryViewSet,
+    DashboardView,
+    AutosaveView,
+)
 
 app_name = 'api'
 
 # Create a router for ViewSet-based endpoints
 router = DefaultRouter()
 
-# ViewSets will be registered here in the next phase:
-# router.register(r'users', UserViewSet, basename='user')
-# router.register(r'entries', EntryViewSet, basename='entry')
+# Register ViewSets
+router.register(r'entries', EntryViewSet, basename='entry')
 
 urlpatterns = [
-    # Router URLs (ViewSets)
-    path('', include(router.urls)),
-
     # Authentication endpoints
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
@@ -35,6 +36,12 @@ urlpatterns = [
     path('auth/me/', CurrentUserView.as_view(), name='current-user'),
     path('auth/csrf/', CSRFTokenView.as_view(), name='csrf-token'),
 
-    # Additional custom endpoints will be added here
-    # Example: path('dashboard/stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
+    # Dashboard endpoint
+    path('dashboard/', DashboardView.as_view(), name='dashboard'),
+
+    # Autosave endpoint (must come before router URLs to avoid conflicts)
+    path('entries/autosave/', AutosaveView.as_view(), name='entry-autosave'),
+
+    # Router URLs (ViewSets) - must come last to avoid URL conflicts
+    path('', include(router.urls)),
 ]

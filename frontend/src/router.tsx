@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { StatsPage } from './pages/StatsPage';
 import { ArchivePage } from './pages/ArchivePage';
 import { SettingsPage } from './pages/SettingsPage';
+import { EntryEditorPage } from './pages/EntryEditorPage';
 
 export const router = createBrowserRouter([
   // Public routes
@@ -58,6 +59,30 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <ArchivePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/entries',
+    element: (
+      <ProtectedRoute>
+        <ArchivePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/entries/new',
+    element: (
+      <ProtectedRoute>
+        <EntryEditorPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/entries/:id',
+    element: (
+      <ProtectedRoute>
+        <EntryEditorPage />
       </ProtectedRoute>
     ),
   },

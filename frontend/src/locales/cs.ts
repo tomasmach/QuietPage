@@ -34,6 +34,30 @@ export interface Translations {
     delete: string;
     loading: string;
   };
+  dashboard: {
+    greeting: {
+      morning: string;
+      afternoon: string;
+      evening: string;
+    };
+    todayWords: string;
+    newEntry: string;
+    noEntries: string;
+    recentEntries: string;
+    viewAll: string;
+  };
+  entry: {
+    titlePlaceholder: string;
+    contentPlaceholder: string;
+    saving: string;
+    saved: string;
+    delete: string;
+    deleteTitle: string;
+    confirmDelete: string;
+    newEntry: string;
+    editEntry: string;
+    tags: string;
+  };
 }
 
 export const cs: Translations = {
@@ -71,5 +95,29 @@ export const cs: Translations = {
     cancel: 'Zrušit',
     delete: 'Smazat',
     loading: 'Načítání...',
+  },
+  dashboard: {
+    greeting: {
+      morning: 'Dobré ráno',
+      afternoon: 'Dobré odpoledne',
+      evening: 'Dobrý večer',
+    },
+    todayWords: 'Slov dnes',
+    newEntry: 'Nový záznam',
+    noEntries: 'Zatím žádné záznamy. Začni psát!',
+    recentEntries: 'Nedávné záznamy',
+    viewAll: 'Zobrazit vše',
+  },
+  entry: {
+    titlePlaceholder: 'Nadpis (volitelné)',
+    contentPlaceholder: 'Začni psát...',
+    saving: 'Ukládám',
+    saved: 'Uloženo',
+    delete: 'Smazat záznam',
+    deleteTitle: 'Smazat záznam',
+    confirmDelete: 'Opravdu chceš smazat tento záznam? Tuto akci nelze vrátit zpět.',
+    newEntry: 'Nový záznam',
+    editEntry: 'Upravit záznam',
+    tags: 'Štítky',
   },
 };
