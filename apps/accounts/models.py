@@ -115,7 +115,13 @@ class User(AbstractUser):
         verbose_name='Preferovaný motiv',
         help_text="User's preferred theme"
     )
-    
+
+    # Onboarding
+    onboarding_completed = models.BooleanField(
+        default=False,
+        help_text="Whether user has completed the onboarding process"
+    )
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

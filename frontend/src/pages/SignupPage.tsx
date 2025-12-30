@@ -33,7 +33,7 @@ export function SignupPage() {
 
     try {
       await register(formData);
-      navigate('/dashboard');
+      navigate('/onboarding');
     } catch (err: unknown) {
       // Handle different error formats
       if (err instanceof Error) {

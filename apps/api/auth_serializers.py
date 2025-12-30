@@ -7,7 +7,9 @@ This module defines serializers for login and registration operations.
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from rest_framework import serializers
+import pytz
 
 User = get_user_model()
 
@@ -35,6 +37,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     Serializer for user registration.
 
     Validates username and email uniqueness, password strength, and password confirmation.
+    Includes optional onboarding fields for user preferences.
     """
     password = serializers.CharField(
         write_only=True,
@@ -49,9 +52,39 @@ class RegisterSerializer(serializers.ModelSerializer):
         help_text="Password confirmation (must match password)"
     )
 
+    # Optional onboarding fields
+    preferred_theme = serializers.ChoiceField(
+        choices=['midnight', 'paper'],
+        required=False,
+        help_text="Preferred theme (midnight or paper)"
+    )
+    preferred_language = serializers.ChoiceField(
+        choices=['cs', 'en'],
+        required=False,
+        help_text="Preferred language (cs or en)"
+    )
+    daily_word_goal = serializers.IntegerField(
+        required=False,
+        validators=[MinValueValidator(100), MaxValueValidator(5000)],
+        help_text="Daily word count goal (100-5000 words)"
+    )
+    preferred_writing_time = serializers.ChoiceField(
+        choices=['morning', 'afternoon', 'evening', 'anytime'],
+        required=False,
+        help_text="Preferred time of day for writing"
+    )
+    timezone = serializers.CharField(
+        required=False,
+        help_text="User timezone (e.g., Europe/Prague)"
+    )
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password_confirm']
+        fields = [
+            'username', 'email', 'password', 'password_confirm',
+            'preferred_theme', 'preferred_language', 'daily_word_goal',
+            'preferred_writing_time', 'timezone'
+        ]
 
     def validate_username(self, value):
         """Validate username uniqueness."""
@@ -67,6 +100,17 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Uživatel s touto emailovou adresou již existuje."
             )
+        return value
+
+    def validate_timezone(self, value):
+        """Validate timezone string."""
+        if value:
+            try:
+                pytz.timezone(value)
+            except pytz.exceptions.UnknownTimeZoneError:
+                raise serializers.ValidationError(
+                    f"Neplatná časová zóna: {value}"
+                )
         return value
 
     def validate(self, data):
@@ -106,15 +150,34 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         Removes password_confirm from data before creating the user.
         Uses create_user() to properly hash the password.
+        Saves optional onboarding fields if provided.
         """
         # Remove password_confirm as it's not a model field
         validated_data.pop('password_confirm')
 
+        # Extract required fields
+        username = validated_data.pop('username')
+        email = validated_data.pop('email')
+        password = validated_data.pop('password')
+
         # Create user with create_user() to ensure password is hashed
         user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password']
+            username=username,
+            email=email,
+            password=password
         )
+
+        # Update optional onboarding fields if provided
+        # All fields have defaults in the model, so this is safe
+        for field in ['preferred_theme', 'preferred_language', 'daily_word_goal',
+                      'preferred_writing_time', 'timezone']:
+            if field in validated_data:
+                setattr(user, field, validated_data[field])
+
+        # Save user with optional fields
+        if any(field in validated_data for field in ['preferred_theme', 'preferred_language',
+                                                       'daily_word_goal', 'preferred_writing_time',
+                                                       'timezone']):
+            user.save()
 
         return user

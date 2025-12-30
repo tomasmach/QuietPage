@@ -170,4 +170,25 @@ export const en: Translations = {
       deleteButton: 'Permanently Delete Account',
     },
   },
+  onboarding: {
+    progress: 'Step {current} of {total}',
+    skip: 'Skip',
+    continue: 'Continue',
+    back: 'Back',
+    finish: 'Finish',
+    finishing: 'Finishing...',
+    step1: {
+      title: 'Personalization',
+      description: 'Customize QuietPage to your preferences',
+      theme: 'Theme',
+      language: 'Language',
+    },
+    step2: {
+      title: 'Writing Goals',
+      description: 'Set your daily goal and preferred writing time',
+      dailyGoal: 'Daily Word Goal',
+      customGoalPlaceholder: 'Custom value',
+      writingTime: 'Preferred Writing Time',
+    },
+  },
 };

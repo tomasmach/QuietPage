@@ -24,6 +24,7 @@ interface User {
   longest_streak: number;
   preferred_language?: Language;
   preferred_theme?: Theme;
+  onboarding_completed: boolean;
 }
 
 interface LoginCredentials {

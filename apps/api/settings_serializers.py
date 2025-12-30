@@ -125,6 +125,7 @@ class GoalsSettingsSerializer(serializers.ModelSerializer):
             'preferred_writing_time',
             'reminder_enabled',
             'reminder_time',
+            'onboarding_completed',
         ]
 
     def validate_daily_word_goal(self, value):

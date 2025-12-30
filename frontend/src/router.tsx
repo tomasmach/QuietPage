@@ -4,6 +4,7 @@ import { PublicRoute } from './components/auth/PublicRoute';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { StatsPage } from './pages/StatsPage';
 import { ArchivePage } from './pages/ArchivePage';
@@ -45,6 +46,14 @@ export const router = createBrowserRouter([
   },
 
   // Protected routes
+  {
+    path: '/onboarding',
+    element: (
+      <ProtectedRoute>
+        <OnboardingPage />
+      </ProtectedRoute>
+    ),
+  },
   {
     path: '/dashboard',
     element: (

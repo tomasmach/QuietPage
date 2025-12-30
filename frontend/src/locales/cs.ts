@@ -168,6 +168,27 @@ export interface Translations {
       deleteButton: string;
     };
   };
+  onboarding: {
+    progress: string;
+    skip: string;
+    continue: string;
+    back: string;
+    finish: string;
+    finishing: string;
+    step1: {
+      title: string;
+      description: string;
+      theme: string;
+      language: string;
+    };
+    step2: {
+      title: string;
+      description: string;
+      dailyGoal: string;
+      customGoalPlaceholder: string;
+      writingTime: string;
+    };
+  };
 }
 
 export const cs: Translations = {
@@ -338,6 +359,27 @@ export const cs: Translations = {
       confirmationHint: 'Pro potvrzení napiš "{word}"',
       confirmationError: 'Napiš "{word}" pro potvrzení',
       deleteButton: 'Trvale smazat účet',
+    },
+  },
+  onboarding: {
+    progress: 'Krok {current} z {total}',
+    skip: 'Přeskočit',
+    continue: 'Pokračovat',
+    back: 'Zpět',
+    finish: 'Dokončit',
+    finishing: 'Dokončuji...',
+    step1: {
+      title: 'Personalizace',
+      description: 'Přizpůsob si QuietPage podle svých preferencí',
+      theme: 'Motiv',
+      language: 'Jazyk',
+    },
+    step2: {
+      title: 'Psací cíle',
+      description: 'Nastav si denní cíl a preferovaný čas psaní',
+      dailyGoal: 'Denní cíl slov',
+      customGoalPlaceholder: 'Vlastní hodnota',
+      writingTime: 'Preferovaný čas psaní',
     },
   },
 };

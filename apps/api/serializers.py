@@ -38,6 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
             'reminder_time',
             'preferred_language',
             'preferred_theme',
+            'onboarding_completed',
         ]
         read_only_fields = ['id', 'current_streak', 'longest_streak']
 
