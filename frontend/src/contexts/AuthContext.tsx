@@ -130,14 +130,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Logout user
    */
   const logout = async () => {
+    // Clear user state immediately to allow navigation before API call
+    setUser(null);
     setIsLoading(true);
     try {
       await api.post('/auth/logout/');
-      setUser(null);
     } catch (error) {
-      // Even if logout fails, clear user state
-      setUser(null);
-      throw error;
+      // Ignore errors - user is already logged out on client
+      console.error('Logout API failed:', error);
     } finally {
       setIsLoading(false);
     }

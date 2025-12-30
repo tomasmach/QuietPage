@@ -1,10 +1,13 @@
-import { Link, useLocation } from 'react-router-dom';
-import { PenLine, BarChart3, Archive, Settings, Globe } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { PenLine, BarChart3, Archive, Settings, Globe, LogOut } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
+  const { logout } = useAuth();
 
   const navItems = [
     { path: '/dashboard', icon: PenLine, label: t('nav.write') },
@@ -63,6 +66,22 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="mt-auto pt-6 flex flex-col gap-4">
+        {/* Logout Button */}
+        <button
+          onClick={async () => {
+            navigate('/');
+            await logout();
+          }}
+          className="w-full text-left py-2 px-3 border-2 border-transparent hover:border-border font-bold text-sm uppercase flex justify-between items-center group transition-colors text-text-main"
+          aria-label={t('auth.logout')}
+        >
+          <span className="flex items-center gap-3">
+            <LogOut size={16} />
+            <span>{t('auth.logout')}</span>
+          </span>
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+        </button>
+
         {/* Language Switcher */}
         <button
           onClick={toggleLanguage}

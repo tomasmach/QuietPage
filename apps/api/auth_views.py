@@ -106,6 +106,7 @@ class LogoutView(APIView):
     Response 200: {"message": "Logged out successfully"}
     """
     permission_classes = [AllowAny]
+    authentication_classes = []  # Disable authentication to avoid CSRF issues
 
     def post(self, request):
         logout(request)
