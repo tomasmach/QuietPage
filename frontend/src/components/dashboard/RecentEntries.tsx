@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Frown, Meh, Smile, Laugh, SmilePlus } from 'lucide-react';
 import type { RecentEntry } from '../../hooks/useDashboard';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -9,12 +10,12 @@ interface RecentEntriesProps {
   onNewEntry: () => void;
 }
 
-const MOOD_EMOJIS: Record<number, string> = {
-  1: '😢',
-  2: '😕',
-  3: '😐',
-  4: '🙂',
-  5: '😄',
+const MOOD_ICONS = {
+  1: Frown,
+  2: Meh,
+  3: Smile,
+  4: Laugh,
+  5: SmilePlus,
 };
 
 /**
@@ -54,17 +55,12 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
             minute: '2-digit',
           });
 
+          const MoodIcon = entry.mood_rating ? MOOD_ICONS[entry.mood_rating as keyof typeof MOOD_ICONS] : null;
+
           return (
             <Link key={entry.id} to={`/entries/${entry.id}`} className="block group">
               <Card className="transition-transform hover:translate-x-1 hover:translate-y-1">
-                <div className="flex items-start gap-3">
-                  {/* Mood indicator */}
-                  {entry.mood_rating && (
-                    <div className="text-2xl flex-shrink-0">
-                      {MOOD_EMOJIS[entry.mood_rating]}
-                    </div>
-                  )}
-
+                <div className="flex items-start gap-3 justify-between">
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 mb-1">
@@ -86,6 +82,13 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
 
                     <div className="text-xs text-text-muted mt-2">{entry.word_count} slov</div>
                   </div>
+
+                  {/* Mood indicator */}
+                  {MoodIcon && (
+                    <div className="flex-shrink-0">
+                      <MoodIcon className="h-5 w-5 text-text-muted" />
+                    </div>
+                  )}
                 </div>
               </Card>
             </Link>
