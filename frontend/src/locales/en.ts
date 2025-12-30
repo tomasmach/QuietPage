@@ -108,6 +108,12 @@ export const en: Translations = {
       bioHint: 'A short description about yourself (optional)',
       uploadAvatar: 'Upload Avatar',
       avatarHint: 'Max. 5 MB, formats: JPG, PNG, GIF',
+      appearance: 'Appearance',
+      appearanceDescription: 'Customize the look of the application',
+      theme: 'Theme',
+      themeMidnight: 'Midnight (dark)',
+      themePaper: 'Paper (light)',
+      language: 'Language',
     },
     goals: {
       title: 'Writing Goals',

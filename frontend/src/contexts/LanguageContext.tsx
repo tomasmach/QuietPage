@@ -1,7 +1,10 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { translations } from '../locales';
 import type { Language } from '../locales';
+import { api } from '../lib/api';
+
+export type { Language } from '../locales';
 
 type TranslationKey = string;
 type TranslationParams = Record<string, string | number>;
@@ -9,6 +12,7 @@ type TranslationParams = Record<string, string | number>;
 interface LanguageContextValue {
   language: Language;
   setLanguage: (language: Language) => void;
+  syncFromAPI: (language: Language) => void;
   t: (key: TranslationKey, params?: TranslationParams) => string;
 }
 
@@ -27,14 +31,28 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     return (stored === 'cs' || stored === 'en') ? stored : 'cs';
   });
 
-  useEffect(() => {
-    // Persist to localStorage
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-  }, [language]);
-
-  const setLanguage = (newLanguage: Language) => {
+  /**
+   * Set language from API without saving back to API (avoids circular calls)
+   * Used by AuthContext when user data is loaded
+   */
+  const syncFromAPI = useCallback((newLanguage: Language) => {
     setLanguageState(newLanguage);
-  };
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, newLanguage);
+  }, []);
+
+  /**
+   * Set language with persistence to localStorage and API (if authenticated)
+   * Used for user-initiated language changes
+   */
+  const setLanguage = useCallback((newLanguage: Language) => {
+    setLanguageState(newLanguage);
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, newLanguage);
+
+    // Save to API (fire and forget - don't block UI)
+    api.patch('/settings/profile/', { preferred_language: newLanguage }).catch(() => {
+      // Silently ignore errors - user may not be authenticated
+    });
+  }, []);
 
   /**
    * Translation function
@@ -70,6 +88,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const value: LanguageContextValue = {
     language,
     setLanguage,
+    syncFromAPI,
     t,
   };
 

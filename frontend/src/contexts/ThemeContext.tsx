@@ -1,12 +1,14 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import { api } from '../lib/api';
 
-type Theme = 'midnight' | 'paper';
+export type Theme = 'midnight' | 'paper';
 
 interface ThemeContextValue {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
+  syncFromAPI: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -27,23 +29,50 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   useEffect(() => {
     // Set data-theme attribute on <html> element
     document.documentElement.setAttribute('data-theme', theme);
-
-    // Persist to localStorage
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
-  const setTheme = (newTheme: Theme) => {
+  /**
+   * Set theme from API without saving back to API (avoids circular calls)
+   * Used by AuthContext when user data is loaded
+   */
+  const syncFromAPI = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
-  };
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+  }, []);
 
-  const toggleTheme = () => {
-    setThemeState(prev => prev === 'midnight' ? 'paper' : 'midnight');
-  };
+  /**
+   * Set theme with persistence to localStorage and API (if authenticated)
+   * Used for user-initiated theme changes
+   */
+  const setTheme = useCallback((newTheme: Theme) => {
+    setThemeState(newTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+
+    // Save to API (fire and forget - don't block UI)
+    api.patch('/settings/profile/', { preferred_theme: newTheme }).catch(() => {
+      // Silently ignore errors - user may not be authenticated
+    });
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setThemeState(prev => {
+      const newTheme = prev === 'midnight' ? 'paper' : 'midnight';
+      localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+
+      // Save to API (fire and forget)
+      api.patch('/settings/profile/', { preferred_theme: newTheme }).catch(() => {
+        // Silently ignore errors
+      });
+
+      return newTheme;
+    });
+  }, []);
 
   const value: ThemeContextValue = {
     theme,
     setTheme,
     toggleTheme,
+    syncFromAPI,
   };
 
   return (

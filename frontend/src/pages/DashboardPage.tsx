@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Sidebar } from '../components/layout/Sidebar';
 import { ContextPanel } from '../components/layout/ContextPanel';
-import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { Card } from '../components/ui/Card';
 import { Spinner } from '../components/ui/Spinner';
 import { RecentEntries } from '../components/dashboard/RecentEntries';
@@ -34,7 +33,6 @@ export function DashboardPage() {
         <div className="p-8 flex items-center justify-center min-h-[50vh]">
           <Spinner size="lg" />
         </div>
-        <ThemeToggle />
       </AppLayout>
     );
   }
@@ -45,11 +43,10 @@ export function DashboardPage() {
         <div className="p-8">
           <Card>
             <p className="text-error">
-              Chyba při načítání dashboardu: {error?.message || 'Neznámá chyba'}
+              Chyba pri nacitani dashboardu: {error?.message || 'Neznama chyba'}
             </p>
           </Card>
         </div>
-        <ThemeToggle />
       </AppLayout>
     );
   }
@@ -96,7 +93,7 @@ export function DashboardPage() {
           <Card className="text-center py-12">
             <blockquote className="space-y-4">
               <p className="text-xl italic text-text">"{data.quote.text}"</p>
-              <footer className="text-muted">— {data.quote.author}</footer>
+              <footer className="text-muted">-- {data.quote.author}</footer>
             </blockquote>
             <div className="mt-8">
               <button
@@ -111,7 +108,6 @@ export function DashboardPage() {
           <RecentEntries entries={data.recentEntries} onNewEntry={handleNewEntry} />
         )}
       </div>
-      <ThemeToggle />
     </AppLayout>
   );
 }

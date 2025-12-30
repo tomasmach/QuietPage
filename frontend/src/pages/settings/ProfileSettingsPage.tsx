@@ -1,17 +1,19 @@
 import { useState, useRef, type FormEvent, type ChangeEvent } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useSettings } from '@/hooks/useSettings';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
-import { Upload } from 'lucide-react';
+import { Upload, Moon, Sun } from 'lucide-react';
 
 export function ProfileSettingsPage() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
+  const { theme, setTheme } = useTheme();
   const { isLoading, error, success, clearMessages, updateProfile, uploadAvatar } = useSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -62,6 +64,7 @@ export function ProfileSettingsPage() {
   };
 
   return (
+    <>
     <Card>
       <h2 className="text-2xl font-bold text-text-main mb-6 font-mono uppercase tracking-wider">
         {t('settings.profile.title')}
@@ -152,5 +155,94 @@ export function ProfileSettingsPage() {
         </div>
       </form>
     </Card>
+
+    {/* Appearance Section */}
+    <Card className="mt-6">
+      <h2 className="text-2xl font-bold text-text-main mb-2 font-mono uppercase tracking-wider">
+        {t('settings.profile.appearance')}
+      </h2>
+      <p className="text-text-muted text-sm font-mono mb-6">
+        {t('settings.profile.appearanceDescription')}
+      </p>
+
+      <div className="space-y-6">
+        {/* Theme Selection */}
+        <div>
+          <label className="block text-sm font-mono font-bold text-text-main uppercase tracking-wider mb-3">
+            {t('settings.profile.theme')}
+          </label>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => setTheme('midnight')}
+              className={`
+                flex items-center gap-2 px-4 py-2 font-mono font-bold uppercase tracking-wider text-sm
+                border-2 border-border transition-all duration-150
+                ${theme === 'midnight'
+                  ? 'bg-accent text-accent-fg shadow-hard'
+                  : 'bg-transparent text-text-main hover:shadow-hard'
+                }
+              `}
+            >
+              <Moon className="w-4 h-4" />
+              {t('settings.profile.themeMidnight')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTheme('paper')}
+              className={`
+                flex items-center gap-2 px-4 py-2 font-mono font-bold uppercase tracking-wider text-sm
+                border-2 border-border transition-all duration-150
+                ${theme === 'paper'
+                  ? 'bg-accent text-accent-fg shadow-hard'
+                  : 'bg-transparent text-text-main hover:shadow-hard'
+                }
+              `}
+            >
+              <Sun className="w-4 h-4" />
+              {t('settings.profile.themePaper')}
+            </button>
+          </div>
+        </div>
+
+        {/* Language Selection */}
+        <div>
+          <label className="block text-sm font-mono font-bold text-text-main uppercase tracking-wider mb-3">
+            {t('settings.profile.language')}
+          </label>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => setLanguage('cs')}
+              className={`
+                flex items-center gap-2 px-4 py-2 font-mono font-bold uppercase tracking-wider text-sm
+                border-2 border-border transition-all duration-150
+                ${language === 'cs'
+                  ? 'bg-accent text-accent-fg shadow-hard'
+                  : 'bg-transparent text-text-main hover:shadow-hard'
+                }
+              `}
+            >
+              Cestina
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`
+                flex items-center gap-2 px-4 py-2 font-mono font-bold uppercase tracking-wider text-sm
+                border-2 border-border transition-all duration-150
+                ${language === 'en'
+                  ? 'bg-accent text-accent-fg shadow-hard'
+                  : 'bg-transparent text-text-main hover:shadow-hard'
+                }
+              `}
+            >
+              English
+            </button>
+          </div>
+        </div>
+      </div>
+    </Card>
+    </>
   );
 }

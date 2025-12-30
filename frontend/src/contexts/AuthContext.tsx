@@ -1,6 +1,10 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { api } from '../lib/api';
+import { useTheme } from './ThemeContext';
+import { useLanguage } from './LanguageContext';
+import type { Theme } from './ThemeContext';
+import type { Language } from './LanguageContext';
 
 interface User {
   id: number;
@@ -18,6 +22,8 @@ interface User {
   email_notifications?: boolean;
   current_streak: number;
   longest_streak: number;
+  preferred_language?: Language;
+  preferred_theme?: Theme;
 }
 
 interface LoginCredentials {
@@ -52,7 +58,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const { syncFromAPI: syncTheme } = useTheme();
+  const { syncFromAPI: syncLanguage } = useLanguage();
+
   const isAuthenticated = user !== null;
+
+  /**
+   * Sync theme and language preferences from user data
+   */
+  const syncPreferences = useCallback((userData: User) => {
+    if (userData.preferred_theme) {
+      syncTheme(userData.preferred_theme);
+    }
+    if (userData.preferred_language) {
+      syncLanguage(userData.preferred_language);
+    }
+  }, [syncTheme, syncLanguage]);
+
+  /**
+   * Fetch current user from API
+   */
+  const checkAuth = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get<{ user: User }>('/auth/me/');
+      setUser(response.user);
+      syncPreferences(response.user);
+    } catch {
+      // User not authenticated or error occurred
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [syncPreferences]);
 
   /**
    * Check authentication status on mount
@@ -64,23 +102,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await checkAuth();
     };
     initAuth();
-  }, []);
-
-  /**
-   * Fetch current user from API
-   */
-  const checkAuth = async () => {
-    setIsLoading(true);
-    try {
-      const response = await api.get<{ user: User }>('/auth/me/');
-      setUser(response.user);
-    } catch {
-      // User not authenticated or error occurred
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [checkAuth]);
 
   /**
    * Login user
@@ -95,6 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       };
       const response = await api.post<{ user: User }>('/auth/login/', payload);
       setUser(response.user);
+      syncPreferences(response.user);
     } catch (error) {
       setIsLoading(false);
       throw error;
@@ -128,6 +151,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const response = await api.post<{ user: User }>('/auth/register/', credentials);
       setUser(response.user);
+      syncPreferences(response.user);
     } catch (error) {
       setIsLoading(false);
       throw error;

@@ -37,7 +37,15 @@ class ProfileSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'bio', 'avatar', 'avatar_upload']
+        fields = [
+            'first_name',
+            'last_name',
+            'bio',
+            'avatar',
+            'avatar_upload',
+            'preferred_language',
+            'preferred_theme',
+        ]
 
     def get_avatar(self, obj):
         """Return full URL for avatar if it exists."""

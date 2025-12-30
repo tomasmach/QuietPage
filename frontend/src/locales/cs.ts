@@ -106,6 +106,12 @@ export interface Translations {
       bioHint: string;
       uploadAvatar: string;
       avatarHint: string;
+      appearance: string;
+      appearanceDescription: string;
+      theme: string;
+      themeMidnight: string;
+      themePaper: string;
+      language: string;
     };
     goals: {
       title: string;
@@ -269,6 +275,12 @@ export const cs: Translations = {
       bioHint: 'Krátký popis o sobě (volitelné)',
       uploadAvatar: 'Nahrát avatar',
       avatarHint: 'Max. 5 MB, formáty: JPG, PNG, GIF',
+      appearance: 'Vzhled',
+      appearanceDescription: 'Přizpůsobte si vzhled aplikace',
+      theme: 'Motiv',
+      themeMidnight: 'Midnight (tmavý)',
+      themePaper: 'Paper (světlý)',
+      language: 'Jazyk',
     },
     goals: {
       title: 'Psací cíle',

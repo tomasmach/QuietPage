@@ -3,7 +3,6 @@ import { User, Target, Shield, Lock, Trash2 } from 'lucide-react';
 import { AppLayout } from './AppLayout';
 import { Sidebar } from './Sidebar';
 import { ContextPanel } from './ContextPanel';
-import { ThemeToggle } from '../ui/ThemeToggle';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface SettingsNavItem {
@@ -85,7 +84,6 @@ export function SettingsLayout() {
           </div>
         </div>
       </div>
-      <ThemeToggle />
     </AppLayout>
   );
 }

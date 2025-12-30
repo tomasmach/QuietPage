@@ -99,6 +99,22 @@ class User(AbstractUser):
         help_text="Date of last journal entry (in user timezone)",
         db_index=True
     )
+
+    # Language and theme preferences
+    preferred_language = models.CharField(
+        max_length=2,
+        choices=[('cs', 'Čeština'), ('en', 'English')],
+        default='cs',
+        verbose_name='Preferovaný jazyk',
+        help_text="User's preferred language"
+    )
+    preferred_theme = models.CharField(
+        max_length=10,
+        choices=[('midnight', 'Midnight'), ('paper', 'Paper')],
+        default='midnight',
+        verbose_name='Preferovaný motiv',
+        help_text="User's preferred theme"
+    )
     
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
