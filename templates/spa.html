@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuietPage</title>
+
+    {% if not debug %}
+    {# Production: Load built CSS from Vite manifest #}
+    {% for css_url in vite_css %}
+    <link rel="stylesheet" href="{{ css_url }}">
+    {% endfor %}
+    {% endif %}
+</head>
+<body>
+    <div id="root"></div>
+
+    {% if debug %}
+    {# Development: Load from Vite dev server #}
+    <script type="module" src="http://localhost:5173/@vite/client"></script>
+    <script type="module" src="http://localhost:5173/src/main.tsx"></script>
+    {% else %}
+    {# Production: Load built JS from Vite manifest #}
+    {% for js_url in vite_js %}
+    <script type="module" src="{{ js_url }}"></script>
+    {% endfor %}
+    {% endif %}
+</body>
+</html>

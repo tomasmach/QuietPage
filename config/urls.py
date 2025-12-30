@@ -15,18 +15,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views  # type: ignore
 
 urlpatterns = [
-    path('', views.HomeView.as_view(), name='home'),
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('accounts/', include('apps.accounts.urls', namespace='accounts')),
     path('journal/', include('apps.journal.urls', namespace='journal')),
     path('api/v1/', include('apps.api.urls', namespace='api')),
+    # Catch-all pattern for React SPA - MUST be last
+    re_path(r'^.*$', views.SPAView.as_view(), name='spa'),
 ]
 
 # Django Debug Toolbar URLs (only in development)

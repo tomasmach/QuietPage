@@ -3,9 +3,12 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 // https://vite.dev/config/
-export default defineConfig({
+// Use function config to set base dynamically:
+// - Development (serve): base = '/' for Vite dev server
+// - Production (build): base = '/static/' for Django static files
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-  base: '/static/',
+  base: command === 'build' ? '/static/' : '/',
   build: {
     outDir: 'dist',
     manifest: true,
@@ -29,4 +32,4 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-})
+}))
