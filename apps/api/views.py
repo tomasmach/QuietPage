@@ -276,7 +276,7 @@ class TodayEntryView(APIView):
                         tags_list = [str(tag).strip() for tag in tags_data if str(tag).strip()]
                     else:
                         tags_list = []
-                    entry.tags.set(*tags_list)
+                    entry.tags.set(tags_list)
 
                 serializer = EntrySerializer(entry, context={'request': request})
                 return Response(serializer.data)
@@ -298,7 +298,7 @@ class TodayEntryView(APIView):
                         tags_list = [str(tag).strip() for tag in tags_data if str(tag).strip()]
                     else:
                         tags_list = []
-                    entry.tags.set(*tags_list)
+                    entry.tags.set(tags_list)
 
                 serializer = EntrySerializer(entry, context={'request': request})
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -387,7 +387,7 @@ class AutosaveView(APIView):
 
                         # Update tags
                         if tags_list is not None:
-                            entry.tags.set(*tags_list)
+                            entry.tags.set(tags_list)
 
                         return Response({
                             'status': 'success',
@@ -411,7 +411,7 @@ class AutosaveView(APIView):
 
                     # Add tags if provided
                     if tags_list:
-                        entry.tags.set(*tags_list)
+                        entry.tags.set(tags_list)
 
                     return Response({
                         'status': 'success',

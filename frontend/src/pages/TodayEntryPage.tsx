@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flame } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
@@ -26,10 +26,12 @@ export function TodayEntryPage() {
   const [tags, setTags] = useState<string[]>([]);
 
   // Auto-save functionality
+  const onSaveSuccess = useCallback(() => {
+    // Záznam uložen - zůstáváme na /write (nenavigujeme)
+  }, []);
+
   const { save: autoSave, isSaving: isAutoSaving, lastSaved } = useTodayAutoSave({
-    onSuccess: () => {
-      // Záznam uložen - zůstáváme na /write (nenavigujeme)
-    },
+    onSuccess: onSaveSuccess,
   });
 
   // Initialize form from entry data
@@ -51,7 +53,8 @@ export function TodayEntryPage() {
         tags,
       });
     }
-  }, [content, moodRating, tags, autoSave]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, moodRating, tags]);
 
   // Word count
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
