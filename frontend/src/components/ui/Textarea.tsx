@@ -25,6 +25,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={textareaId}
           rows={rows}
+          spellCheck={false}
           className={cn(
             'w-full bg-bg-panel border-2 text-text-main font-mono px-3 py-2',
             'focus:outline-none focus:ring-2 focus:ring-accent',

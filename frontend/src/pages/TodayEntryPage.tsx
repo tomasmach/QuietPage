@@ -199,7 +199,8 @@ export function TodayEntryPage() {
             onChange={(e) => setContent(e.target.value)}
             placeholder={t('entry.contentPlaceholder')}
             rows={20}
-            className="w-full text-lg font-mono leading-relaxed resize-none border-0 bg-transparent focus:ring-0 focus:outline-none text-text-main placeholder:text-text-text-muted"
+            spellCheck={false}
+            className="w-full text-lg font-mono font-medium leading-relaxed resize-none border-0 bg-transparent focus:ring-0 focus:outline-none text-text-main placeholder:text-text-text-muted"
             autoFocus
           />
         </div>

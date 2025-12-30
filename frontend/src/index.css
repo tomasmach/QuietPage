@@ -12,10 +12,10 @@
   /* Midnight (Dark) - DEFAULT */
   --color-bg-app: #0D0D0D;
   --color-bg-panel: #242424;
-  --color-text-main: #E5E5E5;
+  --color-text-main: #F5F5F5;
   --color-text-muted: #888888;
   --color-border: #444444;
-  --color-accent: #E5E5E5;
+  --color-accent: #F5F5F5;
   --color-accent-fg: #0D0D0D;
   --color-shadow: rgba(0, 0, 0, 0.5);
 }
@@ -24,10 +24,10 @@
   /* Paper (Light) */
   --color-bg-app: #FFFCF5;
   --color-bg-panel: #FFFFFF;
-  --color-text-main: #1A1A1A;
+  --color-text-main: #000000;
   --color-text-muted: #666666;
   --color-border: #1A1A1A;
-  --color-accent: #1A1A1A;
+  --color-accent: #000000;
   --color-accent-fg: #FFFFFF;
   --color-shadow: rgba(0, 0, 0, 1);
 }
