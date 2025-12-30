@@ -95,7 +95,7 @@ export function DashboardPage() {
         {/* Header */}
         <div className="flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
           <div>
-            <div className="text-xs font-bold uppercase text-text-muted mb-1">
+            <div className="text-xs font-bold uppercase text-text-text-muted mb-1">
               {t(`dashboard.greeting.${greetingKey}`)}
             </div>
             <h1 className="text-3xl font-bold uppercase text-text-main">
@@ -104,7 +104,7 @@ export function DashboardPage() {
           </div>
           <div className="text-right">
             <div className="text-3xl font-bold text-text-main">{data.stats.todayWords}</div>
-            <div className="text-[10px] font-bold uppercase text-text-muted">
+            <div className="text-[10px] font-bold uppercase text-text-text-muted">
               {t('meta.wordsToday')}
             </div>
           </div>
@@ -115,7 +115,7 @@ export function DashboardPage() {
           <Card className="text-center py-12">
             <blockquote className="space-y-4">
               <p className="text-xl italic text-text">"{data.quote.text}"</p>
-              <footer className="text-muted">-- {data.quote.author}</footer>
+              <footer className="text-text-muted">-- {data.quote.author}</footer>
             </blockquote>
             <div className="mt-8">
               <button

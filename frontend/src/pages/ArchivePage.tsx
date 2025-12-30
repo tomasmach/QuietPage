@@ -39,7 +39,7 @@ export function ArchivePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8 border-b-2 border-border pb-4 border-dashed">
           <div>
-            <div className="text-xs font-bold uppercase text-text-muted mb-1">
+            <div className="text-xs font-bold uppercase text-text-text-muted mb-1">
               {t('nav.archive')}
             </div>
             <h1 className="text-3xl font-bold uppercase text-text-main">
@@ -68,7 +68,7 @@ export function ArchivePage() {
         {/* Empty State */}
         {!isLoading && !error && entries.length === 0 && (
           <Card className="text-center py-12">
-            <p className="text-muted mb-4">{t('dashboard.noEntries')}</p>
+            <p className="text-text-muted mb-4">{t('dashboard.noEntries')}</p>
             <Button onClick={handleNewEntry}>{t('dashboard.newEntry')}</Button>
           </Card>
         )}
@@ -92,7 +92,7 @@ export function ArchivePage() {
                 >
                   ← Předchozí
                 </Button>
-                <span className="text-muted">
+                <span className="text-text-muted">
                   Stránka {page}
                 </span>
                 <Button

@@ -11,10 +11,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-bg-app">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
-          <p className="mt-4 text-text">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-text-main border-t-transparent"></div>
+          <p className="mt-4 text-text-main">Loading...</p>
         </div>
       </div>
     );

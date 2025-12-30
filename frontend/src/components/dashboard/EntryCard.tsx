@@ -39,7 +39,7 @@ export function EntryCard({ entry }: EntryCardProps) {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm font-bold text-text-main uppercase">{formattedDate}</div>
-              <div className="text-xs text-text-muted">{formattedTime}</div>
+              <div className="text-xs text-text-text-muted">{formattedTime}</div>
             </div>
             {entry.mood_rating && (
               <div className="text-2xl">{MOOD_EMOJIS[entry.mood_rating]}</div>
@@ -55,12 +55,12 @@ export function EntryCard({ entry }: EntryCardProps) {
 
           {/* Content preview */}
           {entry.content_preview && (
-            <p className="text-muted text-sm line-clamp-3">{entry.content_preview}</p>
+            <p className="text-text-muted text-sm line-clamp-3">{entry.content_preview}</p>
           )}
 
           {/* Footer with word count and tags */}
           <div className="flex items-center justify-between pt-2 border-t border-border">
-            <div className="text-xs text-muted">{entry.word_count} slov</div>
+            <div className="text-xs text-text-muted">{entry.word_count} slov</div>
             {entry.tags.length > 0 && (
               <div className="flex gap-1 flex-wrap">
                 {entry.tags.slice(0, 3).map((tag) => (

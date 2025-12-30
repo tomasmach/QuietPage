@@ -45,7 +45,7 @@ export function SettingsLayout() {
   return (
     <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
       <div className="p-8">
-        <h1 className="text-4xl font-bold text-primary mb-8">{translations.title}</h1>
+        <h1 className="text-4xl font-bold text-text-main mb-8">{translations.title}</h1>
 
         <div className="flex gap-8">
           {/* Settings Navigation */}
@@ -64,10 +64,10 @@ export function SettingsLayout() {
                     ${active
                       ? item.danger
                         ? 'bg-red-600 text-white border-red-800 shadow-hard'
-                        : 'bg-primary text-bg-panel border-primary shadow-hard'
+                        : 'bg-accent text-bg-panel border-accent shadow-hard'
                       : item.danger
                         ? 'bg-bg-panel text-red-600 border-border hover:border-red-600'
-                        : 'bg-bg-panel text-text-main border-border hover:border-primary'
+                        : 'bg-bg-panel text-text-main border-border hover:border-accent'
                     }
                   `}
                 >

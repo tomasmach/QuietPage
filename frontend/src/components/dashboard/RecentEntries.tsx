@@ -26,7 +26,7 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
   if (entries.length === 0) {
     return (
       <Card className="text-center py-12">
-        <p className="text-muted mb-4">{t('dashboard.noEntries')}</p>
+        <p className="text-text-muted mb-4">{t('dashboard.noEntries')}</p>
         <Button onClick={onNewEntry}>{t('dashboard.newEntry')}</Button>
       </Card>
     );
@@ -35,7 +35,7 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-primary">{t('dashboard.recentEntries')}</h2>
+        <h2 className="text-2xl font-bold text-accent">{t('dashboard.recentEntries')}</h2>
         <Button onClick={onNewEntry} size="sm">
           {t('dashboard.newEntry')}
         </Button>
@@ -68,10 +68,10 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-xs font-bold text-primary">
+                      <span className="text-xs font-bold text-accent">
                         {formattedDate}
                       </span>
-                      <span className="text-xs text-muted">{formattedTime}</span>
+                      <span className="text-xs text-text-muted">{formattedTime}</span>
                     </div>
 
                     {entry.title && (
@@ -80,11 +80,11 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
                       </h3>
                     )}
 
-                    <p className="text-sm text-muted line-clamp-2">
+                    <p className="text-sm text-text-muted line-clamp-2">
                       {entry.content_preview}
                     </p>
 
-                    <div className="text-xs text-muted mt-2">{entry.word_count} slov</div>
+                    <div className="text-xs text-text-muted mt-2">{entry.word_count} slov</div>
                   </div>
                 </div>
               </Card>

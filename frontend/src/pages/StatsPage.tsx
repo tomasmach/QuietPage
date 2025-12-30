@@ -7,9 +7,9 @@ export function StatsPage() {
   return (
     <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
       <div className="p-8">
-        <h1 className="text-4xl font-bold text-primary mb-8">Statistics</h1>
-        <div className="border-2 border-border p-8 bg-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <p className="text-muted">Statistics page coming soon...</p>
+        <h1 className="text-4xl font-bold text-text-main mb-8">Statistics</h1>
+        <div className="border-2 border-border p-8 bg-bg-panel shadow-hard">
+          <p className="text-text-muted">Statistics page coming soon...</p>
         </div>
       </div>
       <ThemeToggle />
