@@ -14,10 +14,10 @@
   --color-bg-panel: #242424;
   --color-text-main: #F5F5F5;
   --color-text-muted: #888888;
-  --color-border: #444444;
+  --color-border: #F5F5F5;
   --color-accent: #F5F5F5;
   --color-accent-fg: #0D0D0D;
-  --color-shadow: rgba(0, 0, 0, 0.5);
+  --color-shadow: #F5F5F5;
 }
 
 [data-theme='paper'] {

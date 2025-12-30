@@ -29,7 +29,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       primary:
         'bg-accent text-accent-fg border-2 border-border shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[4px] active:translate-y-[4px]',
       secondary:
-        'bg-transparent text-text-main border-2 border-border shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[4px] active:translate-y-[4px]',
+        'bg-bg-panel text-text-main border-2 border-border shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[4px] active:translate-y-[4px]',
       ghost:
         'bg-transparent text-text-main border-2 border-transparent hover:border-border',
       danger:

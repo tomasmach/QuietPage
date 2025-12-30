@@ -27,15 +27,15 @@ export function Sidebar() {
       {/* Logo */}
       <div className="mb-8">
         <Link to="/dashboard" className="block">
-          <div className="border-2 border-border p-3 inline-flex items-center gap-2 bg-bg-app shadow-hard">
-            <div className="w-3 h-3 bg-accent"></div>
-            <span className="font-bold text-lg uppercase tracking-widest leading-none text-text-main">QuietPage</span>
+          <div className="border-2 border-border p-5 flex w-full items-center gap-4 bg-bg-panel shadow-hard">
+            <div className="w-4 h-4 bg-accent"></div>
+            <span className="font-bold text-2xl uppercase tracking-widest leading-none text-text-main">QuietPage</span>
           </div>
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-3">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -45,10 +45,10 @@ export function Sidebar() {
               key={item.path}
               to={item.path}
               className={`
-                w-full text-left py-4 px-3 border-2 font-bold text-sm uppercase flex justify-between items-center group transition-colors
+                w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all bg-bg-panel shadow-hard
                 ${active
-                  ? 'bg-accent text-accent-fg'
-                  : 'border-transparent hover:border-border text-text-main'
+                  ? 'bg-text-main text-bg-panel'
+                  : 'text-text-main hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
                 }
               `}
             >
@@ -63,11 +63,11 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="mt-auto pt-6 flex flex-col gap-4">
+      <div className="mt-auto pt-6 flex flex-col gap-3">
         {/* Theme Switcher */}
         <button
           onClick={toggleTheme}
-          className="w-full text-left py-4 px-3 border-2 border-transparent hover:border-border font-bold text-sm uppercase flex justify-between items-center group transition-colors text-text-main"
+          className="w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all text-text-main bg-bg-panel shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
           aria-label="Toggle theme"
         >
           <span className="flex items-center gap-3">
@@ -83,7 +83,7 @@ export function Sidebar() {
             navigate('/');
             await logout();
           }}
-          className="w-full text-left py-4 px-3 border-2 border-transparent hover:border-border font-bold text-sm uppercase flex justify-between items-center group transition-colors text-text-main"
+          className="w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all text-text-main bg-bg-panel shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
           aria-label={t('auth.logout')}
         >
           <span className="flex items-center gap-3">
