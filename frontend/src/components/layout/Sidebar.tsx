@@ -1,13 +1,15 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { PenLine, BarChart3, Archive, Settings, Globe, LogOut } from 'lucide-react';
+import { PenLine, BarChart3, Archive, Settings, Moon, Sun, LogOut } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
   const { logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const navItems = [
     { path: '/dashboard', icon: PenLine, label: t('nav.write') },
@@ -18,10 +20,6 @@ export function Sidebar() {
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
-  };
-
-  const toggleLanguage = () => {
-    setLanguage(language === 'cs' ? 'en' : 'cs');
   };
 
   return (
@@ -66,6 +64,19 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="mt-auto pt-6 flex flex-col gap-4">
+        {/* Theme Switcher */}
+        <button
+          onClick={toggleTheme}
+          className="w-full text-left py-4 px-3 border-2 border-transparent hover:border-border font-bold text-sm uppercase flex justify-between items-center group transition-colors text-text-main"
+          aria-label="Toggle theme"
+        >
+          <span className="flex items-center gap-3">
+            {theme === 'midnight' ? <Sun size={16} /> : <Moon size={16} />}
+            <span>{theme === 'midnight' ? 'Světlý režim' : 'Tmavý režim'}</span>
+          </span>
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+        </button>
+
         {/* Logout Button */}
         <button
           onClick={async () => {
@@ -80,16 +91,6 @@ export function Sidebar() {
             <span>{t('auth.logout')}</span>
           </span>
           <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-        </button>
-
-        {/* Language Switcher */}
-        <button
-          onClick={toggleLanguage}
-          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-muted hover:text-text-main transition-colors text-left"
-          aria-label="Toggle language"
-        >
-          <Globe size={14} />
-          <span>{language === 'cs' ? 'Jazyk: Cestina' : 'Language: English'}</span>
         </button>
 
         {/* Version */}
