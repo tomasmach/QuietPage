@@ -91,7 +91,7 @@ class DashboardView(APIView):
 
     Returns:
         - greeting: Time-based greeting (Dobré ráno/odpoledne/večer)
-        - stats: User statistics (total_entries, current_streak, longest_streak, total_words)
+        - stats: User statistics (today_words, daily_goal, total_entries, current_streak, longest_streak, total_words)
         - recent_entries: Last 5 entries (without content)
         - quote: Random inspirational quote
     """
@@ -143,7 +143,23 @@ class DashboardView(APIView):
         stats = cache.get(cache_key)
 
         if not stats:
+            # Calculate today's word count (in user's timezone)
+            user_tz = ZoneInfo(str(user.timezone))
+            now = timezone.now().astimezone(user_tz)
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+            today_words = Entry.objects.filter(
+                user=user,
+                created_at__gte=today_start,
+                created_at__lte=today_end
+            ).aggregate(
+                total=Sum('word_count')
+            )['total'] or 0
+
             stats = {
+                'today_words': today_words,
+                'daily_goal': user.daily_word_goal,
                 'total_entries': Entry.objects.filter(user=user).count(),
                 'current_streak': user.current_streak,
                 'longest_streak': user.longest_streak,

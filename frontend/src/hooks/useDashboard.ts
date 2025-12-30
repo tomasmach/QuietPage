@@ -52,8 +52,24 @@ export function useDashboard(): UseDashboardReturn {
     setError(null);
 
     try {
-      const response = await api.get<DashboardData>('/dashboard/');
-      setData(response);
+      const response = await api.get<any>('/dashboard/');
+
+      // Convert snake_case from backend to camelCase for frontend
+      const dashboardData: DashboardData = {
+        greeting: response.greeting,
+        stats: {
+          todayWords: response.stats.today_words ?? 0,
+          dailyGoal: response.stats.daily_goal ?? 750,
+          currentStreak: response.stats.current_streak ?? 0,
+          longestStreak: response.stats.longest_streak ?? 0,
+          totalEntries: response.stats.total_entries ?? 0,
+        },
+        recentEntries: response.recent_entries || [],
+        quote: response.quote,
+        hasEntries: (response.recent_entries || []).length > 0,
+      };
+
+      setData(dashboardData);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch dashboard'));
     } finally {

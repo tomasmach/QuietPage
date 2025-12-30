@@ -154,6 +154,8 @@ class DashboardStatsSerializer(serializers.Serializer):
 
     This is not a ModelSerializer as it aggregates data from multiple sources.
     """
+    today_words = serializers.IntegerField()
+    daily_goal = serializers.IntegerField()
     total_entries = serializers.IntegerField()
     current_streak = serializers.IntegerField()
     longest_streak = serializers.IntegerField()
