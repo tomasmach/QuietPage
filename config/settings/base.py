@@ -82,6 +82,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.api.context_processors.vite_assets',
             ],
         },
     },
@@ -131,7 +132,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # For collectstatic
-STATICFILES_DIRS = [BASE_DIR / 'static']  # Custom static files
+
+# Custom static files directories
+_staticfiles_dirs = [BASE_DIR / 'static']
+
+# Add Vite build output directory if it exists (for production)
+_vite_dist = BASE_DIR / 'frontend' / 'dist'
+if _vite_dist.exists():
+    _staticfiles_dirs.append(_vite_dist)
+
+STATICFILES_DIRS = _staticfiles_dirs
 
 # Media files (User uploaded files - avatars, etc.)
 # https://docs.djangoproject.com/en/5.2/topics/files/

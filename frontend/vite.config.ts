@@ -5,6 +5,16 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: '/static/',
+  build: {
+    outDir: 'dist',
+    manifest: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {
