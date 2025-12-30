@@ -7,7 +7,7 @@ interface PublicRouteProps {
 }
 
 export function PublicRoute({ children }: PublicRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -21,7 +21,9 @@ export function PublicRoute({ children }: PublicRouteProps) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    // Redirect new users to onboarding, existing users to dashboard
+    const redirectTo = user?.onboarding_completed ? '/dashboard' : '/onboarding';
+    return <Navigate to={redirectTo} replace />;
   }
 
   return <>{children}</>;
