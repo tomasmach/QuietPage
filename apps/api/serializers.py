@@ -16,6 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
     Includes profile information, writing goals, streak data, and preferences.
     """
     avatar = serializers.SerializerMethodField()
+    timezone = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -46,6 +47,10 @@ class UserSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.avatar.url)
             return obj.avatar.url
         return None
+
+    def get_timezone(self, obj):
+        """Return timezone as string instead of ZoneInfo object."""
+        return str(obj.timezone) if obj.timezone else 'Europe/Prague'
 
 
 class EntryListSerializer(serializers.ModelSerializer):

@@ -50,9 +50,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Check authentication status on mount
+   * Wait for API client to be ready (CSRF token fetched) before checking auth
    */
   useEffect(() => {
-    checkAuth();
+    const initAuth = async () => {
+      await api.ready();
+      await checkAuth();
+    };
+    initAuth();
   }, []);
 
   /**
@@ -61,8 +66,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const checkAuth = async () => {
     setIsLoading(true);
     try {
-      const userData = await api.get<User>('/auth/me/');
-      setUser(userData);
+      const response = await api.get<{ user: User }>('/auth/me/');
+      setUser(response.user);
     } catch {
       // User not authenticated or error occurred
       setUser(null);
@@ -77,7 +82,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
     try {
-      const response = await api.post<{ user: User }>('/auth/login/', credentials);
+      // API expects username_or_email field
+      const payload = {
+        username_or_email: credentials.username,
+        password: credentials.password,
+      };
+      const response = await api.post<{ user: User }>('/auth/login/', payload);
       setUser(response.user);
     } catch (error) {
       setIsLoading(false);

@@ -19,10 +19,41 @@ export interface Translations {
     login: string;
     logout: string;
     register: string;
+    signup: string;
     username: string;
+    usernameOrEmail: string;
     email: string;
     password: string;
     passwordConfirm: string;
+    forgotPassword: string;
+    noAccount: string;
+    hasAccount: string;
+    createAccount: string;
+    backToHome: string;
+    loggingIn: string;
+    signingUp: string;
+    loginError: string;
+    signupError: string;
+  };
+  landing: {
+    title: string;
+    tagline: string;
+    getStarted: string;
+    signIn: string;
+    features: {
+      encrypted: {
+        title: string;
+        description: string;
+      };
+      progress: {
+        title: string;
+        description: string;
+      };
+      goals: {
+        title: string;
+        description: string;
+      };
+    };
   };
   themes: {
     paper: string;
@@ -81,10 +112,41 @@ export const cs: Translations = {
     login: 'Přihlásit se',
     logout: 'Odhlásit se',
     register: 'Registrace',
+    signup: 'Registrovat se',
     username: 'Uživatelské jméno',
+    usernameOrEmail: 'Uživatelské jméno nebo e-mail',
     email: 'E-mail',
     password: 'Heslo',
     passwordConfirm: 'Heslo znovu',
+    forgotPassword: 'Zapomenuté heslo?',
+    noAccount: 'Nemáš účet?',
+    hasAccount: 'Máš účet?',
+    createAccount: 'Vytvořit účet',
+    backToHome: 'Zpět',
+    loggingIn: 'Přihlašuji...',
+    signingUp: 'Registruji...',
+    loginError: 'Nesprávné přihlašovací údaje',
+    signupError: 'Registrace se nezdařila',
+  },
+  landing: {
+    title: 'QuietPage',
+    tagline: 'Tvůj osobní prostor pro psaní a reflexi',
+    getStarted: 'Začít psát',
+    signIn: 'Přihlásit se',
+    features: {
+      encrypted: {
+        title: 'Šifrované záznamy',
+        description: 'Tvé myšlenky zůstanou v bezpečí',
+      },
+      progress: {
+        title: 'Sledování pokroku',
+        description: 'Motivace skrz streaky a statistiky',
+      },
+      goals: {
+        title: 'Psací cíle',
+        description: 'Denní cíle a připomínky',
+      },
+    },
   },
   themes: {
     paper: 'Paper (Světlý)',

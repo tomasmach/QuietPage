@@ -84,8 +84,8 @@ class LoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Log the user in (creates session)
-        login(request, user)
+        # Log the user in (creates session, specify backend due to multiple backends)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
         # Return user data
         user_serializer = UserSerializer(user, context={'request': request})
@@ -146,8 +146,8 @@ class RegisterView(APIView):
         # Create the user
         user = serializer.save()
 
-        # Automatically log in the new user
-        login(request, user)
+        # Automatically log in the new user (specify backend due to multiple backends)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
         # Return user data
         user_serializer = UserSerializer(user, context={'request': request})

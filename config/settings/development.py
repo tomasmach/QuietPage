@@ -45,7 +45,15 @@ SECURE_SSL_REDIRECT = False
 
 # Session and CSRF settings for development (relaxed)
 SESSION_COOKIE_SECURE = False  # Allow HTTP in development
+SESSION_COOKIE_SAMESITE = 'Lax'  # Allow cross-origin requests with credentials
+
 CSRF_COOKIE_SECURE = False     # Allow HTTP in development
+CSRF_COOKIE_HTTPONLY = False   # CRITICAL: JavaScript needs to read CSRF token from cookie
+CSRF_COOKIE_SAMESITE = 'Lax'   # Allow cross-origin requests with credentials
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+]
 
 # Email backend - print emails to console
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -57,3 +65,4 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']

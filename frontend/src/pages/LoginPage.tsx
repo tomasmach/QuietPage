@@ -1,10 +1,118 @@
+import { useState, type FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Logo } from '@/components/ui/Logo';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
+
 export function LoginPage() {
+  const navigate = useNavigate();
+  const { login, isLoading } = useAuth();
+  const { t } = useLanguage();
+
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+  });
+  const [error, setError] = useState<string>('');
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      await login(formData);
+      navigate('/dashboard');
+    } catch {
+      setError(t('auth.loginError'));
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-8">
+    <div className="min-h-screen bg-bg-main flex items-center justify-center p-4 relative">
+      {/* Fixed toggles in corners */}
+      <LanguageToggle />
+      <ThemeToggle />
+
+      {/* Login card */}
       <div className="w-full max-w-md">
-        <h1 className="text-4xl font-bold text-primary mb-8 text-center">Login</h1>
-        <div className="border-2 border-border p-8 bg-background shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <p className="text-center text-muted">Login form coming soon...</p>
+        {/* Logo + Title */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <Logo size="md" />
+          </div>
+          <h1 className="text-3xl font-bold text-text-main font-mono uppercase tracking-wider">
+            {t('auth.login')}
+          </h1>
+        </div>
+
+        {/* Form Card */}
+        <div className="bg-bg-panel border-2 border-border shadow-hard p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Username/Email Input */}
+            <Input
+              label={t('auth.usernameOrEmail')}
+              type="text"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              required
+              autoComplete="username"
+              disabled={isLoading}
+            />
+
+            {/* Password Input */}
+            <Input
+              label={t('auth.password')}
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              required
+              autoComplete="current-password"
+              disabled={isLoading}
+            />
+
+            {/* Error Message */}
+            {error && (
+              <div className="p-4 border-2 border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
+                {error}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full"
+              loading={isLoading}
+              disabled={isLoading}
+            >
+              {isLoading ? t('auth.loggingIn') : t('auth.login')}
+            </Button>
+
+            {/* Links */}
+            <div className="text-center space-y-3 text-sm font-mono pt-2">
+              <p className="text-text-muted">
+                {t('auth.noAccount')}{' '}
+                <Link
+                  to="/signup"
+                  className="text-accent hover:underline font-bold uppercase tracking-wider"
+                >
+                  {t('auth.signup')}
+                </Link>
+              </p>
+              <p>
+                <Link
+                  to="/"
+                  className="text-text-muted hover:text-text-main uppercase tracking-wider"
+                >
+                  ← {t('auth.backToHome')}
+                </Link>
+              </p>
+            </div>
+          </form>
         </div>
       </div>
     </div>
