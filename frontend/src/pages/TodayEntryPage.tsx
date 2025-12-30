@@ -122,20 +122,24 @@ export function TodayEntryPage() {
 
             {/* Streak Badge */}
             {dashboardData && (
-              <div className="border-2 border-border p-3 bg-bg-panel shadow-hard">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-bold uppercase text-text-text-muted">
-                    {t('meta.currentStreak')}
-                  </span>
-                  <Flame size={14} className="text-text-main" />
+              <div className="border-2 border-border p-4 bg-bg-panel shadow-hard">
+                <div className="flex justify-between items-stretch gap-4">
+                  <div className="flex flex-col justify-between">
+                    <span className="text-xs font-bold uppercase text-text-text-muted">
+                      {t('meta.currentStreak')}
+                    </span>
+                    <div className="text-3xl font-bold text-text-main">{dashboardData.stats.currentStreak}</div>
+                  </div>
+                  <div className="flex items-center">
+                    <Flame size={56} className="text-text-main" strokeWidth={1.2} />
+                  </div>
                 </div>
-                <div className="text-3xl font-bold text-text-main">{dashboardData.stats.currentStreak}</div>
               </div>
             )}
 
             {/* Mood Selector */}
             <div>
-              <h3 className="text-xs font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
+              <h3 className="text-sm font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
                 {t('meta.moodCheck')}
               </h3>
               <MoodSelector
@@ -146,7 +150,7 @@ export function TodayEntryPage() {
 
             {/* Tags */}
             <div>
-              <h3 className="text-xs font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
+              <h3 className="text-sm font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
                 {t('entry.tags')}
               </h3>
               <TagInput value={tags} onChange={setTags} />
@@ -161,10 +165,10 @@ export function TodayEntryPage() {
 
             {/* Auto-save indicator */}
             {isAutoSaving && (
-              <p className="text-xs text-text-muted">{t('entry.saving')}...</p>
+              <p className="text-sm text-text-muted">{t('entry.saving')}...</p>
             )}
             {lastSaved && !isAutoSaving && (
-              <p className="text-xs text-text-muted">
+              <p className="text-sm text-text-muted">
                 {t('entry.saved')}{' '}
                 {lastSaved.toLocaleTimeString('cs-CZ', {
                   hour: '2-digit',
@@ -181,7 +185,7 @@ export function TodayEntryPage() {
           {/* Header */}
           <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
             <div>
-              <div className="text-xs font-bold uppercase text-text-text-muted mb-1">
+              <div className="text-sm font-bold uppercase text-text-text-muted mb-1">
                 {t(`dashboard.greeting.${greetingKey}`)}
               </div>
               <h1 className="text-3xl font-bold uppercase text-text-main">
@@ -189,8 +193,8 @@ export function TodayEntryPage() {
               </h1>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-text-main">{wordCount}</div>
-              <div className="text-[10px] font-bold uppercase text-text-text-muted">
+              <div className="text-4xl font-bold text-text-main">{wordCount}</div>
+              <div className="text-sm font-bold uppercase text-text-text-muted">
                 {t('meta.wordsToday')}
               </div>
             </div>

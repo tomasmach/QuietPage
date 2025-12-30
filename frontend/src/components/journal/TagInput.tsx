@@ -47,7 +47,7 @@ export function TagInput({
 
   return (
     <div className={cn('w-full', className)}>
-      <label className="block mb-2 text-xs font-bold uppercase tracking-wider text-text-muted font-mono">
+      <label className="block mb-2 text-sm font-bold uppercase tracking-wider text-text-muted font-mono">
         Tags
       </label>
       <div className="w-full bg-bg-panel border-2 border-border p-2 min-h-[42px]">
@@ -82,7 +82,7 @@ export function TagInput({
           />
         </div>
       </div>
-      <p className="mt-1 text-xs text-text-muted font-mono">
+      <p className="mt-1 text-sm text-text-muted font-mono">
         Press Enter or comma to add tag
       </p>
     </div>

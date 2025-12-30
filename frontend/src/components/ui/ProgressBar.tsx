@@ -23,7 +23,7 @@ export function ProgressBar({
   return (
     <div className={cn('w-full', className)} {...props}>
       {showLabel && (
-        <div className="flex justify-between text-xs font-bold uppercase mb-1 text-text-main">
+        <div className="flex justify-between text-sm font-bold uppercase mb-1 text-text-main">
           <span>{t('meta.progress')}</span>
           <span>{value} / {max} {t('meta.wordsSuffix')}</span>
         </div>
@@ -44,7 +44,7 @@ export function ProgressBar({
           style={{ width: `${percentage}%` }}
         />
         {percentage >= 100 && (
-          <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold uppercase tracking-widest text-accent-fg">
+          <div className="absolute inset-0 flex items-center justify-center text-xs font-bold uppercase tracking-widest text-accent-fg">
             {t('meta.goalMet')}
           </div>
         )}

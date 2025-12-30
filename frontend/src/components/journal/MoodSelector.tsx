@@ -39,7 +39,7 @@ export function MoodSelector({ value, onChange, disabled = false }: MoodSelector
               aria-checked={isSelected}
               aria-label={label}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-7 w-7" />
             </button>
           );
         })}
