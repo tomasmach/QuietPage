@@ -184,6 +184,126 @@ class DashboardView(APIView):
         })
 
 
+class TodayEntryView(APIView):
+    """
+    API endpoint pro dnešní daily note.
+
+    GET: Vrátí dnešní záznam pokud existuje, 404 pokud ne
+    POST: Vytvoří nebo updatne dnešní záznam
+
+    Zajišťuje:
+    1. Pouze jeden záznam za den (v user timezone)
+    2. Záznam se vytvoří jen když je poskytnut content
+    3. Streak se updatne jen při skutečném uložení contentu
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_today_date_range(self, user):
+        """Vrátí start/end datetime pro dnešek v user timezone."""
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        return today_start, today_end
+
+    def get(self, request):
+        """Vrátí dnešní záznam pokud existuje, jinak 404."""
+        user = request.user
+        today_start, today_end = self.get_today_date_range(user)
+
+        try:
+            entry = Entry.objects.get(
+                user=user,
+                created_at__gte=today_start,
+                created_at__lte=today_end
+            )
+            serializer = EntrySerializer(entry, context={'request': request})
+            return Response(serializer.data)
+        except Entry.DoesNotExist:
+            return Response(
+                {'detail': 'Dnes ještě nemáte záznam'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Entry.MultipleObjectsReturned:
+            # Legacy: více záznamů za den - vrátí nejnovější
+            entry = Entry.objects.filter(
+                user=user,
+                created_at__gte=today_start,
+                created_at__lte=today_end
+            ).order_by('-created_at').first()
+            serializer = EntrySerializer(entry, context={'request': request})
+            return Response(serializer.data)
+
+    def post(self, request):
+        """
+        Vytvoří nebo updatne dnešní záznam.
+
+        KRITICKÉ: Odmítne prázdný content pro prevenci
+        nechtěného vytváření záznamů a updatu streaku.
+        """
+        user = request.user
+        content = (request.data.get('content') or '').strip()
+
+        # KRITICKÉ: Odmítnutí prázdného contentu
+        if not content:
+            return Response({
+                'status': 'error',
+                'message': 'Obsah nemůže být prázdný'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        today_start, today_end = self.get_today_date_range(user)
+
+        with transaction.atomic():
+            entry = Entry.objects.filter(
+                user=user,
+                created_at__gte=today_start,
+                created_at__lte=today_end
+            ).select_for_update().first()
+
+            if entry:
+                # Update existujícího záznamu
+                entry.title = (request.data.get('title') or '').strip()
+                entry.content = content
+                entry.mood_rating = request.data.get('mood_rating', None)
+                entry.save()
+
+                # Update tagů
+                tags_data = request.data.get('tags', None)
+                if tags_data is not None:
+                    if isinstance(tags_data, str):
+                        tags_list = [tag.strip() for tag in tags_data.split(',') if tag.strip()]
+                    elif isinstance(tags_data, list):
+                        tags_list = [str(tag).strip() for tag in tags_data if str(tag).strip()]
+                    else:
+                        tags_list = []
+                    entry.tags.set(*tags_list)
+
+                serializer = EntrySerializer(entry, context={'request': request})
+                return Response(serializer.data)
+            else:
+                # Vytvoření nového záznamu (streak signal se spustí)
+                entry = Entry.objects.create(
+                    user=user,
+                    title=(request.data.get('title') or '').strip(),
+                    content=content,
+                    mood_rating=request.data.get('mood_rating', None)
+                )
+
+                # Přidání tagů
+                tags_data = request.data.get('tags', None)
+                if tags_data:
+                    if isinstance(tags_data, str):
+                        tags_list = [tag.strip() for tag in tags_data.split(',') if tag.strip()]
+                    elif isinstance(tags_data, list):
+                        tags_list = [str(tag).strip() for tag in tags_data if str(tag).strip()]
+                    else:
+                        tags_list = []
+                    entry.tags.set(*tags_list)
+
+                serializer = EntrySerializer(entry, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
 class AutosaveView(APIView):
     """
     API endpoint for auto-saving journal entries.

@@ -12,7 +12,7 @@ export function Sidebar() {
   const { theme, toggleTheme } = useTheme();
 
   const navItems = [
-    { path: '/dashboard', icon: PenLine, label: t('nav.write') },
+    { path: '/write', icon: PenLine, label: t('nav.write') },
     { path: '/stats', icon: BarChart3, label: t('nav.stats') },
     { path: '/archive', icon: Archive, label: t('nav.archive') },
     { path: '/settings', icon: Settings, label: t('nav.settings') },

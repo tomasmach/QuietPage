@@ -9,6 +9,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { StatsPage } from './pages/StatsPage';
 import { ArchivePage } from './pages/ArchivePage';
 import { EntryEditorPage } from './pages/EntryEditorPage';
+import { TodayEntryPage } from './pages/TodayEntryPage';
 import { SettingsLayout } from './components/layout/SettingsLayout';
 import {
   ProfileSettingsPage,
@@ -83,6 +84,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <ArchivePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/write',
+    element: (
+      <ProtectedRoute>
+        <TodayEntryPage />
       </ProtectedRoute>
     ),
   },
