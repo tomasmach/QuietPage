@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { CloudRain, Cloud, Sun, Zap, Coffee } from 'lucide-react';
+import { Frown, Meh, Smile, Laugh, SmilePlus } from 'lucide-react';
 
 export interface MoodSelectorProps {
   value: 1 | 2 | 3 | 4 | 5 | null;
@@ -8,11 +8,11 @@ export interface MoodSelectorProps {
 }
 
 const moods = [
-  { value: 1 as const, icon: CloudRain, label: 'Very Bad' },
-  { value: 2 as const, icon: Cloud, label: 'Bad' },
-  { value: 3 as const, icon: Sun, label: 'Neutral' },
-  { value: 4 as const, icon: Zap, label: 'Good' },
-  { value: 5 as const, icon: Coffee, label: 'Excellent' },
+  { value: 1 as const, icon: Frown, label: 'Very Bad' },
+  { value: 2 as const, icon: Meh, label: 'Bad' },
+  { value: 3 as const, icon: Smile, label: 'Neutral' },
+  { value: 4 as const, icon: Laugh, label: 'Good' },
+  { value: 5 as const, icon: SmilePlus, label: 'Excellent' },
 ];
 
 export function MoodSelector({ value, onChange, disabled = false }: MoodSelectorProps) {
