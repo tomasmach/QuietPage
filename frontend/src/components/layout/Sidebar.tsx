@@ -47,7 +47,7 @@ export function Sidebar() {
               key={item.path}
               to={item.path}
               className={`
-                w-full text-left py-2 px-3 border-2 font-bold text-sm uppercase flex justify-between items-center group transition-colors
+                w-full text-left py-4 px-3 border-2 font-bold text-sm uppercase flex justify-between items-center group transition-colors
                 ${active
                   ? 'bg-accent text-accent-fg'
                   : 'border-transparent hover:border-border text-text-main'
@@ -72,7 +72,7 @@ export function Sidebar() {
             navigate('/');
             await logout();
           }}
-          className="w-full text-left py-2 px-3 border-2 border-transparent hover:border-border font-bold text-sm uppercase flex justify-between items-center group transition-colors text-text-main"
+          className="w-full text-left py-4 px-3 border-2 border-transparent hover:border-border font-bold text-sm uppercase flex justify-between items-center group transition-colors text-text-main"
           aria-label={t('auth.logout')}
         >
           <span className="flex items-center gap-3">

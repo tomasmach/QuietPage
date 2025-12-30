@@ -131,7 +131,7 @@ export function StatsPanel({
             {recentEntries.slice(0, 4).map((entry) => (
               <div
                 key={entry.id}
-                className="flex justify-between items-center text-xs border border-border p-2 hover:border-dashed cursor-pointer transition-all text-text-main"
+                className="flex justify-between items-center text-xs border border-border py-4 px-2 hover:border-dashed cursor-pointer transition-all text-text-main"
               >
                 <span className="font-bold">{formatDate(entry.created_at)}</span>
                 <div className="flex items-center gap-2">
