@@ -35,23 +35,23 @@ export function DeleteAccountPage() {
   };
 
   return (
-    <Card className="border-red-500">
+    <Card className="border-red-700" style={{ borderColor: '#dc2626' }}>
       {/* Warning Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-red-100 dark:bg-red-950/50 border-2 border-red-500">
-          <AlertTriangle className="w-6 h-6 text-red-600" />
+        <div className="p-2 dark:bg-red-950/50 border-2" style={{ borderColor: '#dc2626', backgroundColor: '#dc2626' }}>
+          <AlertTriangle className="w-6 h-6" style={{ color: '#ffffff' }} />
         </div>
-        <h2 className="text-2xl font-bold text-red-600 font-mono uppercase tracking-wider">
+        <h2 className="text-2xl font-bold font-mono uppercase tracking-wider" style={{ color: '#dc2626' }}>
           {t('settings.delete.title')}
         </h2>
       </div>
 
       {/* Warning Message */}
-      <div className="p-4 mb-6 border-2 border-red-500 bg-red-50 dark:bg-red-950/30">
-        <p className="text-red-700 dark:text-red-400 text-sm font-mono font-bold mb-2">
+      <div className="p-4 mb-6 border-2 dark:bg-red-950/30 dark:border-red-700" style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}>
+        <p className="text-sm font-mono font-bold mb-2 dark:text-red-400" style={{ color: '#ffffff' }}>
           {t('settings.delete.warning')}
         </p>
-        <ul className="text-red-600 dark:text-red-400 text-sm font-mono list-disc list-inside space-y-1">
+        <ul className="text-sm font-mono list-disc list-inside space-y-1 dark:text-red-400" style={{ color: '#ffffff' }}>
           <li>{t('settings.delete.warningItem1')}</li>
           <li>{t('settings.delete.warningItem2')}</li>
           <li>{t('settings.delete.warningItem3')}</li>
@@ -90,7 +90,7 @@ export function DeleteAccountPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="p-4 border-2 border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
+          <div className="p-4 border-2 border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
             {error}
           </div>
         )}
