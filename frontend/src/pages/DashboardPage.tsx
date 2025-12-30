@@ -95,7 +95,7 @@ export function DashboardPage() {
         {/* Header */}
         <div className="flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
           <div>
-            <div className="text-xs font-bold uppercase text-text-text-muted mb-1">
+            <div className="text-sm font-bold uppercase text-text-text-muted mb-1">
               {t(`dashboard.greeting.${greetingKey}`)}
             </div>
             <h1 className="text-3xl font-bold uppercase text-text-main">
@@ -103,8 +103,8 @@ export function DashboardPage() {
             </h1>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold text-text-main">{data.stats.todayWords}</div>
-            <div className="text-[10px] font-bold uppercase text-text-text-muted">
+            <div className="text-4xl font-bold text-text-main">{data.stats.todayWords}</div>
+            <div className="text-sm font-bold uppercase text-text-text-muted">
               {t('meta.wordsToday')}
             </div>
           </div>

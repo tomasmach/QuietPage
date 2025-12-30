@@ -70,7 +70,7 @@ export function StatsPanel({
     <div className="space-y-6">
       {/* Progress Section */}
       <div>
-        <h3 className="text-xs font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
+        <h3 className="text-sm font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
           {t('meta.progress')}
         </h3>
         <ProgressBar
@@ -84,7 +84,7 @@ export function StatsPanel({
       {/* Streak Badge */}
       <div className="border-2 border-border p-3 bg-bg-panel shadow-hard">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-[10px] font-bold uppercase text-text-muted">
+          <span className="text-xs font-bold uppercase text-text-muted">
             {t('meta.currentStreak')}
           </span>
           <Flame size={14} className="text-text-main" />
@@ -103,7 +103,7 @@ export function StatsPanel({
             />
           ))}
         </div>
-        <div className="mt-2 text-xs text-text-muted">
+        <div className="mt-2 text-sm text-text-muted">
           <span>{t('dashboard.longestStreak') || 'Nejdelší'}: {stats.longestStreak}</span>
         </div>
       </div>
@@ -111,7 +111,7 @@ export function StatsPanel({
       {/* Mood Selector */}
       {onMoodSelect && (
         <div>
-          <h3 className="text-xs font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
+          <h3 className="text-sm font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
             {t('meta.moodCheck')}
           </h3>
           <MoodSelector
@@ -124,14 +124,14 @@ export function StatsPanel({
       {/* Recent Days */}
       {recentEntries.length > 0 && (
         <div className="border-t-2 border-border pt-4">
-          <h3 className="text-xs font-bold uppercase mb-2 text-text-main">
+          <h3 className="text-sm font-bold uppercase mb-2 text-text-main">
             {t('meta.recentDays')}
           </h3>
           <div className="space-y-2">
             {recentEntries.slice(0, 4).map((entry) => (
               <div
                 key={entry.id}
-                className="flex justify-between items-center text-xs border border-border py-4 px-2 hover:border-dashed cursor-pointer transition-all text-text-main"
+                className="flex justify-between items-center text-sm border border-border py-4 px-2 hover:border-dashed cursor-pointer transition-all text-text-main"
               >
                 <span className="font-bold">{formatDate(entry.created_at)}</span>
                 <div className="flex items-center gap-2">
