@@ -225,28 +225,27 @@ export function EntryEditorPage() {
         </ContextPanel>
       }
     >
-      <div className="p-8">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
-          <div>
-            <div className="text-xs font-bold uppercase text-text-muted mb-1">
-              {t(`dashboard.greeting.${greetingKey}`)}
+      <div className="p-12">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
+            <div>
+              <div className="text-xs font-bold uppercase text-text-muted mb-1">
+                {t(`dashboard.greeting.${greetingKey}`)}
+              </div>
+              <h1 className="text-3xl font-bold uppercase text-text-main">
+                {formattedDate}
+              </h1>
             </div>
-            <h1 className="text-3xl font-bold uppercase text-text-main">
-              {formattedDate}
-            </h1>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-text-main">{wordCount}</div>
-            <div className="text-[10px] font-bold uppercase text-text-muted">
-              {t('meta.wordsToday')}
+            <div className="text-right">
+              <div className="text-3xl font-bold text-text-main">{wordCount}</div>
+              <div className="text-[10px] font-bold uppercase text-text-muted">
+                {t('meta.wordsToday')}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Editor */}
-        <div>
-          {/* Content */}
+          {/* Editor */}
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}

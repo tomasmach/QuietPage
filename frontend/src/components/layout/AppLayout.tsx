@@ -9,7 +9,7 @@ interface AppLayoutProps {
 export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <div className="grid grid-cols-[240px_1fr_280px] divide-x-2 divide-border min-h-screen">
+      <div className="grid grid-cols-[minmax(240px,280px)_1fr_minmax(280px,320px)] divide-x-2 divide-border min-h-screen">
         {/* Left Sidebar */}
         <aside className="sticky top-0 h-screen overflow-y-auto bg-background">
           {sidebar}
