@@ -19,6 +19,14 @@ from apps.api.views import (
     DashboardView,
     AutosaveView,
 )
+from apps.api.settings_views import (
+    ProfileSettingsView,
+    GoalsSettingsView,
+    PrivacySettingsView,
+    ChangePasswordView,
+    ChangeEmailView,
+    DeleteAccountView,
+)
 
 app_name = 'api'
 
@@ -41,6 +49,14 @@ urlpatterns = [
 
     # Autosave endpoint (must come before router URLs to avoid conflicts)
     path('entries/autosave/', AutosaveView.as_view(), name='entry-autosave'),
+
+    # Settings endpoints
+    path('settings/profile/', ProfileSettingsView.as_view(), name='settings-profile'),
+    path('settings/goals/', GoalsSettingsView.as_view(), name='settings-goals'),
+    path('settings/privacy/', PrivacySettingsView.as_view(), name='settings-privacy'),
+    path('settings/security/password/', ChangePasswordView.as_view(), name='settings-change-password'),
+    path('settings/security/email/', ChangeEmailView.as_view(), name='settings-change-email'),
+    path('settings/delete-account/', DeleteAccountView.as_view(), name='settings-delete-account'),
 
     # Router URLs (ViewSets) - must come last to avoid URL conflicts
     path('', include(router.urls)),

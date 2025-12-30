@@ -7,8 +7,15 @@ import { SignupPage } from './pages/SignupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { StatsPage } from './pages/StatsPage';
 import { ArchivePage } from './pages/ArchivePage';
-import { SettingsPage } from './pages/SettingsPage';
 import { EntryEditorPage } from './pages/EntryEditorPage';
+import { SettingsLayout } from './components/layout/SettingsLayout';
+import {
+  ProfileSettingsPage,
+  GoalsSettingsPage,
+  PrivacySettingsPage,
+  SecuritySettingsPage,
+  DeleteAccountPage,
+} from './pages/settings';
 
 export const router = createBrowserRouter([
   // Public routes
@@ -86,13 +93,40 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+  // Settings routes with nested layout
   {
     path: '/settings',
     element: (
       <ProtectedRoute>
-        <SettingsPage />
+        <SettingsLayout />
       </ProtectedRoute>
     ),
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/settings/profile" replace />,
+      },
+      {
+        path: 'profile',
+        element: <ProfileSettingsPage />,
+      },
+      {
+        path: 'goals',
+        element: <GoalsSettingsPage />,
+      },
+      {
+        path: 'privacy',
+        element: <PrivacySettingsPage />,
+      },
+      {
+        path: 'security',
+        element: <SecuritySettingsPage />,
+      },
+      {
+        path: 'delete-account',
+        element: <DeleteAccountPage />,
+      },
+    ],
   },
 
   // Catch-all redirect

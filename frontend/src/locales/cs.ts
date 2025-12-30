@@ -89,6 +89,76 @@ export interface Translations {
     editEntry: string;
     tags: string;
   };
+  settings: {
+    title: string;
+    nav: {
+      profile: string;
+      goals: string;
+      privacy: string;
+      security: string;
+      deleteAccount: string;
+    };
+    profile: {
+      title: string;
+      firstName: string;
+      lastName: string;
+      bio: string;
+      bioHint: string;
+      uploadAvatar: string;
+      avatarHint: string;
+    };
+    goals: {
+      title: string;
+      dailyWordGoal: string;
+      dailyWordGoalHint: string;
+      timezone: string;
+      preferredWritingTime: string;
+      writingTime: {
+        morning: string;
+        afternoon: string;
+        evening: string;
+      };
+      reminders: string;
+      enableReminders: string;
+      reminderTime: string;
+    };
+    privacy: {
+      title: string;
+      notifications: string;
+      emailNotifications: string;
+      emailNotificationsHint: string;
+      dataPrivacy: string;
+      encryptionInfo: string;
+      dataUsageInfo: string;
+    };
+    security: {
+      changePassword: string;
+      currentPassword: string;
+      newPassword: string;
+      confirmNewPassword: string;
+      passwordHint: string;
+      passwordsDoNotMatch: string;
+      updatePassword: string;
+      changeEmail: string;
+      currentEmail: string;
+      newEmail: string;
+      passwordForEmail: string;
+      passwordForEmailHint: string;
+      updateEmail: string;
+    };
+    delete: {
+      title: string;
+      warning: string;
+      warningItem1: string;
+      warningItem2: string;
+      warningItem3: string;
+      password: string;
+      confirmationLabel: string;
+      confirmationHint: string;
+      confirmationError: string;
+      deleteButton: string;
+    };
+  };
 }
 
 export const cs: Translations = {
@@ -181,5 +251,75 @@ export const cs: Translations = {
     newEntry: 'Nový záznam',
     editEntry: 'Upravit záznam',
     tags: 'Štítky',
+  },
+  settings: {
+    title: 'Nastavení',
+    nav: {
+      profile: 'Profil',
+      goals: 'Cíle',
+      privacy: 'Soukromí',
+      security: 'Zabezpečení',
+      deleteAccount: 'Smazat účet',
+    },
+    profile: {
+      title: 'Profil',
+      firstName: 'Jméno',
+      lastName: 'Příjmení',
+      bio: 'O mně',
+      bioHint: 'Krátký popis o sobě (volitelné)',
+      uploadAvatar: 'Nahrát avatar',
+      avatarHint: 'Max. 5 MB, formáty: JPG, PNG, GIF',
+    },
+    goals: {
+      title: 'Psací cíle',
+      dailyWordGoal: 'Denní cíl slov',
+      dailyWordGoalHint: 'Doporučeno: 750 slov (asi 3 stránky)',
+      timezone: 'Časová zóna',
+      preferredWritingTime: 'Preferovaný čas psaní',
+      writingTime: {
+        morning: 'Ráno',
+        afternoon: 'Odpoledne',
+        evening: 'Večer',
+      },
+      reminders: 'Připomínky',
+      enableReminders: 'Povolit denní připomínky',
+      reminderTime: 'Čas připomínky',
+    },
+    privacy: {
+      title: 'Soukromí',
+      notifications: 'Oznámení',
+      emailNotifications: 'E-mailová oznámení',
+      emailNotificationsHint: 'Dostávat e-maily o novinkách a připomínkách',
+      dataPrivacy: 'Ochrana dat',
+      encryptionInfo: 'Všechny tvé záznamy jsou šifrovány pomocí AES-256 šifrování.',
+      dataUsageInfo: 'Tvá data nikdy nesdílíme s třetími stranami.',
+    },
+    security: {
+      changePassword: 'Změnit heslo',
+      currentPassword: 'Současné heslo',
+      newPassword: 'Nové heslo',
+      confirmNewPassword: 'Potvrdit nové heslo',
+      passwordHint: 'Minimálně 8 znaků',
+      passwordsDoNotMatch: 'Hesla se neshodují',
+      updatePassword: 'Aktualizovat heslo',
+      changeEmail: 'Změnit e-mail',
+      currentEmail: 'Současný e-mail',
+      newEmail: 'Nový e-mail',
+      passwordForEmail: 'Heslo pro potvrzení',
+      passwordForEmailHint: 'Pro změnu e-mailu zadej své heslo',
+      updateEmail: 'Aktualizovat e-mail',
+    },
+    delete: {
+      title: 'Smazat účet',
+      warning: 'Tato akce je nevratná!',
+      warningItem1: 'Všechny tvé záznamy budou trvale smazány',
+      warningItem2: 'Tvůj profil a nastavení budou odstraněny',
+      warningItem3: 'Tuto akci nelze vrátit zpět',
+      password: 'Heslo',
+      confirmationLabel: 'Potvrzení',
+      confirmationHint: 'Pro potvrzení napiš "{word}"',
+      confirmationError: 'Napiš "{word}" pro potvrzení',
+      deleteButton: 'Trvale smazat účet',
+    },
   },
 };

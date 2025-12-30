@@ -6,10 +6,16 @@ interface User {
   id: number;
   username: string;
   email: string;
+  first_name?: string;
+  last_name?: string;
   avatar?: string;
   bio?: string;
   timezone: string;
   daily_word_goal: number;
+  preferred_writing_time?: 'morning' | 'afternoon' | 'evening';
+  reminder_enabled?: boolean;
+  reminder_time?: string;
+  email_notifications?: boolean;
   current_streak: number;
   longest_streak: number;
 }

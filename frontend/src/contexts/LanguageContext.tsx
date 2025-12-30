@@ -4,11 +4,12 @@ import { translations } from '../locales';
 import type { Language } from '../locales';
 
 type TranslationKey = string;
+type TranslationParams = Record<string, string | number>;
 
 interface LanguageContextValue {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: TranslationKey) => string;
+  t: (key: TranslationKey, params?: TranslationParams) => string;
 }
 
 const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
@@ -38,8 +39,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   /**
    * Translation function
    * Supports nested keys using dot notation (e.g., 'nav.write')
+   * Supports template parameters (e.g., t('key', { name: 'John' }) replaces {name} with John)
    */
-  const t = (key: TranslationKey): string => {
+  const t = (key: TranslationKey, params?: TranslationParams): string => {
     const keys = key.split('.');
     let value: unknown = translations[language];
 
@@ -53,7 +55,16 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       }
     }
 
-    return typeof value === 'string' ? value : key;
+    let result = typeof value === 'string' ? value : key;
+
+    // Replace template parameters
+    if (params) {
+      Object.entries(params).forEach(([paramKey, paramValue]) => {
+        result = result.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(paramValue));
+      });
+    }
+
+    return result;
   };
 
   const value: LanguageContextValue = {
