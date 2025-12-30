@@ -1,5 +1,6 @@
 export interface Translations {
   nav: {
+    dashboard: string;
     write: string;
     stats: string;
     archive: string;
@@ -193,6 +194,7 @@ export interface Translations {
 
 export const cs: Translations = {
   nav: {
+    dashboard: 'Dashboard',
     write: 'Psát',
     stats: 'Statistiky',
     archive: 'Archiv',

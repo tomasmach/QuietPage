@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { PenLine, BarChart3, Archive, Settings, Moon, Sun, LogOut } from 'lucide-react';
+import { LayoutDashboard, PenLine, BarChart3, Archive, Settings, Moon, Sun, LogOut } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -12,6 +12,7 @@ export function Sidebar() {
   const { theme, toggleTheme } = useTheme();
 
   const navItems = [
+    { path: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
     { path: '/write', icon: PenLine, label: t('nav.write') },
     { path: '/stats', icon: BarChart3, label: t('nav.stats') },
     { path: '/archive', icon: Archive, label: t('nav.archive') },

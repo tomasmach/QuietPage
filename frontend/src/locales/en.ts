@@ -2,6 +2,7 @@ import type { Translations } from './cs';
 
 export const en: Translations = {
   nav: {
+    dashboard: 'Dashboard',
     write: 'Write',
     stats: 'Statistics',
     archive: 'Archive',

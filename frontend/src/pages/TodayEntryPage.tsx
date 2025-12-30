@@ -180,10 +180,10 @@ export function TodayEntryPage() {
         </ContextPanel>
       }
     >
-      <div className="p-12 bg-bg-panel min-h-screen">
-        <div className="max-w-5xl mx-auto">
+      <div className="p-12 bg-bg-panel flex flex-col" style={{ minHeight: 'calc(100vh - 0px)' }}>
+        <div className="max-w-5xl mx-auto w-full flex flex-col flex-1">
           {/* Header */}
-          <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
+          <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed flex-shrink-0">
             <div>
               <div className="text-sm font-bold uppercase text-text-text-muted mb-1">
                 {t(`dashboard.greeting.${greetingKey}`)}
@@ -205,9 +205,8 @@ export function TodayEntryPage() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={t('entry.contentPlaceholder')}
-            rows={20}
             spellCheck={false}
-            className="w-full text-lg font-mono font-medium leading-relaxed resize-none border-0 bg-transparent focus:ring-0 focus:outline-none text-text-main placeholder:text-text-text-muted"
+            className="w-full flex-1 text-lg font-mono font-medium leading-relaxed resize-none border-0 bg-transparent focus:ring-0 focus:outline-none text-text-main placeholder:text-text-text-muted"
             autoFocus
           />
         </div>
