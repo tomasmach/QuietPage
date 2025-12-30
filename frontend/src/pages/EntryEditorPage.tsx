@@ -225,7 +225,7 @@ export function EntryEditorPage() {
         </ContextPanel>
       }
     >
-      <div className="p-12">
+      <div className="p-12 bg-bg-panel min-h-screen">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
