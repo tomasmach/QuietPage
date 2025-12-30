@@ -7,7 +7,6 @@ import { Card } from '../components/ui/Card';
 import { Spinner } from '../components/ui/Spinner';
 import { RecentEntries } from '../components/dashboard/RecentEntries';
 import { StatsPanel } from '../components/dashboard/StatsPanel';
-import { WordCount } from '../components/journal/WordCount';
 import { useDashboard } from '../hooks/useDashboard';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -54,11 +53,21 @@ export function DashboardPage() {
   // Get current date info
   const today = new Date();
   const formattedDate = today.toLocaleDateString('cs-CZ', {
-    weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
   });
+
+  // Get time-based greeting key
+  const hour = today.getHours();
+  const getGreetingKey = () => {
+    if (hour < 12) return 'morning';
+    if (hour < 18) return 'afternoon';
+    return 'evening';
+  };
+  const greetingKey = getGreetingKey();
+
+  // Calculate progress percentage
+  const progressPercentage = Math.min((data.stats.todayWords / data.stats.dailyGoal) * 100, 100);
 
   return (
     <AppLayout
@@ -67,24 +76,37 @@ export function DashboardPage() {
         <ContextPanel>
           <StatsPanel
             stats={data.stats}
+            recentEntries={data.recentEntries}
             onMoodSelect={handleMoodSelect}
             selectedMood={selectedMood}
           />
         </ContextPanel>
       }
     >
-      <div className="p-8 space-y-8">
+      <div className="p-8 space-y-8 relative">
+        {/* Top Thin Progress Bar */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-bg-panel opacity-20">
+          <div
+            className="h-full bg-accent transition-all duration-500"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
+
         {/* Header */}
-        <div>
-          <h1 className="text-4xl font-bold text-primary mb-2">{data.greeting}</h1>
-          <div className="flex items-center gap-4">
-            <p className="text-muted">{formattedDate}</p>
-            {data.stats.todayWords > 0 && (
-              <>
-                <span className="text-muted">•</span>
-                <WordCount current={data.stats.todayWords} />
-              </>
-            )}
+        <div className="flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
+          <div>
+            <div className="text-xs font-bold uppercase text-text-muted mb-1">
+              {t(`dashboard.greeting.${greetingKey}`)}
+            </div>
+            <h1 className="text-3xl font-bold uppercase text-text-main">
+              {formattedDate}
+            </h1>
+          </div>
+          <div className="text-right">
+            <div className="text-3xl font-bold text-text-main">{data.stats.todayWords}</div>
+            <div className="text-[10px] font-bold uppercase text-text-muted">
+              {t('meta.wordsToday')}
+            </div>
           </div>
         </div>
 

@@ -63,27 +63,39 @@ body,
    ============================================ */
 
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-app);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border: 2px solid var(--color-bg-app);
+  background: currentColor;
+  opacity: 0.2;
+  border-radius: 2px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
+/* Custom scroll class for specific elements */
+.custom-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: currentColor;
+  opacity: 0.2;
+  border-radius: 2px;
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border) var(--color-bg-app);
+  scrollbar-color: var(--color-border) transparent;
 }
 
 /* ============================================
@@ -154,4 +166,12 @@ body,
   @apply text-accent underline;
   @apply hover:text-text-main;
   @apply transition-colors duration-150;
+}
+
+/* ============================================
+   TEXTAREA CARET COLOR
+   ============================================ */
+
+textarea {
+  caret-color: var(--color-accent);
 }

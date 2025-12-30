@@ -14,6 +14,7 @@ export interface Translations {
     moodCheck: string;
     recentDays: string;
     wordsSuffix: string;
+    morningMind: string;
   };
   auth: {
     login: string;
@@ -76,6 +77,8 @@ export interface Translations {
     noEntries: string;
     recentEntries: string;
     viewAll: string;
+    longestStreak: string;
+    totalEntries: string;
   };
   entry: {
     titlePlaceholder: string;
@@ -183,6 +186,7 @@ export const cs: Translations = {
     moodCheck: 'Nálada',
     recentDays: 'Poslední Dny',
     wordsSuffix: 'slov',
+    morningMind: 'Ranní Mysl',
   },
   auth: {
     login: 'Přihlásit se',
@@ -245,6 +249,8 @@ export const cs: Translations = {
     noEntries: 'Zatím žádné záznamy. Začni psát!',
     recentEntries: 'Nedávné záznamy',
     viewAll: 'Zobrazit vše',
+    longestStreak: 'Nejdelší',
+    totalEntries: 'Celkem záznamů',
   },
   entry: {
     titlePlaceholder: 'Nadpis (volitelné)',

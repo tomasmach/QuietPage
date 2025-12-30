@@ -16,7 +16,7 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
         </aside>
 
         {/* Main Content */}
-        <main className="min-h-screen overflow-y-auto bg-background">
+        <main className="min-h-screen overflow-y-auto bg-background relative">
           {children}
         </main>
 

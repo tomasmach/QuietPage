@@ -1,20 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Flame } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Sidebar } from '../components/layout/Sidebar';
 import { ContextPanel } from '../components/layout/ContextPanel';
-import { ThemeToggle } from '../components/ui/ThemeToggle';
-import { Input } from '../components/ui/Input';
-import { Textarea } from '../components/ui/Textarea';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
+import { ProgressBar } from '../components/ui/ProgressBar';
 import { MoodSelector } from '../components/journal/MoodSelector';
 import { TagInput } from '../components/journal/TagInput';
-import { WordCount } from '../components/journal/WordCount';
 import { useEntry } from '../hooks/useEntry';
 import { useAutoSave } from '../hooks/useAutoSave';
+import { useDashboard } from '../hooks/useDashboard';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export function EntryEditorPage() {
@@ -23,7 +22,7 @@ export function EntryEditorPage() {
   const { t } = useLanguage();
 
   const { entry, isLoading, error, save, remove } = useEntry(id);
-  const [title, setTitle] = useState('');
+  const { data: dashboardData } = useDashboard();
   const [content, setContent] = useState('');
   const [moodRating, setMoodRating] = useState<number | null>(null);
   const [tags, setTags] = useState<string[]>([]);
@@ -43,7 +42,6 @@ export function EntryEditorPage() {
   // Initialize form from entry data
   useEffect(() => {
     if (entry) {
-      setTitle(entry.title || '');
       setContent(entry.content);
       setMoodRating(entry.mood_rating);
       setTags(entry.tags);
@@ -52,15 +50,14 @@ export function EntryEditorPage() {
 
   // Auto-save when content changes
   useEffect(() => {
-    if (content || title) {
+    if (content) {
       autoSave({
-        title: title || undefined,
         content,
         mood_rating: moodRating,
         tags,
       });
     }
-  }, [title, content, moodRating, tags]);
+  }, [content, moodRating, tags]);
 
   // Word count
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
@@ -69,7 +66,6 @@ export function EntryEditorPage() {
     setIsSaving(true);
     try {
       await save({
-        title: title || undefined,
         content,
         mood_rating: moodRating,
         tags,
@@ -103,7 +99,6 @@ export function EntryEditorPage() {
         <div className="p-8 flex items-center justify-center min-h-[50vh]">
           <Spinner size="lg" />
         </div>
-        <ThemeToggle />
       </AppLayout>
     );
   }
@@ -114,14 +109,13 @@ export function EntryEditorPage() {
         <div className="p-8">
           <Card>
             <p className="text-error">
-              Chyba při načítání záznamu: {error.message}
+              Chyba pri nacitani zaznamu: {error.message}
             </p>
             <Button onClick={handleCancel} className="mt-4">
               {t('common.cancel')}
             </Button>
           </Card>
         </div>
-        <ThemeToggle />
       </AppLayout>
     );
   }
@@ -130,12 +124,15 @@ export function EntryEditorPage() {
     ? new Date(entry.created_at)
     : new Date();
 
+  // Greeting based on time of day
+  const hour = new Date().getHours();
+  const greetingKey = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+
+  // Format date as "29. PROSINCE"
   const formattedDate = date.toLocaleDateString('cs-CZ', {
-    weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
-  });
+  }).toUpperCase();
 
   return (
     <AppLayout
@@ -143,9 +140,33 @@ export function EntryEditorPage() {
       contextPanel={
         <ContextPanel>
           <div className="space-y-6">
+            {/* Progress */}
+            {dashboardData && (
+              <div>
+                <ProgressBar
+                  value={wordCount}
+                  max={dashboardData.stats.dailyGoal}
+                  showLabel={true}
+                />
+              </div>
+            )}
+
+            {/* Streak Badge */}
+            {dashboardData && (
+              <div className="border-2 border-border p-3 bg-bg-panel shadow-hard">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-bold uppercase text-text-muted">
+                    {t('meta.currentStreak')}
+                  </span>
+                  <Flame size={14} className="text-text-main" />
+                </div>
+                <div className="text-3xl font-bold text-text-main">{dashboardData.stats.currentStreak}</div>
+              </div>
+            )}
+
             {/* Mood Selector */}
             <div>
-              <h3 className="text-sm font-bold text-primary mb-2 uppercase tracking-wide">
+              <h3 className="text-xs font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
                 {t('meta.moodCheck')}
               </h3>
               <MoodSelector
@@ -156,7 +177,7 @@ export function EntryEditorPage() {
 
             {/* Tags */}
             <div>
-              <h3 className="text-sm font-bold text-primary mb-2 uppercase tracking-wide">
+              <h3 className="text-xs font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
                 {t('entry.tags')}
               </h3>
               <TagInput value={tags} onChange={setTags} />
@@ -206,34 +227,33 @@ export function EntryEditorPage() {
     >
       <div className="p-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-4xl font-bold text-primary">
-              {id ? t('entry.editEntry') : t('entry.newEntry')}
+        <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
+          <div>
+            <div className="text-xs font-bold uppercase text-text-muted mb-1">
+              {t(`dashboard.greeting.${greetingKey}`)}
+            </div>
+            <h1 className="text-3xl font-bold uppercase text-text-main">
+              {formattedDate}
             </h1>
-            <WordCount current={wordCount} />
           </div>
-          <p className="text-muted">{formattedDate}</p>
+          <div className="text-right">
+            <div className="text-3xl font-bold text-text-main">{wordCount}</div>
+            <div className="text-[10px] font-bold uppercase text-text-muted">
+              {t('meta.wordsToday')}
+            </div>
+          </div>
         </div>
 
         {/* Editor */}
-        <div className="space-y-4">
-          {/* Title */}
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder={t('entry.titlePlaceholder')}
-            className="text-2xl font-bold"
-          />
-
+        <div>
           {/* Content */}
-          <Textarea
+          <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={t('entry.contentPlaceholder')}
             rows={20}
-            className="text-lg resize-none"
-            autoFocus={!id}
+            className="w-full text-lg font-mono leading-relaxed resize-none border-0 bg-transparent focus:ring-0 focus:outline-none text-text-main placeholder:text-text-muted"
+            autoFocus
           />
         </div>
       </div>
@@ -256,8 +276,6 @@ export function EntryEditorPage() {
           </div>
         </div>
       </Modal>
-
-      <ThemeToggle />
     </AppLayout>
   );
 }

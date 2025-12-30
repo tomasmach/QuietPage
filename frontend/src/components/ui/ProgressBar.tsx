@@ -1,5 +1,6 @@
 import { type HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export interface ProgressBarProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   value: number;
@@ -11,17 +12,24 @@ export interface ProgressBarProps extends Omit<HTMLAttributes<HTMLDivElement>, '
 export function ProgressBar({
   value,
   max = 100,
-  showLabel = false,
-  animated = false,
+  showLabel = true,
+  animated = true,
   className,
   ...props
 }: ProgressBarProps) {
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
+  const { t } = useLanguage();
 
   return (
     <div className={cn('w-full', className)} {...props}>
+      {showLabel && (
+        <div className="flex justify-between text-xs font-bold uppercase mb-1 text-text-main">
+          <span>{t('meta.progress')}</span>
+          <span>{value} / {max} {t('meta.wordsSuffix')}</span>
+        </div>
+      )}
       <div
-        className="h-4 border-2 border-border bg-bg-panel overflow-hidden relative"
+        className="h-4 w-full border-2 border-border bg-bg-panel relative"
         role="progressbar"
         aria-valuenow={value}
         aria-valuemin={0}
@@ -30,17 +38,17 @@ export function ProgressBar({
       >
         <div
           className={cn(
-            'h-full bg-accent transition-all duration-300',
-            animated && 'progress-striped'
+            'h-full transition-all duration-500 bg-accent',
+            animated && percentage < 100 && 'progress-striped'
           )}
           style={{ width: `${percentage}%` }}
         />
+        {percentage >= 100 && (
+          <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold uppercase tracking-widest text-accent-fg">
+            {t('meta.goalMet')}
+          </div>
+        )}
       </div>
-      {showLabel && (
-        <div className="mt-1 text-xs text-text-muted font-mono text-right">
-          {Math.round(percentage)}%
-        </div>
-      )}
     </div>
   );
 }

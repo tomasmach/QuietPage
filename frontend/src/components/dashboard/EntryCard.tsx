@@ -33,13 +33,13 @@ export function EntryCard({ entry }: EntryCardProps) {
 
   return (
     <Link to={`/entries/${entry.id}`} className="block group">
-      <Card className="transition-transform hover:translate-x-1 hover:translate-y-1">
+      <Card className="transition-all hover:translate-x-1 hover:translate-y-1 hover:border-dashed">
         <div className="space-y-3">
           {/* Header with date and mood */}
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm font-bold text-primary">{formattedDate}</div>
-              <div className="text-xs text-muted">{formattedTime}</div>
+              <div className="text-sm font-bold text-text-main uppercase">{formattedDate}</div>
+              <div className="text-xs text-text-muted">{formattedTime}</div>
             </div>
             {entry.mood_rating && (
               <div className="text-2xl">{MOOD_EMOJIS[entry.mood_rating]}</div>

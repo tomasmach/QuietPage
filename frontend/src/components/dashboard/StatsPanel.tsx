@@ -1,70 +1,117 @@
-import type { DashboardStats } from '../../hooks/useDashboard';
+import { Flame, CloudRain, Cloud, Sun, Zap, Coffee } from 'lucide-react';
+import type { DashboardStats, RecentEntry } from '../../hooks/useDashboard';
 import { ProgressBar } from '../ui/ProgressBar';
-import { Badge } from '../ui/Badge';
 import { MoodSelector } from '../journal/MoodSelector';
 import { useLanguage } from '../../contexts/LanguageContext';
 
+interface RecentDay {
+  hasEntry: boolean;
+}
+
 interface StatsPanelProps {
   stats: DashboardStats;
+  recentEntries?: RecentEntry[];
+  recentDays?: RecentDay[];
   onMoodSelect?: (mood: number) => void;
   selectedMood?: number | null;
+}
+
+/**
+ * Get mood icon component based on mood rating
+ */
+function getMoodIcon(mood: number | null, size: number = 12) {
+  const iconProps = { size, className: 'text-text-main' };
+
+  switch (mood) {
+    case 1:
+      return <CloudRain {...iconProps} />;
+    case 2:
+      return <Cloud {...iconProps} />;
+    case 3:
+      return <Sun {...iconProps} />;
+    case 4:
+      return <Zap {...iconProps} />;
+    case 5:
+      return <Coffee {...iconProps} />;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Format date for display
+ */
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  return `${day}.${month}.`;
 }
 
 /**
  * Stats panel component for the dashboard context panel
  * Displays progress bar, streak badge, and mood selector
  */
-export function StatsPanel({ stats, onMoodSelect, selectedMood }: StatsPanelProps) {
+export function StatsPanel({
+  stats,
+  recentEntries = [],
+  recentDays = [],
+  onMoodSelect,
+  selectedMood
+}: StatsPanelProps) {
   const { t } = useLanguage();
 
-  const progressPercentage = Math.min(
-    Math.round((stats.todayWords / stats.dailyGoal) * 100),
-    100
-  );
+  // Generate default recentDays if not provided (last 7 days mock data)
+  const displayRecentDays = recentDays.length > 0
+    ? recentDays
+    : Array.from({ length: 7 }).map((_, i) => ({ hasEntry: i >= 4 }));
 
   return (
     <div className="space-y-6">
       {/* Progress Section */}
       <div>
-        <h3 className="text-sm font-bold text-primary mb-2 uppercase tracking-wide">
+        <h3 className="text-xs font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
           {t('meta.progress')}
         </h3>
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between text-sm">
-            <span className="text-muted">{t('meta.wordsToday')}</span>
-            <span className="font-bold text-text">
-              {stats.todayWords} / {stats.dailyGoal}
-            </span>
-          </div>
-          <ProgressBar value={progressPercentage} max={100} />
-          {progressPercentage >= 100 && (
-            <div className="text-xs text-accent font-medium">
-              {t('meta.goalMet')} 🎉
-            </div>
-          )}
-        </div>
+        <ProgressBar
+          value={stats.todayWords}
+          max={stats.dailyGoal}
+          showLabel={true}
+          animated={true}
+        />
       </div>
 
-      {/* Streak Section */}
-      <div>
-        <h3 className="text-sm font-bold text-primary mb-2 uppercase tracking-wide">
-          {t('meta.currentStreak')}
-        </h3>
-        <div className="flex items-center gap-3">
-          <Badge className="text-base px-3 py-2">
-            🔥 {stats.currentStreak}
-          </Badge>
-          <div className="text-xs text-muted">
-            <div>Nejdelší: {stats.longestStreak}</div>
-            <div>Celkem: {stats.totalEntries} záznamů</div>
-          </div>
+      {/* Streak Badge */}
+      <div className="border-2 border-border p-3 bg-bg-panel shadow-hard">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-[10px] font-bold uppercase text-text-muted">
+            {t('meta.currentStreak')}
+          </span>
+          <Flame size={14} className="text-text-main" />
+        </div>
+        <div className="text-3xl font-bold text-text-main">{stats.currentStreak}</div>
+        {/* Mini bars for last 7 days */}
+        <div className="flex gap-1 mt-2">
+          {displayRecentDays.map((day, i) => (
+            <div
+              key={i}
+              className={`h-1.5 flex-1 ${
+                day.hasEntry
+                  ? 'bg-accent'
+                  : 'bg-bg-app border border-border opacity-30'
+              }`}
+            />
+          ))}
+        </div>
+        <div className="mt-2 text-xs text-text-muted">
+          <span>{t('dashboard.longestStreak') || 'Nejdelší'}: {stats.longestStreak}</span>
         </div>
       </div>
 
       {/* Mood Selector */}
       {onMoodSelect && (
         <div>
-          <h3 className="text-sm font-bold text-primary mb-2 uppercase tracking-wide">
+          <h3 className="text-xs font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
             {t('meta.moodCheck')}
           </h3>
           <MoodSelector
@@ -74,32 +121,28 @@ export function StatsPanel({ stats, onMoodSelect, selectedMood }: StatsPanelProp
         </div>
       )}
 
-      {/* Recent Days Mini Calendar */}
-      <div>
-        <h3 className="text-sm font-bold text-primary mb-2 uppercase tracking-wide">
-          {t('meta.recentDays')}
-        </h3>
-        <div className="grid grid-cols-7 gap-1">
-          {Array.from({ length: 7 }).map((_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() - (6 - i));
-            const dayName = date.toLocaleDateString('cs-CZ', { weekday: 'short' });
-
-            // This would need real data from the backend
-            const hasEntry = i >= 4; // Mock data
-
-            return (
+      {/* Recent Days */}
+      {recentEntries.length > 0 && (
+        <div className="border-t-2 border-border pt-4">
+          <h3 className="text-xs font-bold uppercase mb-2 text-text-main">
+            {t('meta.recentDays')}
+          </h3>
+          <div className="space-y-2">
+            {recentEntries.slice(0, 4).map((entry) => (
               <div
-                key={i}
-                className="aspect-square flex flex-col items-center justify-center border-2 border-border"
+                key={entry.id}
+                className="flex justify-between items-center text-xs border border-border p-2 hover:border-dashed cursor-pointer transition-all text-text-main"
               >
-                <div className="text-xs text-muted">{dayName}</div>
-                <div className="text-lg">{hasEntry ? '✓' : '·'}</div>
+                <span className="font-bold">{formatDate(entry.created_at)}</span>
+                <div className="flex items-center gap-2">
+                  <span>{entry.word_count}</span>
+                  {getMoodIcon(entry.mood_rating, 12)}
+                </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

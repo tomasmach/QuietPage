@@ -9,13 +9,14 @@ export const en: Translations = {
   },
   meta: {
     version: 'Version 0.9.1 Beta',
-    wordsToday: 'Words today',
+    wordsToday: 'Words Today',
     progress: 'Progress',
-    goalMet: 'Goal met',
+    goalMet: 'Goal Met',
     currentStreak: 'Current Streak',
     moodCheck: 'Mood',
     recentDays: 'Recent Days',
     wordsSuffix: 'words',
+    morningMind: 'Morning Mind',
   },
   auth: {
     login: 'Log in',
@@ -78,6 +79,8 @@ export const en: Translations = {
     noEntries: 'No entries yet. Start writing!',
     recentEntries: 'Recent entries',
     viewAll: 'View all',
+    longestStreak: 'Longest',
+    totalEntries: 'Total entries',
   },
   entry: {
     titlePlaceholder: 'Title (optional)',

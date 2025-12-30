@@ -24,20 +24,17 @@ export function Sidebar() {
   return (
     <div className="flex flex-col h-full p-6">
       {/* Logo */}
-      <div className="mb-12">
+      <div className="mb-8">
         <Link to="/dashboard" className="block">
-          <h1 className="text-2xl font-bold text-primary tracking-tight">
-            QuietPage
-          </h1>
-          <div
-            className="absolute mt-1 ml-1 w-full h-1 bg-primary/20 -z-10"
-            style={{ transform: 'translateY(-4px)' }}
-          />
+          <div className="border-2 border-border p-3 inline-flex items-center gap-2 bg-bg-app shadow-hard">
+            <div className="w-3 h-3 bg-accent"></div>
+            <span className="font-bold text-lg uppercase tracking-widest leading-none text-text-main">QuietPage</span>
+          </div>
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-2">
+      <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -47,38 +44,37 @@ export function Sidebar() {
               key={item.path}
               to={item.path}
               className={`
-                flex items-center gap-3 px-4 py-3 rounded-none
-                border-2 transition-all
+                w-full text-left py-2 px-3 border-2 font-bold text-sm uppercase flex justify-between items-center group transition-colors
                 ${active
-                  ? 'bg-primary text-background border-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
-                  : 'bg-background text-text border-border hover:border-primary'
+                  ? 'bg-accent text-accent-fg'
+                  : 'border-transparent hover:border-border text-text-main'
                 }
               `}
             >
-              <Icon size={20} />
-              <span className="font-medium">{item.label}</span>
+              <span className="flex items-center gap-3">
+                <Icon size={16} />
+                <span>{item.label}</span>
+              </span>
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Language Switcher */}
-      <div className="mt-auto pt-6 space-y-4 border-t-2 border-border">
+      {/* Footer */}
+      <div className="mt-auto pt-6 flex flex-col gap-4">
+        {/* Language Switcher */}
         <button
           onClick={toggleLanguage}
-          className="flex items-center gap-3 px-4 py-3 w-full rounded-none
-            border-2 border-border bg-background text-text
-            hover:border-primary transition-all"
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-muted hover:text-text-main transition-colors text-left"
           aria-label="Toggle language"
         >
-          <Globe size={20} />
-          <span className="font-medium">
-            {language === 'cs' ? 'Čeština' : 'English'}
-          </span>
+          <Globe size={14} />
+          <span>{language === 'cs' ? 'Jazyk: Cestina' : 'Language: English'}</span>
         </button>
 
         {/* Version */}
-        <div className="text-xs text-muted text-center">
+        <div className="text-[10px] uppercase font-bold text-text-muted">
           {t('meta.version')}
         </div>
       </div>

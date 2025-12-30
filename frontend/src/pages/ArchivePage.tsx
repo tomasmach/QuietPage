@@ -37,16 +37,14 @@ export function ArchivePage() {
     <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
       <div className="p-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 border-b-2 border-border pb-4 border-dashed">
           <div>
-            <h1 className="text-4xl font-bold text-primary mb-2">
+            <div className="text-xs font-bold uppercase text-text-muted mb-1">
               {t('nav.archive')}
+            </div>
+            <h1 className="text-3xl font-bold uppercase text-text-main">
+              {totalCount} {totalCount === 1 ? 'záznam' : 'záznamů'}
             </h1>
-            {totalCount > 0 && (
-              <p className="text-muted">
-                {totalCount} {totalCount === 1 ? 'záznam' : 'záznamů'}
-              </p>
-            )}
           </div>
           <Button onClick={handleNewEntry}>{t('dashboard.newEntry')}</Button>
         </div>
