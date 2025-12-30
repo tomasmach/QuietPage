@@ -10,13 +10,13 @@
 
 :root {
   /* Midnight (Dark) - DEFAULT */
-  --color-bg-app: #0D0D0D;
-  --color-bg-panel: #242424;
+  --color-bg-app: #1A1A1A;
+  --color-bg-panel: #2D2D2D;
   --color-text-main: #F5F5F5;
-  --color-text-muted: #888888;
+  --color-text-muted: #999999;
   --color-border: #F5F5F5;
   --color-accent: #F5F5F5;
-  --color-accent-fg: #0D0D0D;
+  --color-accent-fg: #1A1A1A;
   --color-shadow: #F5F5F5;
 }
 
