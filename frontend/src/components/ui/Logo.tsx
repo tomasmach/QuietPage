@@ -34,7 +34,7 @@ export function Logo({ size = 'md', className }: LogoProps) {
       )}
     >
       <BookOpen size={iconSizes[size]} className="text-accent" />
-      <span className={cn('text-text-main', textSizes[size])}>QuietPage</span>
+      <span className={cn('text-text-main', textSizes[size])}>QUIETPAGE</span>
     </div>
   );
 }

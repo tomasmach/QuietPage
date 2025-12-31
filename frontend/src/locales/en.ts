@@ -44,6 +44,10 @@ export const en: Translations = {
     tagline: 'Your personal space for writing and reflection',
     getStarted: 'Get started',
     signIn: 'Sign in',
+    hero: {
+      headline: 'Your private space for mindful writing',
+      subheadline: 'Express yourself freely, track your emotional wellbeing, and build lasting writing habits',
+    },
     features: {
       encrypted: {
         title: 'Encrypted entries',
@@ -57,6 +61,30 @@ export const en: Translations = {
         title: 'Writing goals',
         description: 'Daily goals and reminders',
       },
+      privacy: {
+        title: 'Your Private Sanctuary',
+        description: 'Your thoughts are encrypted and stay completely private. Only you can access your entries.',
+      },
+      moodTracking: {
+        title: 'Track Your Emotional Journey',
+        description: 'Log how you feel each day. Visualize your emotional patterns and discover what affects your wellbeing.',
+      },
+      streaks: {
+        title: 'Build Lasting Habits',
+        description: 'Stay motivated with streak tracking and daily goals. Celebrate your consistency.',
+      },
+      insights: {
+        title: 'Understand Your Patterns',
+        description: 'Beautiful charts show your writing trends, word counts, and mood patterns.',
+      },
+    },
+    finalCta: {
+      headline: 'Start Your Mindful Writing Journey',
+      subtext: 'Free to start, your privacy guaranteed',
+    },
+    trust: {
+      encrypted: 'Encrypted',
+      private: '100% Private',
     },
   },
   themes: {

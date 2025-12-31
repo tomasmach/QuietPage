@@ -40,7 +40,6 @@ body {
   @apply font-mono;
   margin: 0;
   padding: 0;
-  overflow: hidden;
   background-color: var(--color-bg-app);
   color: var(--color-text-main);
 }
@@ -247,4 +246,56 @@ textarea {
 
 .toast-exit {
   animation: toast-slide-out 0.3s ease-in forwards;
+}
+
+/* ============================================
+   LANDING PAGE ANIMATIONS
+   ============================================ */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes flicker {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .float-animation,
+  .pulse-animation,
+  .flicker-animation,
+  .draw-animation {
+    animation: none !important;
+  }
 }

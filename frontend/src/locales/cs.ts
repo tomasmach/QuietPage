@@ -42,6 +42,10 @@ export interface Translations {
     tagline: string;
     getStarted: string;
     signIn: string;
+    hero: {
+      headline: string;
+      subheadline: string;
+    };
     features: {
       encrypted: {
         title: string;
@@ -55,6 +59,30 @@ export interface Translations {
         title: string;
         description: string;
       };
+      privacy: {
+        title: string;
+        description: string;
+      };
+      moodTracking: {
+        title: string;
+        description: string;
+      };
+      streaks: {
+        title: string;
+        description: string;
+      };
+      insights: {
+        title: string;
+        description: string;
+      };
+    };
+    finalCta: {
+      headline: string;
+      subtext: string;
+    };
+    trust: {
+      encrypted: string;
+      private: string;
     };
   };
   themes: {
@@ -258,6 +286,10 @@ export const cs: Translations = {
     tagline: 'Tvůj osobní prostor pro psaní a reflexi',
     getStarted: 'Začít psát',
     signIn: 'Přihlásit se',
+    hero: {
+      headline: 'Tvůj soukromý prostor pro mindful psaní',
+      subheadline: 'Vyjadřuj se svobodně, sleduj své emocionální zdraví a buduj trvalé návyky psaní',
+    },
     features: {
       encrypted: {
         title: 'Šifrované záznamy',
@@ -271,6 +303,30 @@ export const cs: Translations = {
         title: 'Psací cíle',
         description: 'Denní cíle a připomínky',
       },
+      privacy: {
+        title: 'Tvůj Soukromý Prostor',
+        description: 'Tvé myšlenky jsou šifrované a zůstávají zcela soukromé. Přístup k nim máš jen ty.',
+      },
+      moodTracking: {
+        title: 'Sleduj Svou Emocionální Cestu',
+        description: 'Zaznamenej si každý den, jak se cítíš. Vizualizuj své emocionální vzory a objevuj, co ovlivňuje tvou pohodu.',
+      },
+      streaks: {
+        title: 'Buduj Trvalé Návyky',
+        description: 'Zůstaň motivovaný díky sledování streaks a denních cílů. Oslavuj svou konzistenci.',
+      },
+      insights: {
+        title: 'Porozuměj Svým Vzorům',
+        description: 'Krásné grafy ukazují tvé psací trendy, počty slov a nálady.',
+      },
+    },
+    finalCta: {
+      headline: 'Začni Svou Cestu Mindful Psaní',
+      subtext: 'Zdarma na začátek, tvé soukromí garantováno',
+    },
+    trust: {
+      encrypted: 'Šifrováno',
+      private: '100% Soukromé',
     },
   },
   themes: {
