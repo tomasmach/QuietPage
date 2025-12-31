@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from rest_framework import serializers
 import pytz
+import re
 
 User = get_user_model()
 
@@ -87,10 +88,29 @@ class RegisterSerializer(serializers.ModelSerializer):
         ]
 
     def validate_username(self, value):
-        """Validate username uniqueness."""
+        """Validate username format and uniqueness."""
+        # Pouze alfanumerické znaky, podtržítko a tečka
+        if not re.match(r'^[a-zA-Z0-9_.]+$', value):
+            raise serializers.ValidationError(
+                "Uživatelské jméno může obsahovat pouze písmena, čísla, podtržítko a tečku."
+            )
+
+        # Minimální délka
+        if len(value) < 3:
+            raise serializers.ValidationError(
+                "Uživatelské jméno musí mít alespoň 3 znaky."
+            )
+
+        # Maximální délka
+        if len(value) > 30:
+            raise serializers.ValidationError(
+                "Uživatelské jméno může mít maximálně 30 znaků."
+            )
+
+        # Existující unique check
         if User.objects.filter(username__iexact=value).exists():
             raise serializers.ValidationError(
-                "Uživatel s tímto uživatelským jménem již existuje."
+                "Toto uživatelské jméno je již obsazené."
             )
         return value
 

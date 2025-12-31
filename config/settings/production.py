@@ -44,6 +44,12 @@ DATABASES = {
 # Security Settings
 # https://docs.djangoproject.com/en/5.2/topics/security/
 
+# Admin URL Security
+# The admin URL can be customized via ADMIN_URL environment variable to obscure the admin panel
+# This security-through-obscurity measure makes it harder for automated scanners to find the admin
+# Example: export ADMIN_URL=secret-dashboard-xyz/
+# Default: admin/ (for backward compatibility in development)
+
 # HTTPS
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
@@ -130,13 +136,14 @@ LOGGING = {
 
 # Content Security Policy (CSP)
 # https://django-csp.readthedocs.io/
-# Note: 'unsafe-inline' is used temporarily for scripts and styles
-# TODO: Refactor inline scripts/styles to use nonces or hashes for better security
+# Note: React/Vite builds all scripts to external files, so 'unsafe-inline' is not needed for scripts.
+# However, 'unsafe-inline' for styles is required by Tailwind CSS and many UI libraries.
+# TODO: Consider implementing nonce-based CSP for even stricter security in the future.
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": [SELF],
-        "script-src": [SELF, "'unsafe-inline'"],  # TODO: Remove unsafe-inline, use nonces
-        "style-src": [SELF, "'unsafe-inline'", "https://fonts.googleapis.com"],  # Google Fonts CSS
+        "script-src": [SELF],  # Removed unsafe-inline - React/Vite builds to external files
+        "style-src": [SELF, "'unsafe-inline'", "https://fonts.googleapis.com"],  # unsafe-inline required for Tailwind CSS
         "img-src": [SELF, "data:", "https:"],     # Allow data URIs and HTTPS images
         "font-src": [SELF, "https://fonts.gstatic.com"],  # Google Fonts files
         "connect-src": [SELF],

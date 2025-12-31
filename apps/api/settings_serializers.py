@@ -287,12 +287,6 @@ class ChangeEmailSerializer(serializers.Serializer):
                 "Tento email je jiz pouzivan jinym uctem."
             )
 
-        # Block plus-addressing tricks
-        if '+' in value.split('@')[0]:
-            raise serializers.ValidationError(
-                "Email s '+' neni povolen."
-            )
-
         return value
 
     def save(self):
