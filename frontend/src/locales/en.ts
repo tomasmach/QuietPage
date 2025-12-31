@@ -192,4 +192,34 @@ export const en: Translations = {
       writingTime: 'Preferred Writing Time',
     },
   },
+  toast: {
+    close: 'Close',
+    // General
+    saveSuccess: 'Changes saved',
+    saveError: 'Failed to save changes',
+    networkError: 'Connection error. Please try again.',
+    unknownError: 'An unexpected error occurred',
+    // Auth
+    loginError: 'Invalid credentials',
+    loginSuccess: 'Login successful',
+    logoutSuccess: 'Logout successful',
+    registerError: 'Registration failed',
+    accountDeactivated: 'This account has been deactivated',
+    // Profile
+    profileUpdated: 'Profile updated',
+    avatarUploaded: 'Avatar uploaded',
+    avatarRemoved: 'Avatar removed',
+    // Password and email
+    passwordChanged: 'Password changed',
+    emailChanged: 'Email changed',
+    // Goals
+    goalsUpdated: 'Goals updated',
+    // Privacy
+    privacyUpdated: 'Privacy settings updated',
+    // Entries
+    entrySaved: 'Entry saved',
+    entryDeleted: 'Entry deleted',
+    // Account
+    accountDeleted: 'Account deleted',
+  },
 };

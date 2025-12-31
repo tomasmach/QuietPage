@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSettings } from '@/hooks/useSettings';
+import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -10,7 +11,8 @@ const CONFIRMATION_TEXT = 'SMAZAT';
 
 export function DeleteAccountPage() {
   const { t, language } = useLanguage();
-  const { isLoading, error, clearMessages, deleteAccount } = useSettings();
+  const { isLoading, clearMessages, deleteAccount } = useSettings();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     password: '',
@@ -28,10 +30,13 @@ export function DeleteAccountPage() {
       return;
     }
 
-    await deleteAccount({
+    const result = await deleteAccount({
       password: formData.password,
       confirmation_text: formData.confirmation_text,
     });
+    if (!result) {
+      toast.error(t('toast.saveError'));
+    }
   };
 
   return (
@@ -87,13 +92,6 @@ export function DeleteAccountPage() {
               : undefined
           }
         />
-
-        {/* Error Message */}
-        {error && (
-          <div className="p-4 border-2 border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
-            {error}
-          </div>
-        )}
 
         {/* Submit Button */}
         <div className="flex justify-end">

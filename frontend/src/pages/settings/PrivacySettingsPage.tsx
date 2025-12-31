@@ -2,13 +2,15 @@ import { useState, type FormEvent } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSettings } from '@/hooks/useSettings';
+import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
 export function PrivacySettingsPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { isLoading, error, success, clearMessages, updatePrivacy } = useSettings();
+  const { isLoading, clearMessages, updatePrivacy } = useSettings();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     email_notifications: user?.email_notifications ?? true,
@@ -17,7 +19,12 @@ export function PrivacySettingsPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     clearMessages();
-    await updatePrivacy(formData);
+    const result = await updatePrivacy(formData);
+    if (result) {
+      toast.success(t('toast.privacyUpdated'));
+    } else {
+      toast.error(t('toast.saveError'));
+    }
   };
 
   return (
@@ -68,19 +75,6 @@ export function PrivacySettingsPage() {
             <p>{t('settings.privacy.dataUsageInfo')}</p>
           </div>
         </div>
-
-        {/* Messages */}
-        {error && (
-          <div className="p-4 border-2 border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="p-4 border-2 border-green-500 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-sm font-mono font-bold">
-            {success}
-          </div>
-        )}
 
         {/* Submit Button */}
         <div className="flex justify-end">

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,6 +14,7 @@ export function SignupPage() {
   const navigate = useNavigate();
   const { register, isLoading } = useAuth();
   const { t } = useLanguage();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     username: '',
@@ -21,7 +23,6 @@ export function SignupPage() {
     password_confirm: '',
   });
   const [errors, setErrors] = useState<{
-    general?: string;
     username?: string;
     email?: string;
     password?: string;
@@ -44,24 +45,35 @@ export function SignupPage() {
           if (typeof errorData === 'object') {
             // Sanitize - zobraz pouze známé chybové klíče
             const safeErrors: Record<string, string> = {};
-            const allowedKeys = ['username', 'email', 'password', 'password_confirm', 'general'];
+            const allowedKeys = ['username', 'email', 'password', 'password_confirm'];
             for (const key of allowedKeys) {
               if (errorData[key]) {
                 safeErrors[key] = String(errorData[key]);
               }
             }
-            setErrors(Object.keys(safeErrors).length > 0 ? safeErrors : { general: t('auth.signupError') });
+
+            // Handle general error via toast
+            if (errorData['general']) {
+              toast.error(t('toast.registerError'));
+            }
+
+            // If no field-specific errors but there was an error, show toast
+            if (Object.keys(safeErrors).length > 0) {
+              setErrors(safeErrors);
+            } else if (!errorData['general']) {
+              toast.error(t('toast.registerError'));
+            }
           } else {
-            setErrors({ general: t('auth.signupError') });
+            toast.error(t('toast.registerError'));
           }
         } catch {
           // If not JSON, treat as general error - generická zpráva, ne err.message
           logger.error('Signup error:', err);
-          setErrors({ general: t('auth.signupError') });
+          toast.error(t('toast.registerError'));
         }
       } else {
         logger.error('Signup error (unknown):', err);
-        setErrors({ general: t('auth.signupError') });
+        toast.error(t('toast.registerError'));
       }
     }
   };
@@ -134,13 +146,6 @@ export function SignupPage() {
               disabled={isLoading}
               error={errors.password_confirm}
             />
-
-            {/* General Error Message */}
-            {errors.general && (
-              <div className="p-4 border-2 border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
-                {errors.general}
-              </div>
-            )}
 
             {/* Submit Button */}
             <Button

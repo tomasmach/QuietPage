@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSettings } from '@/hooks/useSettings';
+import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -11,12 +12,11 @@ export function SecuritySettingsPage() {
   const { t } = useLanguage();
   const {
     isLoading,
-    error,
-    success,
     clearMessages,
     changePassword,
     changeEmail,
   } = useSettings();
+  const toast = useToast();
 
   // Password form state
   const [passwordForm, setPasswordForm] = useState({
@@ -51,6 +51,9 @@ export function SecuritySettingsPage() {
         new_password: '',
         new_password_confirm: '',
       });
+      toast.success(t('toast.passwordChanged'));
+    } else {
+      toast.error(t('toast.saveError'));
     }
   };
 
@@ -65,6 +68,9 @@ export function SecuritySettingsPage() {
         new_email: '',
         password: '',
       });
+      toast.success(t('toast.emailChanged'));
+    } else {
+      toast.error(t('toast.saveError'));
     }
   };
 
@@ -120,19 +126,6 @@ export function SecuritySettingsPage() {
             error={passwordError}
           />
 
-          {/* Messages for password form */}
-          {activeForm === 'password' && error && (
-            <div className="p-4 border-2 border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
-              {error}
-            </div>
-          )}
-
-          {activeForm === 'password' && success && (
-            <div className="p-4 border-2 border-green-500 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-sm font-mono font-bold">
-              {success}
-            </div>
-          )}
-
           <div className="flex justify-end">
             <Button
               type="submit"
@@ -177,19 +170,6 @@ export function SecuritySettingsPage() {
             autoComplete="current-password"
             helperText={t('settings.security.passwordForEmailHint')}
           />
-
-          {/* Messages for email form */}
-          {activeForm === 'email' && error && (
-            <div className="p-4 border-2 border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
-              {error}
-            </div>
-          )}
-
-          {activeForm === 'email' && success && (
-            <div className="p-4 border-2 border-green-500 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-sm font-mono font-bold">
-              {success}
-            </div>
-          )}
 
           <div className="flex justify-end">
             <Button

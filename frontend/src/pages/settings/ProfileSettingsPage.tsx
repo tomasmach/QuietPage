@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSettings } from '@/hooks/useSettings';
+import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -14,7 +15,8 @@ export function ProfileSettingsPage() {
   const { user } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
-  const { isLoading, error, success, clearMessages, updateProfile, uploadAvatar } = useSettings();
+  const { isLoading, clearMessages, updateProfile, uploadAvatar } = useSettings();
+  const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -27,11 +29,16 @@ export function ProfileSettingsPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     clearMessages();
-    await updateProfile({
+    const result = await updateProfile({
       first_name: formData.first_name,
       last_name: formData.last_name,
       bio: formData.bio,
     });
+    if (result) {
+      toast.success(t('toast.profileUpdated'));
+    } else {
+      toast.error(t('toast.saveError'));
+    }
   };
 
   const handleAvatarClick = () => {
@@ -60,7 +67,10 @@ export function ProfileSettingsPage() {
     reader.readAsDataURL(file);
 
     // Upload avatar
-    await uploadAvatar(file);
+    const result = await uploadAvatar(file);
+    if (result) {
+      toast.success(t('toast.avatarUploaded'));
+    }
   };
 
   return (
@@ -133,19 +143,6 @@ export function ProfileSettingsPage() {
           disabled={isLoading}
           helperText={t('settings.profile.bioHint')}
         />
-
-        {/* Messages */}
-        {error && (
-          <div className="p-4 border-2 border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="p-4 border-2 border-green-500 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-sm font-mono font-bold">
-            {success}
-          </div>
-        )}
 
         {/* Submit Button */}
         <div className="flex justify-end">

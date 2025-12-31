@@ -190,6 +190,28 @@ export interface Translations {
       writingTime: string;
     };
   };
+  toast: {
+    close: string;
+    saveSuccess: string;
+    saveError: string;
+    networkError: string;
+    unknownError: string;
+    loginError: string;
+    loginSuccess: string;
+    logoutSuccess: string;
+    registerError: string;
+    accountDeactivated: string;
+    profileUpdated: string;
+    avatarUploaded: string;
+    avatarRemoved: string;
+    passwordChanged: string;
+    emailChanged: string;
+    goalsUpdated: string;
+    privacyUpdated: string;
+    entrySaved: string;
+    entryDeleted: string;
+    accountDeleted: string;
+  };
 }
 
 export const cs: Translations = {
@@ -383,5 +405,35 @@ export const cs: Translations = {
       customGoalPlaceholder: 'Vlastní hodnota',
       writingTime: 'Preferovaný čas psaní',
     },
+  },
+  toast: {
+    close: 'Zavřít',
+    // Obecné
+    saveSuccess: 'Změny byly uloženy',
+    saveError: 'Nepodařilo se uložit změny',
+    networkError: 'Chyba připojení. Zkuste to znovu.',
+    unknownError: 'Nastala neočekávaná chyba',
+    // Auth
+    loginError: 'Neplatné přihlašovací údaje',
+    loginSuccess: 'Přihlášení úspěšné',
+    logoutSuccess: 'Odhlášení úspěšné',
+    registerError: 'Registrace se nezdařila',
+    accountDeactivated: 'Tento účet byl deaktivován',
+    // Profil
+    profileUpdated: 'Profil byl aktualizován',
+    avatarUploaded: 'Avatar byl nahrán',
+    avatarRemoved: 'Avatar byl odstraněn',
+    // Heslo a email
+    passwordChanged: 'Heslo bylo změněno',
+    emailChanged: 'Email byl změněn',
+    // Cíle
+    goalsUpdated: 'Cíle byly aktualizovány',
+    // Soukromí
+    privacyUpdated: 'Nastavení soukromí bylo aktualizováno',
+    // Záznamy
+    entrySaved: 'Záznam byl uložen',
+    entryDeleted: 'Záznam byl smazán',
+    // Účet
+    accountDeleted: 'Účet byl smazán',
   },
 };

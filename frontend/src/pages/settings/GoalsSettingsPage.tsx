@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSettings } from '@/hooks/useSettings';
+import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -28,7 +29,8 @@ const WRITING_TIMES: WritingTime[] = ['morning', 'afternoon', 'evening'];
 export function GoalsSettingsPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { isLoading, error, success, clearMessages, updateGoals } = useSettings();
+  const { isLoading, clearMessages, updateGoals } = useSettings();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     daily_word_goal: user?.daily_word_goal || 750,
@@ -41,7 +43,12 @@ export function GoalsSettingsPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     clearMessages();
-    await updateGoals(formData);
+    const result = await updateGoals(formData);
+    if (result) {
+      toast.success(t('toast.goalsUpdated'));
+    } else {
+      toast.error(t('toast.saveError'));
+    }
   };
 
   return (
@@ -166,19 +173,6 @@ export function GoalsSettingsPage() {
             </div>
           )}
         </div>
-
-        {/* Messages */}
-        {error && (
-          <div className="p-4 border-2 border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="p-4 border-2 border-green-500 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-sm font-mono font-bold">
-            {success}
-          </div>
-        )}
 
         {/* Submit Button */}
         <div className="flex justify-end">

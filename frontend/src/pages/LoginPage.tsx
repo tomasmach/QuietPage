@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,22 +13,21 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { login, isLoading } = useAuth();
   const { t } = useLanguage();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
-  const [error, setError] = useState<string>('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
 
     try {
       await login(formData);
       navigate('/dashboard');
     } catch {
-      setError(t('auth.loginError'));
+      toast.error(t('toast.loginError'));
     }
   };
 
@@ -73,13 +73,6 @@ export function LoginPage() {
               autoComplete="current-password"
               disabled={isLoading}
             />
-
-            {/* Error Message */}
-            {error && (
-              <div className="p-4 border-2 border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm font-mono font-bold">
-                {error}
-              </div>
-            )}
 
             {/* Submit Button */}
             <Button
