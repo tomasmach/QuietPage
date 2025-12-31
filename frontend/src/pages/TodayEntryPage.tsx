@@ -79,7 +79,7 @@ export function TodayEntryPage() {
         <div className="p-8">
           <Card>
             <p className="text-error">
-              Chyba pri nacitani zaznamu: {error.message}
+              Chyba při načítání záznamu. Zkuste obnovit stránku.
             </p>
             <Button onClick={handleCancel} className="mt-4">
               {t('common.cancel')}

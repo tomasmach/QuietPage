@@ -95,8 +95,11 @@ export function useSettings(): UseSettingsReturn {
       }
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'An error occurred';
-      setError(message);
+      // Zobraz generickou zprávu, ne surový error
+      setError('Nastala chyba při ukládání nastavení. Zkuste to prosím znovu.');
+      if (import.meta.env.DEV) {
+        console.error('Settings error:', err);
+      }
       return false;
     } finally {
       setIsLoading(false);
@@ -130,15 +133,25 @@ export function useSettings(): UseSettingsReturn {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      // Use fetch directly for file upload
+      // Use api client for CSRF token handling
+      // We need to use fetch directly for FormData, but get CSRF token from api client
+      const getCsrfToken = (): string | null => {
+        const name = 'csrftoken';
+        const cookies = document.cookie.split(';');
+        for (const cookie of cookies) {
+          const trimmed = cookie.trim();
+          if (trimmed.startsWith(name + '=')) {
+            return trimmed.substring(name.length + 1);
+          }
+        }
+        return null;
+      };
+
       const response = await fetch('/api/v1/settings/avatar/', {
         method: 'POST',
         credentials: 'include',
         headers: {
-          'X-CSRFToken': document.cookie
-            .split('; ')
-            .find(row => row.startsWith('csrftoken='))
-            ?.split('=')[1] || '',
+          'X-CSRFToken': getCsrfToken() || '',
         },
         body: formData,
       });
@@ -153,8 +166,11 @@ export function useSettings(): UseSettingsReturn {
       await checkAuth(); // Refresh user data
       return data.avatar;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to upload avatar';
-      setError(message);
+      // Zobraz generickou zprávu, ne surový error
+      setError('Nastala chyba při nahrávání avatara. Zkuste to prosím znovu.');
+      if (import.meta.env.DEV) {
+        console.error('Avatar upload error:', err);
+      }
       return null;
     } finally {
       setIsLoading(false);

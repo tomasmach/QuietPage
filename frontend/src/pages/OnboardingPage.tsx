@@ -111,7 +111,9 @@ export function OnboardingPage({ onSkip }: OnboardingPageProps) {
 
       navigate('/dashboard');
     } catch (error) {
-      console.error('Error saving onboarding data:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error saving onboarding data:', error);
+      }
       // Continue to dashboard even on error
       navigate('/dashboard');
     } finally {

@@ -73,7 +73,9 @@ export function EntryEditorPage() {
       navigate('/dashboard');
     } catch (err) {
       // Error is handled by the hook
-      console.error('Failed to save entry:', err);
+      if (import.meta.env.DEV) {
+        console.error('Failed to save entry:', err);
+      }
     } finally {
       setIsSaving(false);
     }
@@ -85,7 +87,9 @@ export function EntryEditorPage() {
       navigate('/dashboard');
     } catch (err) {
       // Error is handled by the hook
-      console.error('Failed to delete entry:', err);
+      if (import.meta.env.DEV) {
+        console.error('Failed to delete entry:', err);
+      }
     }
   };
 
@@ -109,7 +113,7 @@ export function EntryEditorPage() {
         <div className="p-8">
           <Card>
             <p className="text-error">
-              Chyba pri nacitani zaznamu: {error.message}
+              Chyba při načítání záznamu. Zkuste obnovit stránku.
             </p>
             <Button onClick={handleCancel} className="mt-4">
               {t('common.cancel')}

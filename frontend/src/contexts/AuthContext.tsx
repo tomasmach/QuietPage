@@ -138,7 +138,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await api.post('/auth/logout/');
     } catch (error) {
       // Ignore errors - user is already logged out on client
-      console.error('Logout API failed:', error);
+      if (import.meta.env.DEV) {
+        console.error('Logout API failed:', error);
+      }
     } finally {
       setIsLoading(false);
     }

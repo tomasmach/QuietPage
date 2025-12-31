@@ -60,7 +60,7 @@ export function ArchivePage() {
         {error && !isLoading && (
           <Card>
             <p className="text-error">
-              Chyba při načítání záznamů: {error.message}
+              Chyba při načítání záznamů. Zkuste obnovit stránku.
             </p>
           </Card>
         )}

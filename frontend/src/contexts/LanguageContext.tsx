@@ -68,7 +68,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         value = (value as Record<string, unknown>)[k];
       } else {
         // Fallback to key if translation not found
-        console.warn(`Translation key not found: ${key}`);
+        if (import.meta.env.DEV) {
+          console.warn(`Translation key not found: ${key}`);
+        }
         return key;
       }
     }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import logger from '@/utils/logger';
 
 export function SignupPage() {
   const navigate = useNavigate();
@@ -41,15 +42,25 @@ export function SignupPage() {
           // Try to parse JSON error response
           const errorData = JSON.parse(err.message);
           if (typeof errorData === 'object') {
-            setErrors(errorData);
+            // Sanitize - zobraz pouze známé chybové klíče
+            const safeErrors: Record<string, string> = {};
+            const allowedKeys = ['username', 'email', 'password', 'password_confirm', 'general'];
+            for (const key of allowedKeys) {
+              if (errorData[key]) {
+                safeErrors[key] = String(errorData[key]);
+              }
+            }
+            setErrors(Object.keys(safeErrors).length > 0 ? safeErrors : { general: t('auth.signupError') });
           } else {
             setErrors({ general: t('auth.signupError') });
           }
         } catch {
-          // If not JSON, treat as general error
-          setErrors({ general: err.message || t('auth.signupError') });
+          // If not JSON, treat as general error - generická zpráva, ne err.message
+          logger.error('Signup error:', err);
+          setErrors({ general: t('auth.signupError') });
         }
       } else {
+        logger.error('Signup error (unknown):', err);
         setErrors({ general: t('auth.signupError') });
       }
     }
