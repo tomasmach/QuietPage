@@ -14,6 +14,7 @@ from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from django.db.models import Sum
 from django.db import transaction
 from django.core.cache import cache
@@ -53,6 +54,16 @@ class EntryViewSet(viewsets.ModelViewSet):
     Uses different serializers for list (without content) and detail views.
     """
     permission_classes = [IsAuthenticated]
+    throttle_scope = 'entries_create'
+
+    def get_throttles(self):
+        """
+        Apply throttling only on create action to prevent spam.
+        Other actions (list, retrieve, update, delete) are not throttled.
+        """
+        if self.action == 'create':
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     def get_queryset(self):
         """

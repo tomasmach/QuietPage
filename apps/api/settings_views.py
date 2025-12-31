@@ -15,6 +15,7 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.api.settings_serializers import (
@@ -42,6 +43,8 @@ class ProfileSettingsView(APIView):
     """
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'avatar_upload'
 
     def get(self, request):
         """Get current profile settings."""

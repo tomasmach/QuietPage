@@ -16,6 +16,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.api.auth_serializers import LoginSerializer, RegisterSerializer
@@ -100,13 +101,12 @@ class LogoutView(APIView):
     API endpoint for user logout.
 
     Destroys the user session.
-    No authentication required (can logout even if session is invalid).
+    Requires authentication and CSRF token for security.
 
     POST /api/v1/auth/logout/
     Response 200: {"message": "Logged out successfully"}
     """
-    permission_classes = [AllowAny]
-    authentication_classes = []  # Disable authentication to avoid CSRF issues
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         logout(request)
@@ -134,6 +134,8 @@ class RegisterView(APIView):
     Response 400: {"errors": {...}}
     """
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'register'
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)

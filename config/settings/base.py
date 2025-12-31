@@ -234,9 +234,14 @@ LOGIN_REDIRECT_URL = '/journal/'  # Dashboard je na /journal/ (ne /journal/dashb
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login/'
 
-# Session Configuration - "Remember me" automaticky (14 dní)
-SESSION_COOKIE_AGE = 1209600  # 14 days in seconds
-SESSION_SAVE_EVERY_REQUEST = True  # Prodlouží session při každé aktivitě
+# Session security - zkrácený timeout s automatickou prolongací při aktivitě
+# Bezpečnostní důvody:
+# - 2 hodiny minimalizují riziko zneužití opuštěné session (např. na veřejném PC)
+# - SESSION_SAVE_EVERY_REQUEST = sliding window - aktivní uživatelé nejsou odhlášeni
+# - Vyvážený kompromis mezi bezpečností a UX (journaling vyžaduje delší session než banking)
+SESSION_COOKIE_AGE = 7200  # 2 hodiny (kompromis mezi bezpečností a UX)
+SESSION_SAVE_EVERY_REQUEST = True  # Sliding window - session se prodlužuje při každém requestu
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Zachovat session i po zavření prohlížeče
 SESSION_COOKIE_NAME = 'quietpage_sessionid'
 
 # Django Axes - Brute Force Protection Configuration
@@ -264,4 +269,16 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour',
+        'register': '5/hour',
+        'entries_create': '100/day',
+        'avatar_upload': '10/hour',
+    },
 }
