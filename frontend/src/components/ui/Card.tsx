@@ -1,9 +1,10 @@
-import { type HTMLAttributes, type ReactNode, type MouseEvent } from 'react';
+import { type HTMLAttributes, type ReactNode, type MouseEvent, type KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 
-export interface CardProps extends HTMLAttributes<HTMLDivElement> {
+export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
   children: ReactNode;
   hoverable?: boolean;
+  onClick?: (event: MouseEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>) => void;
 }
 
 export function Card({ children, className, hoverable = false, onClick, ...props }: CardProps) {
@@ -24,7 +25,7 @@ export function Card({ children, className, hoverable = false, onClick, ...props
           ? (e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                onClick(e as unknown as MouseEvent<HTMLDivElement>);
+                onClick(e);
               }
             }
           : undefined

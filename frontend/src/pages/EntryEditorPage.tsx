@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Flame } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
@@ -30,13 +30,18 @@ export function EntryEditorPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Auto-save functionality
-  const { save: autoSave, isSaving: isAutoSaving, lastSaved } = useAutoSave(id, {
-    onSuccess: (newId) => {
+  const handleAutoSaveSuccess = useCallback(
+    (newId: string) => {
       // If creating a new entry, navigate to the edit page
       if (!id && newId) {
         navigate(`/entries/${newId}`, { replace: true });
       }
     },
+    [id, navigate]
+  );
+
+  const { save: autoSave, isSaving: isAutoSaving, lastSaved } = useAutoSave(id, {
+    onSuccess: handleAutoSaveSuccess,
   });
 
   // Initialize form from entry data
@@ -57,7 +62,7 @@ export function EntryEditorPage() {
         tags,
       });
     }
-  }, [content, moodRating, tags]);
+  }, [content, moodRating, tags, autoSave]);
 
   // Word count
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
