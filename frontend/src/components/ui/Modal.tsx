@@ -19,13 +19,22 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
     };
 
     if (isOpen) {
+      // Capture original overflow value before modifying
+      const originalOverflow = document.body.style.overflow;
+
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
+
+      return () => {
+        document.removeEventListener('keydown', handleEscape);
+        // Restore original overflow value
+        document.body.style.overflow = originalOverflow;
+      };
     }
 
+    // Return empty cleanup function when modal is closed
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 
