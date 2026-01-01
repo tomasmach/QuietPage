@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" style="background-color:#111111">
+<html lang="en" style="background-color:#1A1A1A">
   <head>
     <meta charset="UTF-8" />
     <script>
@@ -7,7 +7,7 @@
       (function() {
         var theme = localStorage.getItem('quietpage-theme');
         var isDark = theme !== 'paper';
-        var bgColor = isDark ? '#111111' : '#FFFCF5';
+        var bgColor = isDark ? '#1A1A1A' : '#FFFCF5';
         document.documentElement.style.backgroundColor = bgColor;
         document.documentElement.setAttribute('data-theme', isDark ? 'midnight' : 'paper');
       })();
