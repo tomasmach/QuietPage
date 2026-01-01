@@ -81,11 +81,26 @@ export function useTodayAutoSave(
 
   useEffect(() => {
     return () => {
+      // Flush pending save before unmount
       if (debounceTimerRef.current) {
+        // Cancel the debounce timer
         clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+
+        // Immediately invoke pending save if data exists
+        if (saveQueueRef.current) {
+          const pendingData = saveQueueRef.current;
+          saveQueueRef.current = null;
+
+          // Fire-and-forget immediate save, swallow errors
+          performSave(pendingData).catch((err) => {
+            // Log error but don't throw during unmount
+            console.error('Failed to flush pending save on unmount:', err);
+          });
+        }
       }
     };
-  }, []);
+  }, [performSave]);
 
   return {
     save,
