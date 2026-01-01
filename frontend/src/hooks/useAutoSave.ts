@@ -61,6 +61,34 @@ export function useAutoSave(
   }, [entryId, onSuccess, onError]);
 
   /**
+   * Flush pending save immediately (for cleanup/unmount)
+   * Uses sendBeacon for reliable background delivery
+   */
+  const flushImmediate = useCallback(() => {
+    const pendingData = saveQueueRef.current;
+
+    if (!pendingData) {
+      return;
+    }
+
+    const payload = entryId ? { ...pendingData, id: entryId } : pendingData;
+
+    // Use sendBeacon for guaranteed delivery even during page unload
+    // Falls back to synchronous fetch if sendBeacon is unavailable
+    if (navigator.sendBeacon) {
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      navigator.sendBeacon('/api/v1/entries/autosave/', blob);
+    } else {
+      // Fallback: fire-and-forget async save
+      performSave(pendingData).catch(() => {
+        // Silently fail on unmount - data is already lost
+      });
+    }
+
+    saveQueueRef.current = null;
+  }, [entryId, performSave]);
+
+  /**
    * Debounced save function
    */
   const save = useCallback((data: EntryFormData) => {
@@ -82,15 +110,23 @@ export function useAutoSave(
   }, [debounceMs, performSave]);
 
   /**
-   * Cleanup on unmount
+   * Cleanup on unmount - flush pending saves before clearing timer
    */
   useEffect(() => {
     return () => {
+      // Flush any pending save before unmounting
+      flushImmediate();
+
+      // Clear debounce timer
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
       }
+
+      // Clear refs
+      saveQueueRef.current = null;
     };
-  }, []);
+  }, [flushImmediate]);
 
   return {
     save,
