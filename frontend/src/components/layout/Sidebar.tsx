@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, PenLine, BarChart3, Archive, Settings, Moon, Sun, LogOut } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -10,6 +11,7 @@ export function Sidebar() {
   const { t } = useLanguage();
   const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
@@ -81,10 +83,23 @@ export function Sidebar() {
         {/* Logout Button */}
         <button
           onClick={async () => {
-            navigate('/');
-            await logout();
+            if (isLoggingOut) return;
+
+            setIsLoggingOut(true);
+            try {
+              await logout();
+              navigate('/');
+            } catch (error) {
+              console.error('Logout failed:', error);
+              setIsLoggingOut(false);
+            }
           }}
-          className="w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all text-text-main bg-bg-panel shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+          disabled={isLoggingOut}
+          className={`w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all text-text-main bg-bg-panel shadow-hard ${
+            isLoggingOut
+              ? 'opacity-50 cursor-not-allowed'
+              : 'hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
+          }`}
           aria-label={t('auth.logout')}
         >
           <span className="flex items-center gap-3">
