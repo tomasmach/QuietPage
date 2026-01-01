@@ -120,6 +120,7 @@ export interface Translations {
     newEntry: string;
     editEntry: string;
     tags: string;
+    loadError: string;
   };
   settings: {
     title: string;
@@ -364,6 +365,7 @@ export const cs: Translations = {
     newEntry: 'Nový záznam',
     editEntry: 'Upravit záznam',
     tags: 'Štítky',
+    loadError: 'Chyba při načítání záznamu. Zkuste obnovit stránku.',
   },
   settings: {
     title: 'Nastavení',

@@ -19,7 +19,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 export function EntryEditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const { entry, isLoading, error, save, remove } = useEntry(id);
   const { data: dashboardData } = useDashboard();
@@ -118,7 +118,7 @@ export function EntryEditorPage() {
         <div className="p-8">
           <Card>
             <p className="text-error">
-              Chyba při načítání záznamu. Zkuste obnovit stránku.
+              {t('entry.loadError')}
             </p>
             <Button onClick={handleCancel} className="mt-4">
               {t('common.cancel')}
@@ -137,8 +137,11 @@ export function EntryEditorPage() {
   const hour = new Date().getHours();
   const greetingKey = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
 
+  // Map language to locale (cs -> cs-CZ, en -> en-US)
+  const locale = language === 'cs' ? 'cs-CZ' : language === 'en' ? 'en-US' : (navigator.language || 'en-US');
+
   // Format date as "29. PROSINCE"
-  const formattedDate = date.toLocaleDateString('cs-CZ', {
+  const formattedDate = date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
   }).toUpperCase();
@@ -224,7 +227,7 @@ export function EntryEditorPage() {
             {lastSaved && !isAutoSaving && (
               <p className="text-xs text-text-muted">
                 {t('entry.saved')}{' '}
-                {lastSaved.toLocaleTimeString('cs-CZ', {
+                {lastSaved.toLocaleTimeString(locale, {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}

@@ -122,6 +122,7 @@ export const en: Translations = {
     newEntry: 'New entry',
     editEntry: 'Edit entry',
     tags: 'Tags',
+    loadError: 'Error loading entry. Please try refreshing the page.',
   },
   settings: {
     title: 'Settings',
