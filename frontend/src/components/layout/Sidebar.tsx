@@ -75,7 +75,7 @@ export function Sidebar() {
         >
           <span className="flex items-center gap-3">
             {theme === 'midnight' ? <Sun size={16} /> : <Moon size={16} />}
-            <span>{theme === 'midnight' ? 'Světlý režim' : 'Tmavý režim'}</span>
+            <span>{theme === 'midnight' ? t('theme.light') : t('theme.dark')}</span>
           </span>
           <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
         </button>

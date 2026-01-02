@@ -89,6 +89,10 @@ export interface Translations {
     paper: string;
     midnight: string;
   };
+  theme: {
+    light: string;
+    dark: string;
+  };
   common: {
     save: string;
     cancel: string;
@@ -333,6 +337,10 @@ export const cs: Translations = {
   themes: {
     paper: 'Paper (Světlý)',
     midnight: 'Midnight (Tmavý)',
+  },
+  theme: {
+    light: 'Světlý režim',
+    dark: 'Tmavý režim',
   },
   common: {
     save: 'Uložit',

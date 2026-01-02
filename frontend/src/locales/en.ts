@@ -91,6 +91,10 @@ export const en: Translations = {
     paper: 'Paper (Light)',
     midnight: 'Midnight (Dark)',
   },
+  theme: {
+    light: 'Light mode',
+    dark: 'Dark mode',
+  },
   common: {
     save: 'Save',
     cancel: 'Cancel',
