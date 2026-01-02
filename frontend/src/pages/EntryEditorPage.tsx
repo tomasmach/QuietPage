@@ -167,7 +167,7 @@ export function EntryEditorPage() {
             {dashboardData && (
               <div className="border-2 border-border p-3 bg-bg-panel shadow-hard">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-bold uppercase text-text-text-muted">
+                  <span className="text-[10px] font-bold uppercase text-text-muted">
                     {t('meta.currentStreak')}
                   </span>
                   <Flame size={14} className="text-text-main" />
@@ -242,7 +242,7 @@ export function EntryEditorPage() {
           {/* Header */}
           <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
             <div>
-              <div className="text-xs font-bold uppercase text-text-text-muted mb-1">
+              <div className="text-xs font-bold uppercase text-text-muted mb-1">
                 {t(`dashboard.greeting.${greetingKey}`)}
               </div>
               <h1 className="text-3xl font-bold uppercase text-text-main">
@@ -251,7 +251,7 @@ export function EntryEditorPage() {
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-text-main">{wordCount}</div>
-              <div className="text-[10px] font-bold uppercase text-text-text-muted">
+              <div className="text-[10px] font-bold uppercase text-text-muted">
                 {t('meta.wordsToday')}
               </div>
             </div>
@@ -264,7 +264,7 @@ export function EntryEditorPage() {
             placeholder={t('entry.contentPlaceholder')}
             rows={20}
             spellCheck={false}
-            className="w-full text-lg font-mono font-medium leading-relaxed resize-none border-0 bg-transparent focus:ring-0 focus:outline-none text-text-main placeholder:text-text-text-muted"
+            className="w-full text-lg font-mono font-medium leading-relaxed resize-none border-0 bg-transparent focus:ring-0 focus:outline-none text-text-main placeholder:text-text-muted"
             autoFocus
           />
         </div>
