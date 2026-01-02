@@ -41,18 +41,44 @@ export const setErrorHandler = (handler: ErrorHandler | null): void => {
 const sanitizeArgs = (args: unknown[]): unknown[] => {
   const sensitiveKeys = ['password', 'token', 'key', 'secret', 'authorization', 'auth'];
 
-  return args.map((arg) => {
-    if (typeof arg === 'object' && arg !== null && !Array.isArray(arg)) {
-      const sanitized = { ...arg } as Record<string, unknown>;
-      for (const key of Object.keys(sanitized)) {
+  const sanitizeValue = (value: unknown): unknown => {
+    // Handle null/undefined
+    if (value === null || value === undefined) {
+      return value;
+    }
+
+    // Handle arrays recursively
+    if (Array.isArray(value)) {
+      return value.map(sanitizeValue);
+    }
+
+    // Handle Error objects
+    if (value instanceof Error) {
+      return {
+        name: value.name,
+        message: value.message,
+        stack: value.stack,
+      };
+    }
+
+    // Handle plain objects recursively
+    if (typeof value === 'object') {
+      const sanitized: Record<string, unknown> = {};
+      for (const key of Object.keys(value)) {
         if (sensitiveKeys.some((sensitive) => key.toLowerCase().includes(sensitive))) {
           sanitized[key] = '[REDACTED]';
+        } else {
+          sanitized[key] = sanitizeValue((value as Record<string, unknown>)[key]);
         }
       }
       return sanitized;
     }
-    return arg;
-  });
+
+    // Primitive values pass through
+    return value;
+  };
+
+  return args.map(sanitizeValue);
 };
 
 export const logger = {
