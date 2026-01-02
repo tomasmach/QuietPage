@@ -131,40 +131,13 @@ export function useSettings(): UseSettingsReturn {
 
     try {
       const formData = new FormData();
-      formData.append('avatar', file);
+      formData.append('avatar_upload', file);
 
-      // Use api client for CSRF token handling
-      // We need to use fetch directly for FormData, but get CSRF token from api client
-      const getCsrfToken = (): string | null => {
-        const name = 'csrftoken';
-        const cookies = document.cookie.split(';');
-        for (const cookie of cookies) {
-          const trimmed = cookie.trim();
-          if (trimmed.startsWith(name + '=')) {
-            return trimmed.substring(name.length + 1);
-          }
-        }
-        return null;
-      };
+      const response = await api.patch<{ avatar: string }>('/settings/profile/', formData);
 
-      const response = await fetch('/api/v1/settings/avatar/', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'X-CSRFToken': getCsrfToken() || '',
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to upload avatar');
-      }
-
-      const data = await response.json();
       setSuccess('Avatar uploaded successfully');
       await checkAuth(); // Refresh user data
-      return data.avatar;
+      return response.avatar;
     } catch (err) {
       // Zobraz generickou zprávu, ne surový error
       setError('Nastala chyba při nahrávání avatara. Zkuste to prosím znovu.');

@@ -31,6 +31,22 @@ export interface DashboardData {
   hasEntries: boolean;
 }
 
+// API response with snake_case from backend
+interface DashboardStatsAPI {
+  today_words: number;
+  daily_goal: number;
+  current_streak: number;
+  longest_streak: number;
+  total_entries: number;
+}
+
+interface DashboardDataAPI {
+  greeting: string;
+  stats: DashboardStatsAPI;
+  recent_entries: RecentEntry[];
+  quote: Quote | null;
+}
+
 interface UseDashboardReturn {
   data: DashboardData | null;
   isLoading: boolean;
@@ -52,7 +68,7 @@ export function useDashboard(): UseDashboardReturn {
     setError(null);
 
     try {
-      const response = await api.get<any>('/dashboard/');
+      const response = await api.get<DashboardDataAPI>('/dashboard/');
 
       // Convert snake_case from backend to camelCase for frontend
       const dashboardData: DashboardData = {
