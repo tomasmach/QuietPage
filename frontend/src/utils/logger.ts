@@ -92,11 +92,11 @@ export const logger = {
       console.error(message, ...args);
     } else {
       // Production error handling: use configured handler or fallback to sanitized console.error
+      const sanitized = sanitizeArgs(args);
       if (config.errorHandler) {
-        config.errorHandler(message, ...args);
+        config.errorHandler(message, ...sanitized);
       } else {
         // Fallback: log to console.error with sanitized args to prevent data leakage
-        const sanitized = sanitizeArgs(args);
         console.error(message, ...sanitized);
       }
     }
