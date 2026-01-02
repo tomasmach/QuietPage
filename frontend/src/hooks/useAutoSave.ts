@@ -73,17 +73,8 @@ export function useAutoSave(
 
     const payload = entryId ? { ...pendingData, id: entryId } : pendingData;
 
-    // Use sendBeacon for guaranteed delivery even during page unload
-    // Falls back to synchronous fetch if sendBeacon is unavailable
-    if (navigator.sendBeacon) {
-      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-      navigator.sendBeacon('/api/v1/entries/autosave/', blob);
-    } else {
-      // Fallback: fire-and-forget async save
-      performSave(pendingData).catch(() => {
-        // Silently fail on unmount - data is already lost
-      });
-    }
+    // Fire-and-forget fetch with keepalive for background delivery
+    fetch('/api/v1/entries/autosave/', { method: 'POST', body: JSON.stringify(payload), keepalive: true, credentials: 'include', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
 
     saveQueueRef.current = null;
   }, [entryId, performSave]);
