@@ -31,6 +31,7 @@ export function useAutoSave(
 
   const debounceTimerRef = useRef<number | null>(null);
   const saveQueueRef = useRef<EntryFormData | null>(null);
+  const flushImmediateRef = useRef<(() => void) | null>(null);
 
   /**
    * Perform the actual save operation
@@ -77,7 +78,10 @@ export function useAutoSave(
     fetch('/api/v1/entries/autosave/', { method: 'POST', body: JSON.stringify(payload), keepalive: true, credentials: 'include', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
 
     saveQueueRef.current = null;
-  }, [entryId, performSave]);
+  }, [entryId]);
+
+  // Store the current flushImmediate in a ref for stable cleanup access
+  flushImmediateRef.current = flushImmediate;
 
   /**
    * Debounced save function
@@ -106,18 +110,15 @@ export function useAutoSave(
   useEffect(() => {
     return () => {
       // Flush any pending save before unmounting
-      flushImmediate();
+      flushImmediateRef.current?.();
 
       // Clear debounce timer
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = null;
       }
-
-      // Clear refs
-      saveQueueRef.current = null;
     };
-  }, [flushImmediate]);
+  }, []);
 
   return {
     save,
