@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 // Types for settings data
 export interface ProfileSettings {
@@ -75,6 +76,7 @@ export function useSettings(): UseSettingsReturn {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { checkAuth, logout } = useAuth();
+  const { t } = useLanguage();
 
   const clearMessages = useCallback(() => {
     setError(null);
@@ -97,7 +99,7 @@ export function useSettings(): UseSettingsReturn {
       return true;
     } catch (err) {
       // Zobraz generickou zprávu, ne surový error
-      setError('Nastala chyba při ukládání nastavení. Zkuste to prosím znovu.');
+      setError(t('toast.saveError'));
       if (import.meta.env.DEV) {
         console.error('Settings error:', err);
       }
@@ -105,7 +107,7 @@ export function useSettings(): UseSettingsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   /**
    * Update profile settings (first_name, last_name, bio)
@@ -141,7 +143,7 @@ export function useSettings(): UseSettingsReturn {
       return response.avatar;
     } catch (err) {
       // Zobraz generickou zprávu, ne surový error
-      setError('Nastala chyba při nahrávání avatara. Zkuste to prosím znovu.');
+      setError(t('toast.saveError'));
       if (import.meta.env.DEV) {
         console.error('Avatar upload error:', err);
       }
@@ -149,7 +151,7 @@ export function useSettings(): UseSettingsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [checkAuth]);
+  }, [checkAuth, t]);
 
   /**
    * Update goals settings
