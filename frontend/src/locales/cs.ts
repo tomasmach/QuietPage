@@ -496,6 +496,7 @@ export const cs: Translations = {
     goalsUpdated: 'Cíle byly aktualizovány',
     // Soukromí
     privacyUpdated: 'Nastavení soukromí bylo aktualizováno',
+    emailVerificationSent: 'Ověřovací e-mail byl odeslán na vaši novou e-mailovou adresu',
     // Záznamy
     entrySaved: 'Záznam byl uložen',
     entryDeleted: 'Záznam byl smazán',

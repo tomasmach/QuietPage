@@ -249,6 +249,7 @@ export const en: Translations = {
     goalsUpdated: 'Goals updated',
     // Privacy
     privacyUpdated: 'Privacy settings updated',
+    emailVerificationSent: 'Verification email sent to your new email address',
     // Entries
     entrySaved: 'Entry saved',
     entryDeleted: 'Entry deleted',

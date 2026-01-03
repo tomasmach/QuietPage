@@ -115,13 +115,13 @@ export function useSettings(): UseSettingsReturn {
   const updateProfile = useCallback(async (data: ProfileSettings): Promise<boolean> => {
     const result = await handleRequest(
       () => api.patch('/settings/profile/', data),
-      'Profile updated successfully'
+      t('toast.profileUpdated')
     );
     if (result) {
       await checkAuth(); // Refresh user data
     }
     return result;
-  }, [handleRequest, checkAuth]);
+  }, [handleRequest, checkAuth, t]);
 
   /**
    * Upload avatar image
@@ -138,7 +138,7 @@ export function useSettings(): UseSettingsReturn {
 
       const response = await api.patch<{ avatar: string }>('/settings/profile/', formData);
 
-      setSuccess('Avatar uploaded successfully');
+      setSuccess(t('toast.avatarUploaded'));
       await checkAuth(); // Refresh user data
       return response.avatar;
     } catch (err) {
@@ -159,13 +159,13 @@ export function useSettings(): UseSettingsReturn {
   const updateGoals = useCallback(async (data: GoalsSettings): Promise<boolean> => {
     const result = await handleRequest(
       () => api.patch('/settings/goals/', data),
-      'Goals updated successfully'
+      t('toast.goalsUpdated')
     );
     if (result) {
       await checkAuth(); // Refresh user data
     }
     return result;
-  }, [handleRequest, checkAuth]);
+  }, [handleRequest, checkAuth, t]);
 
   /**
    * Update privacy settings
@@ -173,9 +173,9 @@ export function useSettings(): UseSettingsReturn {
   const updatePrivacy = useCallback(async (data: PrivacySettings): Promise<boolean> => {
     return handleRequest(
       () => api.patch('/settings/privacy/', data),
-      'Privacy settings updated successfully'
+      t('toast.privacyUpdated')
     );
-  }, [handleRequest]);
+  }, [handleRequest, t]);
 
   /**
    * Change password
@@ -183,9 +183,9 @@ export function useSettings(): UseSettingsReturn {
   const changePassword = useCallback(async (data: ChangePasswordData): Promise<boolean> => {
     return handleRequest(
       () => api.post('/settings/change-password/', data),
-      'Password changed successfully'
+      t('toast.passwordChanged')
     );
-  }, [handleRequest]);
+  }, [handleRequest, t]);
 
   /**
    * Change email
@@ -193,9 +193,9 @@ export function useSettings(): UseSettingsReturn {
   const changeEmail = useCallback(async (data: ChangeEmailData): Promise<boolean> => {
     return handleRequest(
       () => api.post('/settings/change-email/', data),
-      'Verification email sent to your new email address'
+      t('toast.emailVerificationSent')
     );
-  }, [handleRequest]);
+  }, [handleRequest, t]);
 
   /**
    * Delete account
@@ -203,13 +203,13 @@ export function useSettings(): UseSettingsReturn {
   const deleteAccount = useCallback(async (data: DeleteAccountData): Promise<boolean> => {
     const result = await handleRequest(
       () => api.post('/settings/delete-account/', data),
-      'Account deleted successfully'
+      t('toast.accountDeleted')
     );
     if (result) {
       await logout();
     }
     return result;
-  }, [handleRequest, logout]);
+  }, [handleRequest, logout, t]);
 
   return {
     isLoading,
