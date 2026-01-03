@@ -28,6 +28,7 @@ ADMIN_URL = os.getenv('ADMIN_URL', 'admin/')
 
 urlpatterns = [
     path(ADMIN_URL, admin.site.urls),
+    path('', views.HomeView.as_view(), name='home'),
     path('accounts/', include('allauth.urls')),
     path('accounts/', include('apps.accounts.urls', namespace='accounts')),
     path('journal/', include('apps.journal.urls', namespace='journal')),

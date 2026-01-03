@@ -23,13 +23,12 @@ urlpatterns = [
     # Privacy settings
     path('settings/privacy/', views.PrivacySettingsView.as_view(), name='settings-privacy'),
 
-    # Security settings (legacy routes - redirect to new API endpoints)
-    # These redirect to the new REST API endpoints used by the React frontend
+    # Security settings
     path('settings/security/password/',
-         RedirectView.as_view(url='/api/v1/settings/change-password/', permanent=False),
+         views.CustomPasswordChangeView.as_view(),
          name='settings-password'),
     path('settings/security/email/',
-         RedirectView.as_view(url='/api/v1/settings/change-email/', permanent=False),
+         views.EmailChangeView.as_view(),
          name='settings-email'),
     path('settings/security/email/verify/<str:token>/', views.EmailVerifyView.as_view(), name='email-verify'),
     path('settings/security/email/resend/', views.EmailResendVerificationView.as_view(), name='email-resend'),
