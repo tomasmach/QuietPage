@@ -63,7 +63,7 @@ export function useAutoSave(
 
   /**
    * Flush pending save immediately (for cleanup/unmount)
-   * Uses sendBeacon for reliable background delivery
+   * Uses fetch with keepalive for reliable background delivery
    */
   const flushImmediate = useCallback(() => {
     const pendingData = saveQueueRef.current;
@@ -74,8 +74,24 @@ export function useAutoSave(
 
     const payload = entryId ? { ...pendingData, id: entryId } : pendingData;
 
+    // Read CSRF token from cookie
+    const getCsrfToken = (): string | null => {
+      const cookies = document.cookie.split(';');
+      const csrfCookie = cookies.find(cookie => cookie.trim().startsWith('csrftoken='));
+      return csrfCookie ? csrfCookie.split('=')[1].trim() : null;
+    };
+
     // Fire-and-forget fetch with keepalive for background delivery
-    fetch('/api/v1/entries/autosave/', { method: 'POST', body: JSON.stringify(payload), keepalive: true, credentials: 'include', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+    fetch('/api/v1/entries/autosave/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      keepalive: true,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(getCsrfToken() && { 'X-CSRFToken': getCsrfToken()! })
+      }
+    }).catch(() => {});
 
     saveQueueRef.current = null;
   }, [entryId]);
