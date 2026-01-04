@@ -116,10 +116,10 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
         </>
       )}
 
-      {/* Desktop Three-Column Layout */}
-      <div className="hidden lg:grid grid-cols-[minmax(240px,280px)_1fr_minmax(280px,320px)] divide-x-2 divide-border min-h-screen">
+      {/* Responsive Layout */}
+      <div className="lg:grid lg:grid-cols-[minmax(240px,280px)_1fr_minmax(280px,320px)] lg:divide-x-2 divide-border min-h-screen">
         {/* Left Sidebar */}
-        <aside className="sticky top-0 h-screen overflow-y-auto bg-bg-app">
+        <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app">
           {sidebar}
         </aside>
 
@@ -129,15 +129,10 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
         </main>
 
         {/* Right Context Panel */}
-        <aside className="sticky top-0 h-screen overflow-y-auto bg-bg-app">
+        <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app">
           {contextPanel}
         </aside>
       </div>
-
-      {/* Mobile Single-Column Layout */}
-      <main className="lg:hidden min-h-screen overflow-y-auto bg-bg-app">
-        {children}
-      </main>
     </div>
   );
 }
