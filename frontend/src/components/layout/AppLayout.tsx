@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { useFocusTrap, useOverlay } from '@/hooks/useFocusTrap';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -10,6 +11,12 @@ interface AppLayoutProps {
 export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isContextPanelOpen, setIsContextPanelOpen] = useState(false);
+
+  useOverlay(isSidebarOpen, () => setIsSidebarOpen(false));
+  useOverlay(isContextPanelOpen, () => setIsContextPanelOpen(false));
+
+  const sidebarRef = useFocusTrap(isSidebarOpen);
+  const contextPanelRef = useFocusTrap(isContextPanelOpen);
 
   return (
     <div className="min-h-screen bg-bg-app">
@@ -46,8 +53,15 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
           <div
             className="lg:hidden fixed inset-0 bg-black/50 z-40"
             onClick={() => setIsSidebarOpen(false)}
+            aria-hidden="true"
           />
-          <aside className="lg:hidden fixed top-0 left-0 bottom-0 w-[280px] bg-bg-app z-50 overflow-y-auto border-r-2 border-border">
+          <aside
+            ref={sidebarRef as React.RefObject<HTMLElement>}
+            className="lg:hidden fixed top-0 left-0 bottom-0 w-[280px] bg-bg-app z-50 overflow-y-auto border-r-2 border-border"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+          >
             <div className="p-4 border-b-2 border-border flex justify-between items-center">
               <h2 className="font-semibold">Menu</h2>
               <button
@@ -71,8 +85,15 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
           <div
             className="lg:hidden fixed inset-0 bg-black/50 z-40"
             onClick={() => setIsContextPanelOpen(false)}
+            aria-hidden="true"
           />
-          <aside className="lg:hidden fixed top-0 right-0 bottom-0 w-[320px] bg-bg-app z-50 overflow-y-auto border-l-2 border-border">
+          <aside
+            ref={contextPanelRef as React.RefObject<HTMLElement>}
+            className="lg:hidden fixed top-0 right-0 bottom-0 w-[320px] bg-bg-app z-50 overflow-y-auto border-l-2 border-border"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Info"
+          >
             <div className="p-4 border-b-2 border-border flex justify-between items-center">
               <h2 className="font-semibold">Info</h2>
               <button

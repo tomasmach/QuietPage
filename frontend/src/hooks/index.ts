@@ -2,6 +2,7 @@ export { useDashboard } from './useDashboard';
 export { useEntries } from './useEntries';
 export { useEntry } from './useEntry';
 export { useAutoSave } from './useAutoSave';
+export { useFocusTrap, useOverlay } from './useFocusTrap';
 
 export type { DashboardData, DashboardStats, RecentEntry, Quote } from './useDashboard';
 export type { Entry } from './useEntries';

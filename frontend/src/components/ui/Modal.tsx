@@ -1,6 +1,7 @@
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
+import { useFocusTrap, useOverlay } from '@/hooks/useFocusTrap';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -11,32 +12,8 @@ export interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      // Capture original overflow value before modifying
-      const originalOverflow = document.body.style.overflow;
-
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-
-      return () => {
-        document.removeEventListener('keydown', handleEscape);
-        // Restore original overflow value
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-
-    // Return empty cleanup function when modal is closed
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen, onClose]);
+  useOverlay(isOpen, onClose);
+  const modalRef = useFocusTrap(isOpen);
 
   if (!isOpen) return null;
 
@@ -44,16 +21,18 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
     <div
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
       onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={title ? 'modal-title' : undefined}
+      aria-hidden="true"
     >
       <div
+        ref={modalRef as React.RefObject<HTMLElement>}
         className={cn(
           'bg-bg-panel border-2 border-border shadow-hard max-w-lg w-full mx-4',
           className
         )}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'modal-title' : undefined}
       >
         {title && (
           <div className="flex items-center justify-between border-b-2 border-border pb-4 mb-4 px-6 pt-6">
