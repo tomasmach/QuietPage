@@ -21,7 +21,7 @@ export function useFocusTrap(isActive: boolean) {
 
     // Get all focusable elements within the container
     const focusableElements = container.querySelectorAll<FocusableElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable], audio[controls], video[controls], details>summary'
     );
 
     if (focusableElements.length === 0) return;
