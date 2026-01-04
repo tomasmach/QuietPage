@@ -62,6 +62,9 @@ export function useFocusTrap(isActive: boolean) {
 // Module-level counter to track active overlays for nested overlay support
 let overlayCount = 0;
 
+// Module-level variable to store original body overflow value
+let originalBodyOverflow = '';
+
 /**
  * Custom hook to handle body scroll lock and Escape key
  */
@@ -79,6 +82,7 @@ export function useOverlay(isOpen: boolean, onClose: () => void) {
 
     overlayCount++;
     if (overlayCount === 1) {
+      originalBodyOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
     }
 
@@ -86,7 +90,8 @@ export function useOverlay(isOpen: boolean, onClose: () => void) {
       document.removeEventListener('keydown', handleEscape);
       overlayCount = Math.max(0, overlayCount - 1);
       if (overlayCount === 0) {
-        document.body.style.overflow = '';
+        document.body.style.overflow = originalBodyOverflow;
+        originalBodyOverflow = '';
       }
     };
   }, [isOpen, onClose]);
