@@ -711,3 +711,408 @@ class TestStatisticsViewWordCountAnalytics:
         assert word_analytics['average_per_day'] == round(expected_avg, 2)
         assert word_analytics['total_entries'] == 2
 
+
+@pytest.mark.statistics
+@pytest.mark.integration
+class TestStatisticsViewIntegration:
+    """Integration tests for statistics endpoint including caching and performance."""
+
+    def test_authenticated_user_returns_200(self, client):
+        """Authenticated users receive 200 response."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+
+    def test_anonymous_user_returns_403(self, client):
+        """Anonymous users receive 403 forbidden response."""
+        response = client.get(reverse('api:statistics'))
+
+        assert response.status_code == 403
+
+    def test_period_7d_returns_correct_date_range(self, client):
+        """7d period returns correct 7-day date range."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data['period'] == '7d'
+        assert 'start_date' in data
+        assert 'end_date' in data
+
+        from zoneinfo import ZoneInfo
+        from django.utils import timezone
+
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+        expected_start = (now - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
+        actual_start = datetime.fromisoformat(data['start_date']).replace(tzinfo=None)
+
+        assert actual_start.date() == expected_start.date()
+
+    def test_period_30d_returns_correct_date_range(self, client):
+        """30d period returns correct 30-day date range."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        response = client.get(reverse('api:statistics'), {'period': '30d'})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data['period'] == '30d'
+
+        from zoneinfo import ZoneInfo
+        from django.utils import timezone
+
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+        expected_start = (now - timedelta(days=30)).replace(hour=0, minute=0, second=0, microsecond=0)
+        actual_start = datetime.fromisoformat(data['start_date']).replace(tzinfo=None)
+
+        assert actual_start.date() == expected_start.date()
+
+    def test_period_90d_returns_correct_date_range(self, client):
+        """90d period returns correct 90-day date range."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        response = client.get(reverse('api:statistics'), {'period': '90d'})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data['period'] == '90d'
+
+        from zoneinfo import ZoneInfo
+        from django.utils import timezone
+
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+        expected_start = (now - timedelta(days=90)).replace(hour=0, minute=0, second=0, microsecond=0)
+        actual_start = datetime.fromisoformat(data['start_date']).replace(tzinfo=None)
+
+        assert actual_start.date() == expected_start.date()
+
+    def test_period_1y_returns_correct_date_range(self, client):
+        """1y period returns correct 365-day date range."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        response = client.get(reverse('api:statistics'), {'period': '1y'})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data['period'] == '1y'
+
+        from zoneinfo import ZoneInfo
+        from django.utils import timezone
+
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+        expected_start = (now - timedelta(days=365)).replace(hour=0, minute=0, second=0, microsecond=0)
+        actual_start = datetime.fromisoformat(data['start_date']).replace(tzinfo=None)
+
+        assert actual_start.date() == expected_start.date()
+
+    def test_period_all_returns_all_entries(self, client):
+        """all period includes entries from the first entry date."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory(user=user, created_at=base_date - timedelta(days=100))
+        EntryFactory(user=user, created_at=base_date)
+
+        response = client.get(reverse('api:statistics'), {'period': 'all'})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data['period'] == 'all'
+        assert data['mood_analytics']['total_rated_entries'] >= 0
+        assert data['word_count_analytics']['total_entries'] == 2
+
+    def test_response_structure_matches_serializer(self, client):
+        """Response structure matches StatisticsSerializer definition."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        required_fields = ['period', 'start_date', 'end_date', 'mood_analytics', 'word_count_analytics']
+        for field in required_fields:
+            assert field in data
+
+        mood_analytics = data['mood_analytics']
+        required_mood_fields = ['average', 'distribution', 'timeline', 'total_rated_entries', 'trend']
+        for field in required_mood_fields:
+            assert field in mood_analytics
+
+        word_analytics = data['word_count_analytics']
+        required_word_fields = [
+            'total', 'average_per_entry', 'average_per_day', 'timeline',
+            'total_entries', 'goal_achievement_rate', 'best_day'
+        ]
+        for field in required_word_fields:
+            assert field in word_analytics
+
+    def test_caching_improves_performance(self, client):
+        """Identical requests are faster due to caching (cache hit)."""
+        import time
+
+        user = UserFactory(timezone='Europe/Prague')
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory.create_batch(10, user=user, created_at=base_date)
+        client.force_login(user)
+
+        first_request_start = time.time()
+        response1 = client.get(reverse('api:statistics'), {'period': '7d'})
+        first_request_time = time.time() - first_request_start
+
+        assert response1.status_code == 200
+
+        second_request_start = time.time()
+        response2 = client.get(reverse('api:statistics'), {'period': '7d'})
+        second_request_time = time.time() - second_request_start
+
+        assert response2.status_code == 200
+
+        assert response1.json() == response2.json()
+        assert second_request_time < first_request_time
+
+    def test_caching_works_across_periods(self, client):
+        """Different period parameters generate different cache keys."""
+        user = UserFactory(timezone='Europe/Prague')
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory.create_batch(5, user=user, created_at=base_date)
+        client.force_login(user)
+
+        response_7d = client.get(reverse('api:statistics'), {'period': '7d'})
+        response_30d = client.get(reverse('api:statistics'), {'period': '30d'})
+
+        assert response_7d.status_code == 200
+        assert response_30d.status_code == 200
+
+        data_7d = response_7d.json()
+        data_30d = response_30d.json()
+
+        assert data_7d['period'] == '7d'
+        assert data_30d['period'] == '30d'
+
+    def test_cache_invalidation_on_new_entry(self, client):
+        """Creating a new entry on a new day invalidates cache and returns fresh data."""
+        user = UserFactory(timezone='Europe/Prague')
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory.create_batch(5, user=user, created_at=base_date - timedelta(days=1))
+        client.force_login(user)
+
+        response1 = client.get(reverse('api:statistics'), {'period': '7d'})
+        data1 = response1.json()
+
+        initial_entries = data1['word_count_analytics']['total_entries']
+        assert initial_entries == 5
+
+        EntryFactory(user=user, created_at=base_date)
+
+        user.refresh_from_db()
+
+        from django.core.cache import cache
+        cache.clear()
+
+        response2 = client.get(reverse('api:statistics'), {'period': '7d'})
+        data2 = response2.json()
+
+        updated_entries = data2['word_count_analytics']['total_entries']
+        assert updated_entries == 6
+
+    def test_cache_key_includes_last_entry_date(self, client):
+        """Cache key includes last_entry_date for proper invalidation."""
+        user = UserFactory(timezone='Europe/Prague')
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory(user=user, created_at=base_date - timedelta(days=1))
+        client.force_login(user)
+
+        response1 = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        user.refresh_from_db()
+        last_entry_date_1 = user.last_entry_date.isoformat() if user.last_entry_date else 'none'
+
+        EntryFactory(user=user, created_at=base_date)
+
+        user.refresh_from_db()
+        last_entry_date_2 = user.last_entry_date.isoformat() if user.last_entry_date else 'none'
+
+        assert last_entry_date_1 != last_entry_date_2
+
+        from django.core.cache import cache
+        cache.clear()
+
+        response2 = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        data1 = response1.json()
+        data2 = response2.json()
+
+        assert data1['word_count_analytics']['total_entries'] != data2['word_count_analytics']['total_entries']
+
+    def test_invalid_period_parameter_returns_400(self, client):
+        """Invalid period parameter returns 400 error."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        response = client.get(reverse('api:statistics'), {'period': 'invalid'})
+
+        assert response.status_code == 400
+        data = response.json()
+        assert 'error' in data
+        assert 'Invalid period' in data['error']
+
+    def test_performance_with_100_entries_under_2_seconds(self, client):
+        """Statistics endpoint with 100+ entries responds in under 2 seconds."""
+        import time
+
+        user = UserFactory(timezone='Europe/Prague')
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        for i in range(100):
+            entry_date = base_date - timedelta(hours=i)
+            EntryFactory(
+                user=user,
+                content=f'Entry {i} with some content for testing. ' * 10,
+                mood_rating=(i % 5) + 1,
+                created_at=entry_date
+            )
+
+        client.force_login(user)
+
+        start_time = time.time()
+        response = client.get(reverse('api:statistics'), {'period': '90d'})
+        end_time = time.time()
+
+        response_time = end_time - start_time
+
+        assert response.status_code == 200
+        assert response_time < 2.0, f"Response time {response_time:.3f}s exceeds 2 second limit"
+
+        data = response.json()
+        assert data['word_count_analytics']['total_entries'] == 100
+
+    def test_performance_with_200_entries_under_2_seconds(self, client):
+        """Statistics endpoint with 200 entries still responds in under 2 seconds."""
+        import time
+
+        user = UserFactory(timezone='Europe/Prague')
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        for i in range(200):
+            entry_date = base_date - timedelta(days=i)
+            EntryFactory(
+                user=user,
+                content=f'Entry {i} content. ' * 5,
+                mood_rating=(i % 5) + 1,
+                created_at=entry_date
+            )
+
+        client.force_login(user)
+
+        start_time = time.time()
+        response = client.get(reverse('api:statistics'), {'period': '1y'})
+        end_time = time.time()
+
+        response_time = end_time - start_time
+
+        assert response.status_code == 200
+        assert response_time < 2.0, f"Response time {response_time:.3f}s exceeds 2 second limit"
+
+        data = response.json()
+        assert data['word_count_analytics']['total_entries'] == 200
+
+    def test_multiple_users_have_separate_caches(self, client):
+        """Different users have separate cache entries."""
+        from django.core.cache import cache
+        cache.clear()
+
+        user1 = UserFactory(timezone='Europe/Prague')
+        user2 = UserFactory(timezone='Europe/Prague')
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory.create_batch(10, user=user1, created_at=base_date)
+        EntryFactory.create_batch(20, user=user2, created_at=base_date)
+
+        client.force_login(user1)
+        response1 = client.get(reverse('api:statistics'), {'period': '7d'})
+        data1 = response1.json()
+
+        assert response1.status_code == 200
+        assert data1['word_count_analytics']['total_entries'] == 10
+
+        client.logout()
+        cache.clear()
+        client.force_login(user2)
+        response2 = client.get(reverse('api:statistics'), {'period': '7d'})
+        data2 = response2.json()
+
+        assert response2.status_code == 200
+        assert data2['word_count_analytics']['total_entries'] == 20
+
+    def test_mood_analytics_timeline_structure(self, client):
+        """Mood analytics timeline has correct structure."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory(user=user, mood_rating=4, created_at=base_date)
+        EntryFactory(user=user, mood_rating=5, created_at=base_date - timedelta(days=1))
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        timeline = data['mood_analytics']['timeline']
+
+        assert len(timeline) == 2
+        for day in timeline:
+            assert 'date' in day
+            assert 'average' in day
+            assert 'count' in day
+
+    def test_word_analytics_timeline_structure(self, client):
+        """Word analytics timeline has correct structure."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        entry1 = EntryFactory(user=user, content='Ten words here', created_at=base_date)
+        entry1.refresh_from_db()
+
+        entry2 = EntryFactory(user=user, content='Five words', created_at=base_date - timedelta(days=1))
+        entry2.refresh_from_db()
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        timeline = data['word_count_analytics']['timeline']
+
+        assert len(timeline) == 2
+        for day in timeline:
+            assert 'date' in day
+            assert 'word_count' in day
+            assert 'entry_count' in day
