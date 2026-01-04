@@ -241,6 +241,7 @@ export interface Translations {
     emailChanged: string;
     goalsUpdated: string;
     privacyUpdated: string;
+    emailVerificationSent: string;
     entrySaved: string;
     entryDeleted: string;
     accountDeleted: string;
