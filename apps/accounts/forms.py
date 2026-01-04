@@ -285,11 +285,6 @@ class EmailChangeForm(forms.Form):
         if User.objects.filter(email=new_email).exists():
             raise ValidationError('Tento e-mail je již používán jiným účtem.')
 
-        # Block plus-addressing tricks (user+test@example.com)
-        # This prevents users from creating multiple accounts with same base email
-        if '+' in new_email.split('@')[0]:
-            raise ValidationError('E-mail s "+" není povolen.')
-
         # Optional: Block disposable email domains (uncomment if needed)
         # disposable_domains = ['tempmail.com', 'guerrillamail.com', '10minutemail.com']
         # domain = new_email.split('@')[1].lower()

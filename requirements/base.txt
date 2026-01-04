@@ -29,3 +29,7 @@ Pillow>=11.0.0
 
 # Database
 psycopg2-binary==2.9.11  # PostgreSQL adapter (for production)
+
+# REST API
+djangorestframework>=3.15.2  # CVE-2024-21520: requires >=3.15.2
+django-cors-headers>=4.9.0

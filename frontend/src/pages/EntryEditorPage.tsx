@@ -1,0 +1,295 @@
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Flame } from 'lucide-react';
+import { AppLayout } from '../components/layout/AppLayout';
+import { Sidebar } from '../components/layout/Sidebar';
+import { ContextPanel } from '../components/layout/ContextPanel';
+import { Button } from '../components/ui/Button';
+import { Spinner } from '../components/ui/Spinner';
+import { Card } from '../components/ui/Card';
+import { Modal } from '../components/ui/Modal';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { MoodSelector } from '../components/journal/MoodSelector';
+import { TagInput } from '../components/journal/TagInput';
+import { useEntry } from '../hooks/useEntry';
+import { useAutoSave } from '../hooks/useAutoSave';
+import { useDashboard } from '../hooks/useDashboard';
+import { useLanguage } from '../contexts/LanguageContext';
+
+export function EntryEditorPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { t, language } = useLanguage();
+
+  const { entry, isLoading, error, save, remove } = useEntry(id);
+  const { data: dashboardData } = useDashboard();
+  const [content, setContent] = useState('');
+  const [moodRating, setMoodRating] = useState<number | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const closeDeleteModal = useCallback(() => setShowDeleteModal(false), []);
+
+  // Auto-save functionality
+  const handleAutoSaveSuccess = useCallback(
+    (newId: string) => {
+      // If creating a new entry, navigate to the edit page
+      if (!id && newId) {
+        navigate(`/entries/${newId}`, { replace: true });
+      }
+    },
+    [id, navigate]
+  );
+
+  const { save: autoSave, isSaving: isAutoSaving, lastSaved } = useAutoSave(id, {
+    onSuccess: handleAutoSaveSuccess,
+  });
+
+  // Initialize form from entry data
+  useEffect(() => {
+    if (entry) {
+      setContent(entry.content);
+      setMoodRating(entry.mood_rating);
+      setTags(entry.tags);
+    }
+  }, [entry]);
+
+  // Auto-save when content changes
+  useEffect(() => {
+    if (content) {
+      autoSave({
+        content,
+        mood_rating: moodRating,
+        tags,
+      });
+    }
+  }, [content, moodRating, tags, autoSave]);
+
+  // Word count
+  const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await save({
+        content,
+        mood_rating: moodRating,
+        tags,
+      });
+      navigate('/dashboard');
+    } catch (err) {
+      // Error is handled by the hook
+      if (import.meta.env.DEV) {
+        console.error('Failed to save entry:', err);
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await remove();
+      navigate('/dashboard');
+    } catch (err) {
+      // Error is handled by the hook
+      if (import.meta.env.DEV) {
+        console.error('Failed to delete entry:', err);
+      }
+    }
+  };
+
+  const handleCancel = () => {
+    navigate('/dashboard');
+  };
+
+  if (isLoading && id) {
+    return (
+      <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
+        <div className="p-8 flex items-center justify-center min-h-[50vh]">
+          <Spinner size="lg" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error && id) {
+    return (
+      <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
+        <div className="p-8">
+          <Card>
+            <p className="text-error">
+              {t('entry.loadError')}
+            </p>
+            <Button onClick={handleCancel} className="mt-4">
+              {t('common.cancel')}
+            </Button>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const date = entry
+    ? new Date(entry.created_at)
+    : new Date();
+
+  // Greeting based on time of day
+  const hour = new Date().getHours();
+  const greetingKey = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+
+  // Map language to locale (cs -> cs-CZ, en -> en-US)
+  const locale = language === 'cs' ? 'cs-CZ' : language === 'en' ? 'en-US' : (navigator.language || 'en-US');
+
+  // Format date as "29. PROSINCE"
+  const formattedDate = date.toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'long',
+  }).toUpperCase();
+
+  return (
+    <AppLayout
+      sidebar={<Sidebar />}
+      contextPanel={
+        <ContextPanel>
+          <div className="space-y-6">
+            {/* Progress */}
+            {dashboardData && (
+              <div>
+                <ProgressBar
+                  value={wordCount}
+                  max={dashboardData.stats.dailyGoal}
+                  showLabel={true}
+                />
+              </div>
+            )}
+
+            {/* Streak Badge */}
+            {dashboardData && (
+              <div className="border-2 border-border p-3 bg-bg-panel shadow-hard">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-bold uppercase text-text-muted">
+                    {t('meta.currentStreak')}
+                  </span>
+                  <Flame size={14} className="text-text-main" />
+                </div>
+                <div className="text-3xl font-bold text-text-main">{dashboardData.stats.currentStreak}</div>
+              </div>
+            )}
+
+            {/* Mood Selector */}
+            <div>
+              <h3 className="text-xs font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
+                {t('meta.moodCheck')}
+              </h3>
+              <MoodSelector
+                value={moodRating as 1 | 2 | 3 | 4 | 5 | null}
+                onChange={setMoodRating}
+              />
+            </div>
+
+            {/* Tags */}
+            <div>
+              <h3 className="text-xs font-bold uppercase mb-4 border-b-2 border-border pb-1 text-text-main">
+                {t('entry.tags')}
+              </h3>
+              <TagInput value={tags} onChange={setTags} />
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-3">
+              <Button
+                onClick={handleSave}
+                disabled={isSaving || !content}
+                className="w-full"
+              >
+                {isSaving ? t('entry.saving') : t('common.save')}
+              </Button>
+
+              <Button onClick={handleCancel} variant="secondary" className="w-full">
+                {t('common.cancel')}
+              </Button>
+
+              {id && (
+                <Button
+                  onClick={() => setShowDeleteModal(true)}
+                  variant="danger"
+                  className="w-full"
+                >
+                  {t('common.delete')}
+                </Button>
+              )}
+            </div>
+
+            {/* Auto-save indicator */}
+            {isAutoSaving && (
+              <p className="text-xs text-text-muted">{t('entry.saving')}...</p>
+            )}
+            {lastSaved && !isAutoSaving && (
+              <p className="text-xs text-text-muted">
+                {t('entry.saved')}{' '}
+                {lastSaved.toLocaleTimeString(locale, {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+            )}
+          </div>
+        </ContextPanel>
+      }
+    >
+      <div className="p-12 bg-bg-panel min-h-screen">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
+            <div>
+              <div className="text-xs font-bold uppercase text-text-muted mb-1">
+                {t(`dashboard.greeting.${greetingKey}`)}
+              </div>
+              <h1 className="text-3xl font-bold uppercase text-text-main">
+                {formattedDate}
+              </h1>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-text-main">{wordCount}</div>
+              <div className="text-[10px] font-bold uppercase text-text-muted">
+                {t('meta.wordsToday')}
+              </div>
+            </div>
+          </div>
+
+          {/* Editor */}
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={t('entry.contentPlaceholder')}
+            rows={20}
+            spellCheck={false}
+            className="w-full text-lg font-mono font-medium leading-relaxed resize-none border-0 bg-transparent focus:ring-0 focus:outline-none text-text-main placeholder:text-text-muted"
+            autoFocus
+          />
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={closeDeleteModal}
+        title={t('entry.deleteTitle')}
+      >
+        <div className="space-y-4">
+          <p className="text-text-main">{t('entry.confirmDelete')}</p>
+          <div className="flex gap-3">
+            <Button onClick={handleDelete} variant="danger">
+              {t('common.delete')}
+            </Button>
+            <Button onClick={closeDeleteModal} variant="secondary">
+              {t('common.cancel')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </AppLayout>
+  );
+}

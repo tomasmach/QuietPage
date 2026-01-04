@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sites',  # Required by allauth
 
     # Third-party
+    'rest_framework',
+    'corsheaders',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     # Local apps
     'apps.accounts',
     'apps.journal',
+    'apps.api',
 ]
 
 # Sites framework (required by allauth)
@@ -55,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS - must be before CommonMiddleware
     'django.middleware.locale.LocaleMiddleware',  # i18n support
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,6 +82,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.api.context_processors.vite_assets',
             ],
         },
     },
@@ -127,7 +132,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # For collectstatic
-STATICFILES_DIRS = [BASE_DIR / 'static']  # Custom static files
+
+# Custom static files directories
+_staticfiles_dirs = [BASE_DIR / 'static']
+
+# Add Vite build output directory if it exists (for production)
+_vite_dist = BASE_DIR / 'frontend' / 'dist'
+if _vite_dist.exists():
+    _staticfiles_dirs.append(_vite_dist)
+
+STATICFILES_DIRS = _staticfiles_dirs
 
 # Media files (User uploaded files - avatars, etc.)
 # https://docs.djangoproject.com/en/5.2/topics/files/
@@ -220,9 +234,14 @@ LOGIN_REDIRECT_URL = '/journal/'  # Dashboard je na /journal/ (ne /journal/dashb
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login/'
 
-# Session Configuration - "Remember me" automaticky (14 dní)
-SESSION_COOKIE_AGE = 1209600  # 14 days in seconds
-SESSION_SAVE_EVERY_REQUEST = True  # Prodlouží session při každé aktivitě
+# Session security - zkrácený timeout s automatickou prolongací při aktivitě
+# Bezpečnostní důvody:
+# - 2 hodiny minimalizují riziko zneužití opuštěné session (např. na veřejném PC)
+# - SESSION_SAVE_EVERY_REQUEST = sliding window - aktivní uživatelé nejsou odhlášeni
+# - Vyvážený kompromis mezi bezpečností a UX (journaling vyžaduje delší session než banking)
+SESSION_COOKIE_AGE = 7200  # 2 hodiny (kompromis mezi bezpečností a UX)
+SESSION_SAVE_EVERY_REQUEST = True  # Sliding window - session se prodlužuje při každém requestu
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Zachovat session i po zavření prohlížeče
 SESSION_COOKIE_NAME = 'quietpage_sessionid'
 
 # Django Axes - Brute Force Protection Configuration
@@ -233,3 +252,33 @@ AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by user+IP combin
 AXES_RESET_ON_SUCCESS = True  # Reset failure counter on successful login
 AXES_LOCKOUT_TEMPLATE = None  # Use default lockout response (403 Forbidden)
 AXES_VERBOSE = True  # Log lockout events for debugging
+
+# Django REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour',
+        'register': '5/hour',
+        'entries_create': '100/day',
+        'avatar_upload': '10/hour',
+    },
+}

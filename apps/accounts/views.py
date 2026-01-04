@@ -2,7 +2,7 @@
 Views for user account settings.
 
 This module provides views for managing user profiles, goals, privacy settings,
-and account security (password change, email change, account deletion).
+and account security (password change, email change).
 """
 
 from django.contrib import messages
@@ -461,12 +461,14 @@ class EmailCancelChangeView(LoginRequiredMixin, View):
 
 class AccountDeleteView(LoginRequiredMixin, FormView):
     """
-    View for permanent account deletion with confirmation.
-    Deletes user and all associated data (entries cascade automatically).
+    View for deleting user account with password and text confirmation.
+    
+    GET - Renders the deletion confirmation form with user statistics
+    POST - Validates password and confirmation text, then deletes the account
     """
     template_name = 'accounts/settings/delete_account.html'
     form_class = AccountDeleteForm
-    success_url = reverse_lazy('home')
+    success_url = '/'
     
     def get_form_kwargs(self):
         """
@@ -478,45 +480,31 @@ class AccountDeleteView(LoginRequiredMixin, FormView):
     
     def form_valid(self, form):
         """
-        Delete user account and logout.
-
-        Uses atomic transaction to ensure logout and deletion happen together.
-        If deletion fails, user remains logged in.
+        Delete the user account and log them out.
         """
         user = self.request.user
-        username = user.username
-
-        # Log security event BEFORE deletion
-        log_security_event(
-            'ACCOUNT_DELETION',
-            user,
-            self.request,
-            {'username': username}
-        )
-
-        # Atomic transaction to ensure logout + delete happen together
-        with transaction.atomic():
-            # Logout first (invalidate session)
-            logout(self.request)
-            # Then delete user (CASCADE will delete all entries automatically)
-            user.delete()
-
-        messages.success(
-            self.request,
-            f'Účet {username} byl trvale smazán. Děkujeme, že jste s námi byli.'
-        )
-        return super().form_valid(form)
+        
+        # Log security event before deletion
+        log_security_event('ACCOUNT_DELETION', user, self.request)
+        
+        messages.success(self.request, 'Váš účet byl trvale smazán.')
+        logout(self.request)
+        
+        user.delete()
+        return redirect('/')
     
     def get_context_data(self, **kwargs):
         """
-        Add active section and statistics to context.
+        Add user statistics to context.
         """
         context = super().get_context_data(**kwargs)
         context['active_section'] = 'delete'
         
-        # Add statistics about what will be deleted
+        # Get total entries count for the user
         from apps.journal.models import Entry
-        user = self.request.user
-        context['total_entries'] = Entry.objects.filter(user=user).count()
+        total_entries = Entry.objects.filter(user=self.request.user).count()
+        context['total_entries'] = total_entries
         
         return context
+
+

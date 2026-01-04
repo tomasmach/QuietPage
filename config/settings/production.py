@@ -44,16 +44,33 @@ DATABASES = {
 # Security Settings
 # https://docs.djangoproject.com/en/5.2/topics/security/
 
+# Admin URL Security
+# The admin URL can be customized via ADMIN_URL environment variable to obscure the admin panel
+# This security-through-obscurity measure makes it harder for automated scanners to find the admin
+# Example: export ADMIN_URL=secret-dashboard-xyz/
+# Default: admin/ (for backward compatibility in development)
+
 # HTTPS
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_HTTPONLY = True  # Prevent JavaScript access to CSRF token
+# CSRF_COOKIE_HTTPONLY must be False for React SPA - JavaScript needs to read
+# the CSRF token from the cookie to include it in API request headers
+CSRF_COOKIE_HTTPONLY = False
 
 # Session and CSRF cookie security (defense in depth)
 SESSION_COOKIE_HTTPONLY = True  # Prevent XSS access to session cookie
 SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
 CSRF_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+
+# CSRF trusted origins - required for Django 4.0+ when using HTTPS
+# Parse from environment variable, or derive from ALLOWED_HOSTS with https:// prefix
+_csrf_origins_env = os.getenv('CSRF_TRUSTED_ORIGINS', '').strip()
+if _csrf_origins_env:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_origins_env.split(',') if origin.strip()]
+else:
+    # Fallback: derive from ALLOWED_HOSTS with https:// prefix
+    CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS]
 
 # HSTS (HTTP Strict Transport Security)
 SECURE_HSTS_SECONDS = 31536000  # 1 year
@@ -119,18 +136,26 @@ LOGGING = {
 
 # Content Security Policy (CSP)
 # https://django-csp.readthedocs.io/
-# Note: 'unsafe-inline' is used temporarily for scripts and styles
-# TODO: Refactor inline scripts/styles to use nonces or hashes for better security
+# Note: React/Vite builds all scripts to external files, so 'unsafe-inline' is not needed for scripts.
+# However, 'unsafe-inline' for styles is required by Tailwind CSS and many UI libraries.
+# TODO: Consider implementing nonce-based CSP for even stricter security in the future.
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": [SELF],
-        "script-src": [SELF, "'unsafe-inline'"],  # TODO: Remove unsafe-inline, use nonces
-        "style-src": [SELF, "'unsafe-inline'"],   # TODO: Remove unsafe-inline, use nonces
+        "script-src": [SELF],  # Removed unsafe-inline - React/Vite builds to external files
+        "style-src": [SELF, "'unsafe-inline'", "https://fonts.googleapis.com"],  # unsafe-inline required for Tailwind CSS
         "img-src": [SELF, "data:", "https:"],     # Allow data URIs and HTTPS images
-        "font-src": [SELF],
+        "font-src": [SELF, "https://fonts.gstatic.com"],  # Google Fonts files
         "connect-src": [SELF],
         "frame-ancestors": [NONE],                # Prevent clickjacking (more strict than X-Frame-Options)
         "base-uri": [SELF],                       # Prevent base tag injection attacks
         "form-action": [SELF],                    # Prevent form hijacking attacks
     },
 }
+
+# CORS Configuration for Production
+# In production, React SPA is served from the same domain (not a separate origin),
+# so CORS is not needed. These settings are here for completeness and safety.
+CORS_ALLOW_ALL_ORIGINS = False  # Never allow all origins in production
+CORS_ALLOW_CREDENTIALS = True   # Allow cookies/credentials for same-origin requests
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']

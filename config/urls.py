@@ -14,18 +14,27 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import os
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views  # type: ignore
 
+# Admin URL obfuscation - use environment variable in production
+# Security: Using a non-standard admin URL makes it harder for attackers to find the admin panel
+# Example: ADMIN_URL=secret-dashboard-xyz/ in production environment
+ADMIN_URL = os.getenv('ADMIN_URL', 'admin/')
+
 urlpatterns = [
+    path(ADMIN_URL, admin.site.urls),
     path('', views.HomeView.as_view(), name='home'),
-    path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('accounts/', include('apps.accounts.urls', namespace='accounts')),
     path('journal/', include('apps.journal.urls', namespace='journal')),
+    path('api/v1/', include('apps.api.urls', namespace='api')),
+    # Catch-all pattern for React SPA - MUST be last
+    re_path(r'^.*$', views.SPAView.as_view(), name='spa'),
 ]
 
 # Django Debug Toolbar URLs (only in development)

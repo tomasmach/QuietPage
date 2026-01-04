@@ -21,11 +21,51 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+def validate_image_magic_bytes(file_content: bytes) -> bool:
+    """
+    Validate image file by checking magic bytes (file signature).
+
+    Supported formats:
+    - JPEG: FF D8 FF
+    - PNG: 89 50 4E 47 0D 0A 1A 0A
+    - GIF: 47 49 46 38
+    - WebP: 52 49 46 46 ... 57 45 42 50
+
+    Args:
+        file_content: Raw bytes of the file
+
+    Returns:
+        bool: True if file has valid image magic bytes, False otherwise
+    """
+    if len(file_content) < 12:
+        return False
+
+    # JPEG
+    if file_content[:3] == b'\xff\xd8\xff':
+        return True
+
+    # PNG
+    if file_content[:8] == b'\x89PNG\r\n\x1a\n':
+        return True
+
+    # GIF (GIF87a or GIF89a)
+    if file_content[:4] == b'GIF8':
+        return True
+
+    # WebP (RIFF....WEBP)
+    if file_content[:4] == b'RIFF' and file_content[8:12] == b'WEBP':
+        return True
+
+    return False
+
+
 def resize_avatar(image_file, size=(512, 512)):
     """
     Resize uploaded avatar to specified dimensions with comprehensive security checks.
 
     Security measures:
+    - Magic bytes validation (file signature check)
     - File size validation (max 5MB)
     - Extension whitelist (jpg, jpeg, png, gif, webp)
     - Image verification to prevent polyglot attacks
@@ -41,6 +81,15 @@ def resize_avatar(image_file, size=(512, 512)):
     Raises:
         ValidationError: If file fails security checks
     """
+    # Security check 0: Magic bytes validation (must be FIRST)
+    # Read file content to validate magic bytes
+    file_content = image_file.read()
+    image_file.seek(0)  # Reset file pointer for further processing
+
+    # Validate actual file type by magic bytes
+    if not validate_image_magic_bytes(file_content):
+        raise ValidationError('Neplatný formát obrázku. Povolené formáty: JPEG, PNG, GIF, WebP.')
+
     # Security check 1: File size limit (max 5MB)
     if image_file.size > 5 * 1024 * 1024:
         raise ValidationError('Obrázek je příliš velký (max 5MB).')
