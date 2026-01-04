@@ -22,6 +22,7 @@ from .forms import (
     GoalsUpdateForm,
     PrivacySettingsForm,
     EmailChangeForm,
+    AccountDeleteForm,
 )
 from .models import User, EmailChangeRequest
 from .utils import resize_avatar, send_email_verification, verify_email_change_token
@@ -456,5 +457,57 @@ class EmailCancelChangeView(LoginRequiredMixin, View):
             messages.info(request, 'Nebyly nalezeny žádné nevyřízené žádosti.')
         
         return redirect('accounts:settings-email')
+
+
+class AccountDeleteView(LoginRequiredMixin, FormView):
+    """
+    View for deleting user account with password and text confirmation.
+    
+    GET - Renders the deletion confirmation form with user statistics
+    POST - Validates password and confirmation text, then deletes the account
+    """
+    template_name = 'accounts/settings/delete_account.html'
+    form_class = AccountDeleteForm
+    success_url = '/'
+    
+    def get_form_kwargs(self):
+        """
+        Pass current user to form.
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def form_valid(self, form):
+        """
+        Delete the user account and log them out.
+        """
+        user = self.request.user
+        
+        # Log security event before deletion
+        log_security_event('ACCOUNT_DELETION', user, self.request)
+        
+        # Delete the user (cascades to all related data)
+        user.delete()
+        
+        # Logout the user (session will be invalid after user deletion)
+        logout(self.request)
+        
+        messages.success(self.request, 'Váš účet byl trvale smazán.')
+        return redirect('/')
+    
+    def get_context_data(self, **kwargs):
+        """
+        Add user statistics to context.
+        """
+        context = super().get_context_data(**kwargs)
+        context['active_section'] = 'delete'
+        
+        # Get total entries count for the user
+        from apps.journal.models import Entry
+        total_entries = Entry.objects.filter(user=self.request.user).count()
+        context['total_entries'] = total_entries
+        
+        return context
 
 

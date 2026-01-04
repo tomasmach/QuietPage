@@ -7,6 +7,7 @@ Settings URLs for user profile, goals, privacy, and security management.
 from django.urls import path
 from django.views.generic import RedirectView
 from . import views
+from .views import AccountDeleteView
 
 app_name = 'accounts'
 
@@ -34,8 +35,8 @@ urlpatterns = [
     path('settings/security/email/resend/', views.EmailResendVerificationView.as_view(), name='email-resend'),
     path('settings/security/email/cancel/', views.EmailCancelChangeView.as_view(), name='email-cancel'),
 
-    # Account deletion (legacy route - redirect to new API endpoint)
+    # Account deletion
     path('settings/delete/',
-         RedirectView.as_view(url='/api/v1/settings/delete-account/', permanent=False),
-         name='settings-delete'),
+          AccountDeleteView.as_view(),
+          name='settings-delete'),
 ]
