@@ -74,7 +74,7 @@ class TestDeleteAccountAPIView:
 
         response = client.post(
             reverse('api:settings-delete-account'),
-            data=json.dumps({'password': 'password123'}),
+            data=json.dumps({'password': 'testpass123'}),
             content_type='application/json'
         )
 
@@ -89,7 +89,7 @@ class TestDeleteAccountAPIView:
 
         response = client.post(
             reverse('api:settings-delete-account'),
-            data=json.dumps({'password': 'password123', 'confirmation_text': 'INVALID'}),
+            data=json.dumps({'password': 'testpass123', 'confirmation_text': 'INVALID'}),
             content_type='application/json'
         )
 
@@ -366,7 +366,7 @@ class TestChangePasswordAPIView:
         response = client.post(
             reverse('api:settings-change-password'),
             data=json.dumps({
-                'current_password': 'password123',
+                'current_password': 'testpass123',
                 'new_password': 'NewPass123!',
                 'new_password_confirm': 'DifferentPass123!'
             }),
@@ -413,7 +413,7 @@ class TestChangeEmailAPIView:
             reverse('api:settings-change-email'),
             data=json.dumps({
                 'new_email': 'user2@example.com',
-                'password': 'password123'
+                'password': 'testpass123'
             }),
             content_type='application/json'
         )
@@ -431,7 +431,7 @@ class TestChangeEmailAPIView:
             reverse('api:settings-change-email'),
             data=json.dumps({
                 'new_email': 'test@example.com',
-                'password': 'password123'
+                'password': 'testpass123'
             }),
             content_type='application/json'
         )
