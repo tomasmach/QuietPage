@@ -35,12 +35,12 @@ export function useFocusTrap(isActive: boolean) {
     const handleTab = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
 
-      // If Tab key and focus is on last element, move to first
+      // If Shift+Tab and focus is on first element, wrap to last
       if (e.shiftKey && document.activeElement === firstFocusable) {
         e.preventDefault();
         lastFocusable.focus();
       }
-      // If Tab key and focus is on first element, move to last (when Shift+Tab)
+      // If Tab (no Shift) and focus is on last element, wrap to first
       else if (!e.shiftKey && document.activeElement === lastFocusable) {
         e.preventDefault();
         firstFocusable.focus();
