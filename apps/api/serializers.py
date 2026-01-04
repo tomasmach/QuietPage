@@ -160,3 +160,36 @@ class DashboardStatsSerializer(serializers.Serializer):
     current_streak = serializers.IntegerField()
     longest_streak = serializers.IntegerField()
     total_words = serializers.IntegerField()
+
+
+class StatisticsSerializer(serializers.Serializer):
+    """
+    Serializer for statistics API response.
+
+    Defines the structure for aggregated journal analytics.
+    """
+    period = serializers.CharField()
+    mood_analytics = serializers.DictField()
+    word_count_analytics = serializers.DictField()
+    writing_patterns = serializers.DictField()
+    tag_analytics = serializers.DictField()
+
+    def validate_period(self, value):
+        """
+        Validate that period is one of the allowed values.
+
+        Args:
+            value: The period string to validate.
+
+        Returns:
+            str: The validated period.
+
+        Raises:
+            ValidationError: If period is not one of the allowed values.
+        """
+        valid_periods = ['7d', '30d', '90d', '1y', 'all']
+        if value not in valid_periods:
+            raise serializers.ValidationError(
+                f"Period must be one of: {', '.join(valid_periods)}"
+            )
+        return value
