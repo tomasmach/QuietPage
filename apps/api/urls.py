@@ -20,6 +20,9 @@ from apps.api.views import (
     AutosaveView,
     TodayEntryView,
 )
+from apps.api.statistics_views import (
+    StatisticsView,
+)
 from apps.api.settings_views import (
     ProfileSettingsView,
     GoalsSettingsView,
@@ -47,6 +50,9 @@ urlpatterns = [
 
     # Dashboard endpoint
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
+
+    # Statistics endpoint
+    path('statistics/', StatisticsView.as_view(), name='statistics'),
 
     # Today's entry endpoint (must come before autosave and router URLs)
     path('entries/today/', TodayEntryView.as_view(), name='entry-today'),
