@@ -487,13 +487,10 @@ class AccountDeleteView(LoginRequiredMixin, FormView):
         # Log security event before deletion
         log_security_event('ACCOUNT_DELETION', user, self.request)
         
-        # Delete the user (cascades to all related data)
-        user.delete()
-        
-        # Logout the user (session will be invalid after user deletion)
+        messages.success(self.request, 'Váš účet byl trvale smazán.')
         logout(self.request)
         
-        messages.success(self.request, 'Váš účet byl trvale smazán.')
+        user.delete()
         return redirect('/')
     
     def get_context_data(self, **kwargs):
