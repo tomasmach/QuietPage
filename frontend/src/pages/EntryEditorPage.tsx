@@ -29,6 +29,8 @@ export function EntryEditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const closeDeleteModal = useCallback(() => setShowDeleteModal(false), []);
+
   // Auto-save functionality
   const handleAutoSaveSuccess = useCallback(
     (newId: string) => {
@@ -273,7 +275,7 @@ export function EntryEditorPage() {
       {/* Delete Confirmation Modal */}
       <Modal
         isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
+        onClose={closeDeleteModal}
         title={t('entry.deleteTitle')}
       >
         <div className="space-y-4">
@@ -282,7 +284,7 @@ export function EntryEditorPage() {
             <Button onClick={handleDelete} variant="danger">
               {t('common.delete')}
             </Button>
-            <Button onClick={() => setShowDeleteModal(false)} variant="secondary">
+            <Button onClick={closeDeleteModal} variant="secondary">
               {t('common.cancel')}
             </Button>
           </div>

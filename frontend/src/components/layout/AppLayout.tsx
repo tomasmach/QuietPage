@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useFocusTrap, useOverlay } from '@/hooks/useFocusTrap';
 
@@ -12,8 +12,13 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isContextPanelOpen, setIsContextPanelOpen] = useState(false);
 
-  useOverlay(isSidebarOpen, () => setIsSidebarOpen(false));
-  useOverlay(isContextPanelOpen, () => setIsContextPanelOpen(false));
+  const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
+  const toggleContextPanel = useCallback(() => setIsContextPanelOpen(prev => !prev), []);
+  const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
+  const closeContextPanel = useCallback(() => setIsContextPanelOpen(false), []);
+
+  useOverlay(isSidebarOpen, closeSidebar);
+  useOverlay(isContextPanelOpen, closeContextPanel);
 
   const sidebarRef = useFocusTrap(isSidebarOpen);
   const contextPanelRef = useFocusTrap(isContextPanelOpen);
@@ -24,7 +29,7 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
       <div className="lg:hidden sticky top-0 z-30 bg-bg-app border-b-2 border-border px-4 py-3 flex items-center justify-between">
         {sidebar && (
           <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            onClick={toggleSidebar}
             className="p-2 hover:bg-border/20 rounded-md transition-colors"
             aria-label="Toggle sidebar"
           >
@@ -36,7 +41,7 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
         <div className="flex-1" />
         {contextPanel && (
           <button
-            onClick={() => setIsContextPanelOpen(!isContextPanelOpen)}
+            onClick={toggleContextPanel}
             className="p-2 hover:bg-border/20 rounded-md transition-colors"
             aria-label="Toggle context panel"
           >
@@ -52,7 +57,7 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
         <>
           <div
             className="lg:hidden fixed inset-0 bg-black/50 z-40"
-            onClick={() => setIsSidebarOpen(false)}
+            onClick={closeSidebar}
             aria-hidden="true"
           />
           <aside
@@ -65,7 +70,7 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
             <div className="p-4 border-b-2 border-border flex justify-between items-center">
               <h2 className="font-semibold">Menu</h2>
               <button
-                onClick={() => setIsSidebarOpen(false)}
+                onClick={closeSidebar}
                 className="p-2 hover:bg-border/20 rounded-md transition-colors"
                 aria-label="Close sidebar"
               >
@@ -84,7 +89,7 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
         <>
           <div
             className="lg:hidden fixed inset-0 bg-black/50 z-40"
-            onClick={() => setIsContextPanelOpen(false)}
+            onClick={closeContextPanel}
             aria-hidden="true"
           />
           <aside
@@ -97,7 +102,7 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
             <div className="p-4 border-b-2 border-border flex justify-between items-center">
               <h2 className="font-semibold">Info</h2>
               <button
-                onClick={() => setIsContextPanelOpen(false)}
+                onClick={closeContextPanel}
                 className="p-2 hover:bg-border/20 rounded-md transition-colors"
                 aria-label="Close context panel"
               >
