@@ -159,45 +159,74 @@ class StatisticsView(APIView):
             'trend': trend
         }
 
-    def _calculate_word_count_analytics(self, entries):
+    def _calculate_word_count_analytics(self, entries, user, period_start):
         """
         Calculate word count analytics for a filtered entries queryset.
 
         Args:
             entries: QuerySet of Entry objects already filtered by user and date range
+            user: User object for daily_word_goal reference
+            period_start: Start datetime of the period (not directly used, kept for consistency)
 
         Returns:
             dict: Word count statistics including:
                 - total: Total words written
-                - average: Average words per entry
+                - average_per_entry: Average words per entry
+                - average_per_day: Average words per day (active days only)
                 - timeline: List of daily word counts with dates
                 - total_entries: Total entries in period
+                - goal_achievement_rate: Percentage of active days meeting daily goal
+                - best_day: Best writing day with word count
         """
         total_words = entries.aggregate(total=Sum('word_count'))['total'] or 0
         total_entries = entries.count()
 
-        average = total_words / total_entries if total_entries > 0 else 0
+        average_per_entry = total_words / total_entries if total_entries > 0 else 0
 
         daily_data = entries.annotate(
             day=TruncDate('created_at')
         ).values('day').annotate(
             total_words=Sum('word_count'),
-            count=Count('id')
+            entries=Count('id')
         ).order_by('day')
 
         timeline = []
+        active_days_count = 0
+        days_meeting_goal = 0
+        best_day = None
+        max_words = 0
+
         for item in daily_data:
             timeline.append({
                 'date': item['day'].isoformat(),
                 'word_count': item['total_words'],
-                'entry_count': item['count']
+                'entry_count': item['entries']
             })
+
+            active_days_count += 1
+            if item['total_words'] >= user.daily_word_goal:
+                days_meeting_goal += 1
+
+            if item['total_words'] > max_words:
+                max_words = item['total_words']
+                best_day = {
+                    'date': item['day'].isoformat(),
+                    'word_count': item['total_words'],
+                    'entry_count': item['entries']
+                }
+
+        average_per_day = total_words / active_days_count if active_days_count > 0 else 0
+
+        goal_achievement_rate = (days_meeting_goal / active_days_count * 100) if active_days_count > 0 else 0
 
         return {
             'total': total_words,
-            'average': round(average, 2),
+            'average_per_entry': round(average_per_entry, 2),
+            'average_per_day': round(average_per_day, 2),
             'timeline': timeline,
-            'total_entries': total_entries
+            'total_entries': total_entries,
+            'goal_achievement_rate': round(goal_achievement_rate, 2),
+            'best_day': best_day
         }
 
     def get(self, request):
@@ -236,7 +265,7 @@ class StatisticsView(APIView):
         )
 
         mood_analytics = self._calculate_mood_analytics(entries, start_date)
-        word_count_analytics = self._calculate_word_count_analytics(entries)
+        word_count_analytics = self._calculate_word_count_analytics(entries, user, start_date)
 
         return Response({
             'period': period,
