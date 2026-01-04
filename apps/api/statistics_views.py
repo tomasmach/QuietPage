@@ -26,12 +26,12 @@ class StatisticsView(APIView):
     API endpoint for journal statistics and analytics.
 
     Returns aggregated statistics for a specified time period:
-        - period: Time period (week, month, year)
+        - period: Time period (7d, 30d, 90d, 1y, all)
         - mood_analytics: Mood trends (average, distribution, daily breakdown)
         - word_count_analytics: Word count stats (total, average, daily breakdown)
 
     Query Parameters:
-        - period: Time period ('week', 'month', 'year'). Defaults to 'week'
+        - period: Time period ('7d', '30d', '90d', '1y', 'all'). Defaults to '7d'
 
     Authentication:
         - Requires authenticated user (IsAuthenticated)
@@ -41,16 +41,17 @@ class StatisticsView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
-    def _get_period_range(self, user, period):
+    def _get_period_range(self, period, user):
         """
         Calculate date range for a given time period in user's timezone.
 
         Args:
+            period: String ('7d', '30d', '90d', '1y', 'all')
             user: User object with timezone field
-            period: String ('week', 'month', 'year')
 
         Returns:
             tuple: (start_date, end_date) as timezone-aware datetime objects
+                    start_date is at 00:00:00, end_date is at 23:59:59
 
         Raises:
             ValueError: If period is invalid
@@ -58,16 +59,26 @@ class StatisticsView(APIView):
         user_tz = ZoneInfo(str(user.timezone))
         now = timezone.now().astimezone(user_tz)
 
-        if period == 'week':
+        if period == '7d':
             start_date = now - timedelta(days=7)
-        elif period == 'month':
+        elif period == '30d':
             start_date = now - timedelta(days=30)
-        elif period == 'year':
+        elif period == '90d':
+            start_date = now - timedelta(days=90)
+        elif period == '1y':
             start_date = now - timedelta(days=365)
+        elif period == 'all':
+            first_entry = Entry.objects.filter(user=user).order_by('created_at').first()
+            if first_entry:
+                start_date = first_entry.created_at.astimezone(user_tz)
+            else:
+                start_date = now
         else:
             raise ValueError(f"Invalid period: {period}")
 
-        end_date = now
+        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+
         return start_date, end_date
 
     def _calculate_mood_analytics(self, user, start_date, end_date):
@@ -185,25 +196,27 @@ class StatisticsView(APIView):
         Get statistics for the current user.
 
         Query Parameters:
-            - period: Time period ('week', 'month', 'year'). Defaults to 'week'
+            - period: Time period ('7d', '30d', '90d', '1y', 'all'). Defaults to '7d'
 
         Returns:
             Response with statistics data:
                 - period: Requested period
+                - start_date: Start date of period (ISO format)
+                - end_date: End date of period (ISO format)
                 - mood_analytics: Mood trends data
                 - word_count_analytics: Word count data
         """
         user = request.user
-        period = request.query_params.get('period', 'week')
+        period = request.query_params.get('period', '7d')
 
-        valid_periods = ['week', 'month', 'year']
+        valid_periods = ['7d', '30d', '90d', '1y', 'all']
         if period not in valid_periods:
             return Response({
                 'error': f'Invalid period. Must be one of: {", ".join(valid_periods)}'
             }, status=400)
 
         try:
-            start_date, end_date = self._get_period_range(user, period)
+            start_date, end_date = self._get_period_range(period, user)
         except ValueError as e:
             return Response({'error': str(e)}, status=400)
 
