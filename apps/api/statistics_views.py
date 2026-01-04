@@ -13,7 +13,8 @@ from zoneinfo import ZoneInfo
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Avg, Count
+from django.db.models import Sum, Avg, Count, Q
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from apps.journal.models import Entry
@@ -81,113 +82,121 @@ class StatisticsView(APIView):
 
         return start_date, end_date
 
-    def _calculate_mood_analytics(self, user, start_date, end_date):
+    def _calculate_mood_analytics(self, entries, period_start):
         """
-        Calculate mood analytics for a date range.
+        Calculate mood analytics for a filtered entries queryset.
+
+        Args:
+            entries: QuerySet of Entry objects already filtered by user and date range
+            period_start: Start datetime of the period (for trend calculation)
 
         Returns:
             dict: Mood statistics including:
                 - average: Average mood rating (1-5)
                 - distribution: Count of entries per mood rating (1-5)
-                - daily_breakdown: List of daily mood averages
+                - timeline: List of daily mood averages with dates
                 - total_rated_entries: Total entries with mood ratings
+                - trend: 'improving', 'declining', or 'stable'
         """
-        queryset = Entry.objects.filter(
-            user=user,
-            created_at__gte=start_date,
-            created_at__lte=end_date,
-            mood_rating__isnull=False
-        )
-
-        total_rated = queryset.count()
+        rated_entries = entries.filter(mood_rating__isnull=False)
+        total_rated = rated_entries.count()
 
         if total_rated == 0:
             return {
                 'average': None,
                 'distribution': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
-                'daily_breakdown': [],
-                'total_rated_entries': 0
+                'timeline': [],
+                'total_rated_entries': 0,
+                'trend': 'stable'
             }
 
-        average = queryset.aggregate(avg=Avg('mood_rating'))['avg']
+        average = rated_entries.aggregate(avg=Avg('mood_rating'))['avg']
 
         distribution = {}
         for rating in range(1, 6):
-            distribution[rating] = queryset.filter(mood_rating=rating).count()
+            distribution[rating] = rated_entries.filter(mood_rating=rating).count()
 
-        daily_breakdown = []
-        current_date = start_date.date()
-        end_date_local = end_date.date()
+        daily_data = rated_entries.annotate(
+            day=TruncDate('created_at')
+        ).values('day').annotate(
+            avg_mood=Avg('mood_rating', filter=Q(mood_rating__isnull=False)),
+            count=Count('id', filter=Q(mood_rating__isnull=False))
+        ).order_by('day')
 
-        while current_date <= end_date_local:
-            day_start = datetime.combine(current_date, datetime.min.time()).replace(tzinfo=start_date.tzinfo)
-            day_end = datetime.combine(current_date, datetime.max.time()).replace(tzinfo=start_date.tzinfo)
-
-            day_avg = queryset.filter(
-                created_at__gte=day_start,
-                created_at__lte=day_end
-            ).aggregate(avg=Avg('mood_rating'))['avg']
-
-            daily_breakdown.append({
-                'date': current_date.isoformat(),
-                'average': round(day_avg, 2) if day_avg else None
+        timeline = []
+        for item in daily_data:
+            timeline.append({
+                'date': item['day'].isoformat(),
+                'average': round(item['avg_mood'], 2) if item['avg_mood'] else None,
+                'count': item['count']
             })
 
-            current_date += timedelta(days=1)
+        if len(timeline) >= 2:
+            midpoint = len(timeline) // 2
+            first_half_values = [day['average'] for day in timeline[:midpoint] if day['average'] is not None]
+            second_half_values = [day['average'] for day in timeline[midpoint:] if day['average'] is not None]
+
+            if first_half_values and second_half_values:
+                first_half_avg = sum(first_half_values) / len(first_half_values)
+                second_half_avg = sum(second_half_values) / len(second_half_values)
+
+                if second_half_avg - first_half_avg > 0.3:
+                    trend = 'improving'
+                elif first_half_avg - second_half_avg > 0.3:
+                    trend = 'declining'
+                else:
+                    trend = 'stable'
+            else:
+                trend = 'stable'
+        else:
+            trend = 'stable'
 
         return {
             'average': round(average, 2) if average else None,
             'distribution': distribution,
-            'daily_breakdown': daily_breakdown,
-            'total_rated_entries': total_rated
+            'timeline': timeline,
+            'total_rated_entries': total_rated,
+            'trend': trend
         }
 
-    def _calculate_word_count_analytics(self, user, start_date, end_date):
+    def _calculate_word_count_analytics(self, entries):
         """
-        Calculate word count analytics for a date range.
+        Calculate word count analytics for a filtered entries queryset.
+
+        Args:
+            entries: QuerySet of Entry objects already filtered by user and date range
 
         Returns:
             dict: Word count statistics including:
                 - total: Total words written
                 - average: Average words per entry
-                - daily_breakdown: List of daily word counts
+                - timeline: List of daily word counts with dates
                 - total_entries: Total entries in period
         """
-        queryset = Entry.objects.filter(
-            user=user,
-            created_at__gte=start_date,
-            created_at__lte=end_date
-        )
-
-        total_words = queryset.aggregate(total=Sum('word_count'))['total'] or 0
-        total_entries = queryset.count()
+        total_words = entries.aggregate(total=Sum('word_count'))['total'] or 0
+        total_entries = entries.count()
 
         average = total_words / total_entries if total_entries > 0 else 0
 
-        daily_breakdown = []
-        current_date = start_date.date()
-        end_date_local = end_date.date()
+        daily_data = entries.annotate(
+            day=TruncDate('created_at')
+        ).values('day').annotate(
+            total_words=Sum('word_count'),
+            count=Count('id')
+        ).order_by('day')
 
-        while current_date <= end_date_local:
-            day_start = datetime.combine(current_date, datetime.min.time()).replace(tzinfo=start_date.tzinfo)
-            day_end = datetime.combine(current_date, datetime.max.time()).replace(tzinfo=start_date.tzinfo)
-
-            day_total = queryset.filter(
-                created_at__gte=day_start,
-                created_at__lte=day_end
-            ).aggregate(total=Sum('word_count'))['total'] or 0
-
-            daily_breakdown.append({
-                'date': current_date.isoformat(),
-                'word_count': day_total
+        timeline = []
+        for item in daily_data:
+            timeline.append({
+                'date': item['day'].isoformat(),
+                'word_count': item['total_words'],
+                'entry_count': item['count']
             })
-
-            current_date += timedelta(days=1)
 
         return {
             'total': total_words,
             'average': round(average, 2),
-            'daily_breakdown': daily_breakdown,
+            'timeline': timeline,
             'total_entries': total_entries
         }
 
@@ -220,8 +229,14 @@ class StatisticsView(APIView):
         except ValueError as e:
             return Response({'error': str(e)}, status=400)
 
-        mood_analytics = self._calculate_mood_analytics(user, start_date, end_date)
-        word_count_analytics = self._calculate_word_count_analytics(user, start_date, end_date)
+        entries = Entry.objects.filter(
+            user=user,
+            created_at__gte=start_date,
+            created_at__lte=end_date
+        )
+
+        mood_analytics = self._calculate_mood_analytics(entries, start_date)
+        word_count_analytics = self._calculate_word_count_analytics(entries)
 
         return Response({
             'period': period,
