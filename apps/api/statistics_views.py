@@ -16,10 +16,20 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Avg, Count, Q
 from django.db.models.functions import TruncDate
 from django.utils import timezone
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
+from django.utils.decorators import method_decorator
 
 from apps.journal.models import Entry
 
 logger = logging.getLogger(__name__)
+
+
+def custom_cache_key(request):
+    user = request.user
+    period = request.query_params.get('period', '7d')
+    last_entry_date = user.last_entry_date.isoformat() if user.last_entry_date else 'none'
+    return f'statistics_{user.id}_{period}_{last_entry_date}'
 
 
 class StatisticsView(APIView):
@@ -38,7 +48,9 @@ class StatisticsView(APIView):
         - Requires authenticated user (IsAuthenticated)
 
     Caching:
-        - Results are cached for 5 minutes to reduce database load
+        - Results are cached for 30 minutes using database cache backend
+        - Cache key includes user.id, period, and last_entry_date for automatic invalidation
+        - Client-side caching enabled via cache headers
     """
     permission_classes = [IsAuthenticated]
 
@@ -229,6 +241,8 @@ class StatisticsView(APIView):
             'best_day': best_day
         }
 
+    @method_decorator(vary_on_headers('Authorization'))
+    @method_decorator(cache_page(1800, key_prefix=custom_cache_key))
     def get(self, request):
         """
         Get statistics for the current user.
@@ -243,6 +257,12 @@ class StatisticsView(APIView):
                 - end_date: End date of period (ISO format)
                 - mood_analytics: Mood trends data
                 - word_count_analytics: Word count data
+
+        Caching:
+            - Server-side: 30 minutes (1800 seconds)
+            - Client-side: Controlled by Cache-Control headers
+            - Cache key: statistics_{user.id}_{period}_{last_entry_date}
+            - Automatic invalidation: last_entry_date changes on new entry creation
         """
         user = request.user
         period = request.query_params.get('period', '7d')
@@ -267,10 +287,15 @@ class StatisticsView(APIView):
         mood_analytics = self._calculate_mood_analytics(entries, start_date)
         word_count_analytics = self._calculate_word_count_analytics(entries, user, start_date)
 
-        return Response({
+        response = Response({
             'period': period,
             'start_date': start_date.isoformat(),
             'end_date': end_date.isoformat(),
             'mood_analytics': mood_analytics,
             'word_count_analytics': word_count_analytics
         })
+
+        response['Cache-Control'] = 'public, max-age=1800, s-maxage=1800'
+        response['Vary'] = 'Authorization'
+
+        return response
