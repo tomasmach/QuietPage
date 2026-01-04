@@ -470,3 +470,244 @@ class TestStatisticsViewMoodAnalytics:
         assert 'max-age=1800' in response['Cache-Control']
         assert 'Vary' in response
         assert 'Authorization' in response['Vary']
+
+
+@pytest.mark.statistics
+@pytest.mark.unit
+class TestStatisticsViewWordCountAnalytics:
+    """Test StatisticsView with focus on word count analytics calculations."""
+
+    def test_daily_word_count_aggregation(self, client):
+        """Daily word count aggregation sums correctly across multiple entries per day."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        entry1 = EntryFactory(
+            user=user,
+            content='First entry with five words.',
+            created_at=base_date
+        )
+        entry1.refresh_from_db()
+
+        entry2 = EntryFactory(
+            user=user,
+            content='Second entry has six words here.',
+            created_at=base_date
+        )
+        entry2.refresh_from_db()
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        word_analytics = data['word_count_analytics']
+
+        timeline = word_analytics['timeline']
+        today_entry = [t for t in timeline if t['date'] == base_date.date().isoformat()][0]
+
+        assert today_entry['word_count'] == entry1.word_count + entry2.word_count
+        assert today_entry['entry_count'] == 2
+        assert word_analytics['total'] == entry1.word_count + entry2.word_count
+
+    def test_goal_achievement_rate_100_percent(self, client):
+        """Goal achievement rate with 100% achievement."""
+        user = UserFactory(timezone='Europe/Prague', daily_word_goal=100)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory(
+            user=user,
+            content='This entry has more than one hundred words. ' + 'word ' * 110,
+            created_at=base_date
+        )
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        word_analytics = data['word_count_analytics']
+
+        assert word_analytics['goal_achievement_rate'] == 100.0
+
+    def test_goal_achievement_rate_0_percent(self, client):
+        """Goal achievement rate with 0% achievement."""
+        user = UserFactory(timezone='Europe/Prague', daily_word_goal=1000)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory(
+            user=user,
+            content='Short entry with ten words.',
+            created_at=base_date
+        )
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        word_analytics = data['word_count_analytics']
+
+        assert word_analytics['goal_achievement_rate'] == 0.0
+
+    def test_goal_achievement_rate_partial(self, client):
+        """Goal achievement rate with partial achievement."""
+        user = UserFactory(timezone='Europe/Prague', daily_word_goal=100)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        day1 = base_date - timedelta(days=1)
+        day2 = base_date - timedelta(days=2)
+
+        EntryFactory(
+            user=user,
+            content='Entry one with over hundred words exactly. ' + 'word ' * 100,
+            created_at=day1
+        )
+
+        EntryFactory(
+            user=user,
+            content='Entry two with fifty words only. ' + 'word ' * 40,
+            created_at=day2
+        )
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        word_analytics = data['word_count_analytics']
+
+        assert word_analytics['goal_achievement_rate'] == 50.0
+
+    def test_best_day_calculation(self, client):
+        """'best day' calculation returns highest word count day."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory(
+            user=user,
+            content='Normal entry with ten words.',
+            created_at=base_date - timedelta(days=1)
+        )
+
+        EntryFactory(
+            user=user,
+            content='Best entry with two hundred words. ' + 'word ' * 190,
+            created_at=base_date
+        )
+
+        EntryFactory(
+            user=user,
+            content='Another normal entry with fifteen words here.',
+            created_at=base_date - timedelta(days=2)
+        )
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        word_analytics = data['word_count_analytics']
+
+        assert word_analytics['best_day'] is not None
+        assert word_analytics['best_day']['date'] == base_date.date().isoformat()
+        assert word_analytics['best_day']['word_count'] > 100
+
+    def test_no_entries_returns_zeroes(self, client):
+        """User with no entries returns zeros/nulls gracefully."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        word_analytics = data['word_count_analytics']
+
+        assert word_analytics['total'] == 0
+        assert word_analytics['total_entries'] == 0
+        assert word_analytics['average_per_entry'] == 0
+        assert word_analytics['average_per_day'] == 0
+        assert word_analytics['timeline'] == []
+        assert word_analytics['best_day'] is None
+
+    def test_encrypted_content_not_decrypted(self, client):
+        """Calculations exclude encrypted content field (no decryption happens)."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        entry = EntryFactory(
+            user=user,
+            content='This is a test entry with ten words.',
+            created_at=base_date
+        )
+        entry.refresh_from_db()
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        word_analytics = data['word_count_analytics']
+
+        assert word_analytics['total'] == entry.word_count
+        assert word_analytics['total'] > 0
+
+    def test_default_daily_goal_when_not_set(self, client):
+        """User with default daily goal uses 750 words."""
+        user = UserFactory(timezone='Europe/Prague')
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        EntryFactory(
+            user=user,
+            content='word ' * 750,
+            created_at=base_date
+        )
+
+        client.force_login(user)
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        word_analytics = data['word_count_analytics']
+
+        assert word_analytics['goal_achievement_rate'] == 100.0
+
+    def test_average_per_day_calculation(self, client):
+        """Average per day calculated correctly across active days."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo('Europe/Prague'))
+
+        entry1 = EntryFactory(
+            user=user,
+            content='First entry with twenty words here. ' + 'word ' * 10,
+            created_at=base_date
+        )
+        entry1.refresh_from_db()
+
+        entry2 = EntryFactory(
+            user=user,
+            content='Second entry with thirty words total here. ' + 'word ' * 20,
+            created_at=base_date - timedelta(days=1)
+        )
+        entry2.refresh_from_db()
+
+        response = client.get(reverse('api:statistics'), {'period': '7d'})
+
+        assert response.status_code == 200
+        data = response.json()
+        word_analytics = data['word_count_analytics']
+
+        expected_avg = (entry1.word_count + entry2.word_count) / 2
+        assert word_analytics['average_per_day'] == round(expected_avg, 2)
+        assert word_analytics['total_entries'] == 2
+
