@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 
 export interface Entry {
@@ -42,7 +42,7 @@ export function useEntries(pageSize = 20): UseEntriesReturn {
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
 
-  const fetchEntries = async (pageNum: number) => {
+  const fetchEntries = useCallback(async (pageNum: number) => {
     setIsLoading(true);
     setError(null);
 
@@ -60,11 +60,11 @@ export function useEntries(pageSize = 20): UseEntriesReturn {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pageSize]);
 
   useEffect(() => {
     fetchEntries(page);
-  }, [page, pageSize]);
+  }, [page, fetchEntries]);
 
   return {
     entries,

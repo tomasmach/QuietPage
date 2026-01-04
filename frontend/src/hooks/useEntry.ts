@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 
 export interface EntryDetail {
@@ -38,7 +38,7 @@ export function useEntry(id?: string): UseEntryReturn {
   const [isLoading, setIsLoading] = useState(!!id);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchEntry = async () => {
+  const fetchEntry = useCallback(async () => {
     if (!id) return;
 
     setIsLoading(true);
@@ -52,13 +52,13 @@ export function useEntry(id?: string): UseEntryReturn {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (id) {
       fetchEntry();
     }
-  }, [id]);
+  }, [id, fetchEntry]);
 
   /**
    * Save entry (create or update)
