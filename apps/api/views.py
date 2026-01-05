@@ -249,18 +249,14 @@ class TodayEntryView(APIView):
         """
         Vytvoří nebo updatne dnešní záznam.
 
-        KRITICKÉ: Odmítne prázdný content pro prevenci
-        nechtěného vytváření záznamů a updatu streaku.
+        Povolit prázdný content pro 750words.com style - jeden záznam na den.
+        Streak se updatne až když entry má skutečný obsah (word_count > 0).
         """
         user = request.user
         content = (request.data.get('content') or '').strip()
 
-        # KRITICKÉ: Odmítnutí prázdného contentu
-        if not content:
-            return Response({
-                'status': 'error',
-                'message': 'Obsah nemůže být prázdný'
-            }, status=status.HTTP_400_BAD_REQUEST)
+        # Povolit prázdný content - entry se vytvoří, ale streak se neaktualizuje
+        # (to je ošetřeno v signals.py)
 
         today_start, today_end = self.get_today_date_range(user)
 

@@ -19,34 +19,54 @@ export function TodayEntryPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const { entry, isLoading, error } = useTodayEntry();
+  const { entry, isLoading, error, exists, refresh } = useTodayEntry();
   const { data: dashboardData } = useDashboard();
   const [content, setContent] = useState('');
   const [moodRating, setMoodRating] = useState<number | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const [isCreatingEntry, setIsCreatingEntry] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Auto-save functionality
+  // Auto-save functionality (bez refresh - není potřeba)
   const onSaveSuccess = useCallback(() => {
-    // Záznam uložen - zůstáváme na /write (nenavigujeme)
-  }, []);
+    if (isCreatingEntry) {
+      setIsCreatingEntry(false);
+    }
+  }, [isCreatingEntry]);
 
   const { save: autoSave, isSaving: isAutoSaving, lastSaved } = useTodayAutoSave({
     onSuccess: onSaveSuccess,
   });
 
-  // Initialize form from entry data
+  // Auto-create empty entry if it doesn't exist (750words.com style)
   useEffect(() => {
-    if (entry) {
+    if (!isLoading && !exists && !error && !isCreatingEntry) {
+      setIsCreatingEntry(true);
+      setIsInitialized(true);
+      // Create empty entry
+      autoSave({
+        content: '',
+        mood_rating: null,
+        tags: [],
+      });
+    }
+  }, [isLoading, exists, error, isCreatingEntry, autoSave]);
+
+  // Initialize form from entry data POUZE JEDNOU
+  useEffect(() => {
+    if (entry && !isInitialized) {
       setContent(entry.content);
       setMoodRating(entry.mood_rating);
       setTags(entry.tags);
+      setIsInitialized(true);
     }
-  }, [entry]);
+  }, [entry, isInitialized]);
 
-  // Auto-save when content changes
+  // Auto-save when content changes (pouze když už je initialized)
   useEffect(() => {
-    // Only autosave if content is non-empty
-    if (content && content.trim()) {
+    // Autosave JEN když už máme entry a je initialized
+    // Debounce v useTodayAutoSave zajistí, že se volá až po 1s klidu
+    if (isInitialized && !isCreatingEntry) {
       autoSave({
         content,
         mood_rating: moodRating,
