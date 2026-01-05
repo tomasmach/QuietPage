@@ -28,9 +28,11 @@ logger = logging.getLogger(__name__)
 
 def custom_cache_key(request):
     user = request.user
-    period = request.query_params.get('period', '7d')
-    last_entry_date = user.last_entry_date.isoformat() if user.last_entry_date else 'none'
-    return f'statistics_{user.id}_{period}_{last_entry_date}'
+    period = request.query_params.get("period", "7d")
+    last_entry_date = (
+        user.last_entry_date.isoformat() if user.last_entry_date else "none"
+    )
+    return f"statistics_{user.id}_{period}_{last_entry_date}"
 
 
 class StatisticsView(APIView):
@@ -53,7 +55,23 @@ class StatisticsView(APIView):
         - Cache key includes user.id, period, and last_entry_date for automatic invalidation
         - Client-side caching enabled via cache headers
     """
+
     permission_classes = [IsAuthenticated]
+
+    def _normalize_to_local_day(self, dt, user_tz):
+        """
+        Normalize datetime to local day, handling DST transitions.
+        Uses fold=0 for consistent behavior during fall-back.
+
+        Args:
+            dt: datetime object (timezone-aware or naive)
+            user_tz: ZoneInfo timezone object
+
+        Returns:
+            datetime: Normalized to 00:00:00 in user's timezone with fold=0
+        """
+        local_dt = dt.astimezone(user_tz)
+        return local_dt.replace(hour=0, minute=0, second=0, microsecond=0, fold=0)
 
     def _get_period_range(self, period, user):
         """
@@ -73,16 +91,16 @@ class StatisticsView(APIView):
         user_tz = ZoneInfo(str(user.timezone))
         now = timezone.now().astimezone(user_tz)
 
-        if period == '7d':
+        if period == "7d":
             start_date = now - timedelta(days=7)
-        elif period == '30d':
+        elif period == "30d":
             start_date = now - timedelta(days=30)
-        elif period == '90d':
+        elif period == "90d":
             start_date = now - timedelta(days=90)
-        elif period == '1y':
+        elif period == "1y":
             start_date = now - relativedelta(years=1)
-        elif period == 'all':
-            first_entry = Entry.objects.filter(user=user).order_by('created_at').first()
+        elif period == "all":
+            first_entry = Entry.objects.filter(user=user).order_by("created_at").first()
             if first_entry:
                 start_date = first_entry.created_at.astimezone(user_tz)
             else:
@@ -90,8 +108,10 @@ class StatisticsView(APIView):
         else:
             raise ValueError(f"Invalid period: {period}")
 
-        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        start_date = self._normalize_to_local_day(start_date, user_tz)
+        end_date = now.replace(
+            hour=23, minute=59, second=59, microsecond=999999, fold=0
+        )
 
         return start_date, end_date
 
@@ -116,60 +136,73 @@ class StatisticsView(APIView):
 
         if total_rated == 0:
             return {
-                'average': None,
-                'distribution': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
-                'timeline': [],
-                'total_rated_entries': 0,
-                'trend': 'stable'
+                "average": None,
+                "distribution": {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+                "timeline": [],
+                "total_rated_entries": 0,
+                "trend": "stable",
             }
 
-        average = rated_entries.aggregate(avg=Avg('mood_rating'))['avg']
+        average = rated_entries.aggregate(avg=Avg("mood_rating"))["avg"]
 
         distribution = {}
         for rating in range(1, 6):
             distribution[rating] = rated_entries.filter(mood_rating=rating).count()
 
-        daily_data = rated_entries.annotate(
-            day=TruncDate('created_at')
-        ).values('day').annotate(
-            avg_mood=Avg('mood_rating', filter=Q(mood_rating__isnull=False)),
-            count=Count('id', filter=Q(mood_rating__isnull=False))
-        ).order_by('day')
+        daily_data = (
+            rated_entries.annotate(day=TruncDate("created_at"))
+            .values("day")
+            .annotate(
+                avg_mood=Avg("mood_rating", filter=Q(mood_rating__isnull=False)),
+                count=Count("id", filter=Q(mood_rating__isnull=False)),
+            )
+            .order_by("day")
+        )
 
         timeline = []
         for item in daily_data:
-            timeline.append({
-                'date': item['day'].isoformat(),
-                'average': round(item['avg_mood'], 2) if item['avg_mood'] else None,
-                'count': item['count']
-            })
+            timeline.append(
+                {
+                    "date": item["day"].isoformat(),
+                    "average": round(item["avg_mood"], 2) if item["avg_mood"] else None,
+                    "count": item["count"],
+                }
+            )
 
         if len(timeline) >= 2:
             midpoint = len(timeline) // 2
-            first_half_values = [day['average'] for day in timeline[:midpoint] if day['average'] is not None]
-            second_half_values = [day['average'] for day in timeline[midpoint:] if day['average'] is not None]
+            first_half_values = [
+                day["average"]
+                for day in timeline[:midpoint]
+                if day["average"] is not None
+            ]
+            second_half_values = [
+                day["average"]
+                for day in timeline[midpoint:]
+                if day["average"] is not None
+            ]
 
             if first_half_values and second_half_values:
                 first_half_avg = sum(first_half_values) / len(first_half_values)
                 second_half_avg = sum(second_half_values) / len(second_half_values)
 
                 if second_half_avg - first_half_avg > 0.3:
-                    trend = 'improving'
+                    trend = "improving"
                 elif first_half_avg - second_half_avg > 0.3:
-                    trend = 'declining'
+                    trend = "declining"
                 else:
-                    trend = 'stable'
+                    trend = "stable"
             else:
-                trend = 'stable'
+                trend = "stable"
         else:
-            trend = 'stable'
+            trend = "stable"
 
         return {
-            'average': round(average, 2) if average else None,
-            'distribution': distribution,
-            'timeline': timeline,
-            'total_rated_entries': total_rated,
-            'trend': trend
+            "average": round(average, 2) if average else None,
+            "distribution": distribution,
+            "timeline": timeline,
+            "total_rated_entries": total_rated,
+            "trend": trend,
         }
 
     def _calculate_word_count_analytics(self, entries, user, period_start):
@@ -191,17 +224,17 @@ class StatisticsView(APIView):
                 - goal_achievement_rate: Percentage of active days meeting daily goal
                 - best_day: Best writing day with word count
         """
-        total_words = entries.aggregate(total=Sum('word_count'))['total'] or 0
+        total_words = entries.aggregate(total=Sum("word_count"))["total"] or 0
         total_entries = entries.count()
 
         average_per_entry = total_words / total_entries if total_entries > 0 else 0
 
-        daily_data = entries.annotate(
-            day=TruncDate('created_at')
-        ).values('day').annotate(
-            total_words=Sum('word_count'),
-            entries=Count('id')
-        ).order_by('day')
+        daily_data = (
+            entries.annotate(day=TruncDate("created_at"))
+            .values("day")
+            .annotate(total_words=Sum("word_count"), entries=Count("id"))
+            .order_by("day")
+        )
 
         timeline = []
         active_days_count = 0
@@ -210,39 +243,47 @@ class StatisticsView(APIView):
         max_words = 0
 
         for item in daily_data:
-            timeline.append({
-                'date': item['day'].isoformat(),
-                'word_count': item['total_words'],
-                'entry_count': item['entries']
-            })
+            timeline.append(
+                {
+                    "date": item["day"].isoformat(),
+                    "word_count": item["total_words"],
+                    "entry_count": item["entries"],
+                }
+            )
 
             active_days_count += 1
-            if item['total_words'] >= user.daily_word_goal:
+            if item["total_words"] >= user.daily_word_goal:
                 days_meeting_goal += 1
 
-            if item['total_words'] > max_words:
-                max_words = item['total_words']
+            if item["total_words"] > max_words:
+                max_words = item["total_words"]
                 best_day = {
-                    'date': item['day'].isoformat(),
-                    'word_count': item['total_words'],
-                    'entry_count': item['entries']
+                    "date": item["day"].isoformat(),
+                    "word_count": item["total_words"],
+                    "entry_count": item["entries"],
                 }
 
-        average_per_day = total_words / active_days_count if active_days_count > 0 else 0
+        average_per_day = (
+            total_words / active_days_count if active_days_count > 0 else 0
+        )
 
-        goal_achievement_rate = (days_meeting_goal / active_days_count * 100) if active_days_count > 0 else 0
+        goal_achievement_rate = (
+            (days_meeting_goal / active_days_count * 100)
+            if active_days_count > 0
+            else 0
+        )
 
         return {
-            'total': total_words,
-            'average_per_entry': round(average_per_entry, 2),
-            'average_per_day': round(average_per_day, 2),
-            'timeline': timeline,
-            'total_entries': total_entries,
-            'goal_achievement_rate': round(goal_achievement_rate, 2),
-            'best_day': best_day
+            "total": total_words,
+            "average_per_entry": round(average_per_entry, 2),
+            "average_per_day": round(average_per_day, 2),
+            "timeline": timeline,
+            "total_entries": total_entries,
+            "goal_achievement_rate": round(goal_achievement_rate, 2),
+            "best_day": best_day,
         }
 
-    @method_decorator(vary_on_headers('Authorization'))
+    @method_decorator(vary_on_headers("Authorization"))
     @method_decorator(cache_page(1800, key_prefix=custom_cache_key))
     def get(self, request):
         """
@@ -266,37 +307,42 @@ class StatisticsView(APIView):
             - Automatic invalidation: last_entry_date changes on new entry creation
         """
         user = request.user
-        period = request.query_params.get('period', '7d')
+        period = request.query_params.get("period", "7d")
 
-        valid_periods = ['7d', '30d', '90d', '1y', 'all']
+        valid_periods = ["7d", "30d", "90d", "1y", "all"]
         if period not in valid_periods:
-            return Response({
-                'error': f'Invalid period. Must be one of: {", ".join(valid_periods)}'
-            }, status=400)
+            return Response(
+                {
+                    "error": f'Invalid period. Must be one of: {", ".join(valid_periods)}'
+                },
+                status=400,
+            )
 
         try:
             start_date, end_date = self._get_period_range(period, user)
         except ValueError as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({"error": str(e)}, status=400)
 
         entries = Entry.objects.filter(
-            user=user,
-            created_at__gte=start_date,
-            created_at__lte=end_date
+            user=user, created_at__gte=start_date, created_at__lte=end_date
         )
 
         mood_analytics = self._calculate_mood_analytics(entries, start_date)
-        word_count_analytics = self._calculate_word_count_analytics(entries, user, start_date)
+        word_count_analytics = self._calculate_word_count_analytics(
+            entries, user, start_date
+        )
 
-        response = Response({
-            'period': period,
-            'start_date': start_date.isoformat(),
-            'end_date': end_date.isoformat(),
-            'mood_analytics': mood_analytics,
-            'word_count_analytics': word_count_analytics
-        })
+        response = Response(
+            {
+                "period": period,
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "mood_analytics": mood_analytics,
+                "word_count_analytics": word_count_analytics,
+            }
+        )
 
-        response['Cache-Control'] = 'public, max-age=1800, s-maxage=1800'
-        response['Vary'] = 'Authorization'
+        response["Cache-Control"] = "public, max-age=1800, s-maxage=1800"
+        response["Vary"] = "Authorization"
 
         return response
