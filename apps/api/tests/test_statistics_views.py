@@ -584,6 +584,62 @@ class TestStatisticsViewMoodAnalytics:
         assert "Vary" in response
         assert "Authorization" in response["Vary"]
 
+    def test_mood_distribution_keys_are_strings(self, client):
+        """Distribution dictionary keys are strings (not integers) for JSON consistency."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory(user=user, mood_rating=1, created_at=base_date)
+        EntryFactory(user=user, mood_rating=3, created_at=base_date)
+        EntryFactory(user=user, mood_rating=5, created_at=base_date)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        mood_analytics = data["mood_analytics"]
+
+        distribution = mood_analytics["distribution"]
+        assert isinstance(distribution["1"], int)
+        assert isinstance(distribution["2"], int)
+        assert isinstance(distribution["3"], int)
+        assert isinstance(distribution["4"], int)
+        assert isinstance(distribution["5"], int)
+        assert distribution["1"] == 1
+        assert distribution["2"] == 0
+        assert distribution["3"] == 1
+        assert distribution["4"] == 0
+        assert distribution["5"] == 1
+
+    def test_mood_distribution_json_serialization(self, client):
+        """Distribution dictionary serializes correctly to JSON with string keys."""
+        import json
+
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory(user=user, mood_rating=2, created_at=base_date)
+        EntryFactory(user=user, mood_rating=4, created_at=base_date)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+
+        response_data = response.json()
+        mood_analytics = response_data["mood_analytics"]
+        distribution = mood_analytics["distribution"]
+
+        parsed_json = json.loads(response.content)
+        parsed_distribution = parsed_json["mood_analytics"]["distribution"]
+
+        assert parsed_distribution == {"1": 0, "2": 1, "3": 0, "4": 1, "5": 0}
+        assert list(parsed_distribution.keys()) == ["1", "2", "3", "4", "5"]
+        assert all(isinstance(key, str) for key in parsed_distribution.keys())
+
 
 @pytest.mark.statistics
 @pytest.mark.unit

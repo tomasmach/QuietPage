@@ -137,7 +137,7 @@ class StatisticsView(APIView):
         if total_rated == 0:
             return {
                 "average": None,
-                "distribution": {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+                "distribution": {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0},
                 "timeline": [],
                 "total_rated_entries": 0,
                 "trend": "stable",
@@ -147,7 +147,7 @@ class StatisticsView(APIView):
 
         distribution = {}
         for rating in range(1, 6):
-            distribution[rating] = rated_entries.filter(mood_rating=rating).count()
+            distribution[str(rating)] = rated_entries.filter(mood_rating=rating).count()
 
         daily_data = (
             rated_entries.annotate(day=TruncDate("created_at"))
