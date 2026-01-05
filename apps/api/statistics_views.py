@@ -1,0 +1,301 @@
+"""
+Statistics views for QuietPage.
+
+This module contains API views for calculating and serving
+journal statistics including mood trends and word count analytics
+across different time periods.
+"""
+
+import logging
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Sum, Avg, Count, Q
+from django.db.models.functions import TruncDate
+from django.utils import timezone
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
+from django.utils.decorators import method_decorator
+
+from apps.journal.models import Entry
+
+logger = logging.getLogger(__name__)
+
+
+def custom_cache_key(request):
+    user = request.user
+    period = request.query_params.get('period', '7d')
+    last_entry_date = user.last_entry_date.isoformat() if user.last_entry_date else 'none'
+    return f'statistics_{user.id}_{period}_{last_entry_date}'
+
+
+class StatisticsView(APIView):
+    """
+    API endpoint for journal statistics and analytics.
+
+    Returns aggregated statistics for a specified time period:
+        - period: Time period (7d, 30d, 90d, 1y, all)
+        - mood_analytics: Mood trends (average, distribution, daily breakdown)
+        - word_count_analytics: Word count stats (total, average, daily breakdown)
+
+    Query Parameters:
+        - period: Time period ('7d', '30d', '90d', '1y', 'all'). Defaults to '7d'
+
+    Authentication:
+        - Requires authenticated user (IsAuthenticated)
+
+    Caching:
+        - Results are cached for 30 minutes using database cache backend
+        - Cache key includes user.id, period, and last_entry_date for automatic invalidation
+        - Client-side caching enabled via cache headers
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _get_period_range(self, period, user):
+        """
+        Calculate date range for a given time period in user's timezone.
+
+        Args:
+            period: String ('7d', '30d', '90d', '1y', 'all')
+            user: User object with timezone field
+
+        Returns:
+            tuple: (start_date, end_date) as timezone-aware datetime objects
+                    start_date is at 00:00:00, end_date is at 23:59:59
+
+        Raises:
+            ValueError: If period is invalid
+        """
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+
+        if period == '7d':
+            start_date = now - timedelta(days=7)
+        elif period == '30d':
+            start_date = now - timedelta(days=30)
+        elif period == '90d':
+            start_date = now - timedelta(days=90)
+        elif period == '1y':
+            start_date = now - timedelta(days=365)
+        elif period == 'all':
+            first_entry = Entry.objects.filter(user=user).order_by('created_at').first()
+            if first_entry:
+                start_date = first_entry.created_at.astimezone(user_tz)
+            else:
+                start_date = now
+        else:
+            raise ValueError(f"Invalid period: {period}")
+
+        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+        return start_date, end_date
+
+    def _calculate_mood_analytics(self, entries, period_start):
+        """
+        Calculate mood analytics for a filtered entries queryset.
+
+        Args:
+            entries: QuerySet of Entry objects already filtered by user and date range
+            period_start: Start datetime of the period (for trend calculation)
+
+        Returns:
+            dict: Mood statistics including:
+                - average: Average mood rating (1-5)
+                - distribution: Count of entries per mood rating (1-5)
+                - timeline: List of daily mood averages with dates
+                - total_rated_entries: Total entries with mood ratings
+                - trend: 'improving', 'declining', or 'stable'
+        """
+        rated_entries = entries.filter(mood_rating__isnull=False)
+        total_rated = rated_entries.count()
+
+        if total_rated == 0:
+            return {
+                'average': None,
+                'distribution': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+                'timeline': [],
+                'total_rated_entries': 0,
+                'trend': 'stable'
+            }
+
+        average = rated_entries.aggregate(avg=Avg('mood_rating'))['avg']
+
+        distribution = {}
+        for rating in range(1, 6):
+            distribution[rating] = rated_entries.filter(mood_rating=rating).count()
+
+        daily_data = rated_entries.annotate(
+            day=TruncDate('created_at')
+        ).values('day').annotate(
+            avg_mood=Avg('mood_rating', filter=Q(mood_rating__isnull=False)),
+            count=Count('id', filter=Q(mood_rating__isnull=False))
+        ).order_by('day')
+
+        timeline = []
+        for item in daily_data:
+            timeline.append({
+                'date': item['day'].isoformat(),
+                'average': round(item['avg_mood'], 2) if item['avg_mood'] else None,
+                'count': item['count']
+            })
+
+        if len(timeline) >= 2:
+            midpoint = len(timeline) // 2
+            first_half_values = [day['average'] for day in timeline[:midpoint] if day['average'] is not None]
+            second_half_values = [day['average'] for day in timeline[midpoint:] if day['average'] is not None]
+
+            if first_half_values and second_half_values:
+                first_half_avg = sum(first_half_values) / len(first_half_values)
+                second_half_avg = sum(second_half_values) / len(second_half_values)
+
+                if second_half_avg - first_half_avg > 0.3:
+                    trend = 'improving'
+                elif first_half_avg - second_half_avg > 0.3:
+                    trend = 'declining'
+                else:
+                    trend = 'stable'
+            else:
+                trend = 'stable'
+        else:
+            trend = 'stable'
+
+        return {
+            'average': round(average, 2) if average else None,
+            'distribution': distribution,
+            'timeline': timeline,
+            'total_rated_entries': total_rated,
+            'trend': trend
+        }
+
+    def _calculate_word_count_analytics(self, entries, user, period_start):
+        """
+        Calculate word count analytics for a filtered entries queryset.
+
+        Args:
+            entries: QuerySet of Entry objects already filtered by user and date range
+            user: User object for daily_word_goal reference
+            period_start: Start datetime of the period (not directly used, kept for consistency)
+
+        Returns:
+            dict: Word count statistics including:
+                - total: Total words written
+                - average_per_entry: Average words per entry
+                - average_per_day: Average words per day (active days only)
+                - timeline: List of daily word counts with dates
+                - total_entries: Total entries in period
+                - goal_achievement_rate: Percentage of active days meeting daily goal
+                - best_day: Best writing day with word count
+        """
+        total_words = entries.aggregate(total=Sum('word_count'))['total'] or 0
+        total_entries = entries.count()
+
+        average_per_entry = total_words / total_entries if total_entries > 0 else 0
+
+        daily_data = entries.annotate(
+            day=TruncDate('created_at')
+        ).values('day').annotate(
+            total_words=Sum('word_count'),
+            entries=Count('id')
+        ).order_by('day')
+
+        timeline = []
+        active_days_count = 0
+        days_meeting_goal = 0
+        best_day = None
+        max_words = 0
+
+        for item in daily_data:
+            timeline.append({
+                'date': item['day'].isoformat(),
+                'word_count': item['total_words'],
+                'entry_count': item['entries']
+            })
+
+            active_days_count += 1
+            if item['total_words'] >= user.daily_word_goal:
+                days_meeting_goal += 1
+
+            if item['total_words'] > max_words:
+                max_words = item['total_words']
+                best_day = {
+                    'date': item['day'].isoformat(),
+                    'word_count': item['total_words'],
+                    'entry_count': item['entries']
+                }
+
+        average_per_day = total_words / active_days_count if active_days_count > 0 else 0
+
+        goal_achievement_rate = (days_meeting_goal / active_days_count * 100) if active_days_count > 0 else 0
+
+        return {
+            'total': total_words,
+            'average_per_entry': round(average_per_entry, 2),
+            'average_per_day': round(average_per_day, 2),
+            'timeline': timeline,
+            'total_entries': total_entries,
+            'goal_achievement_rate': round(goal_achievement_rate, 2),
+            'best_day': best_day
+        }
+
+    @method_decorator(vary_on_headers('Authorization'))
+    @method_decorator(cache_page(1800, key_prefix=custom_cache_key))
+    def get(self, request):
+        """
+        Get statistics for the current user.
+
+        Query Parameters:
+            - period: Time period ('7d', '30d', '90d', '1y', 'all'). Defaults to '7d'
+
+        Returns:
+            Response with statistics data:
+                - period: Requested period
+                - start_date: Start date of period (ISO format)
+                - end_date: End date of period (ISO format)
+                - mood_analytics: Mood trends data
+                - word_count_analytics: Word count data
+
+        Caching:
+            - Server-side: 30 minutes (1800 seconds)
+            - Client-side: Controlled by Cache-Control headers
+            - Cache key: statistics_{user.id}_{period}_{last_entry_date}
+            - Automatic invalidation: last_entry_date changes on new entry creation
+        """
+        user = request.user
+        period = request.query_params.get('period', '7d')
+
+        valid_periods = ['7d', '30d', '90d', '1y', 'all']
+        if period not in valid_periods:
+            return Response({
+                'error': f'Invalid period. Must be one of: {", ".join(valid_periods)}'
+            }, status=400)
+
+        try:
+            start_date, end_date = self._get_period_range(period, user)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=400)
+
+        entries = Entry.objects.filter(
+            user=user,
+            created_at__gte=start_date,
+            created_at__lte=end_date
+        )
+
+        mood_analytics = self._calculate_mood_analytics(entries, start_date)
+        word_count_analytics = self._calculate_word_count_analytics(entries, user, start_date)
+
+        response = Response({
+            'period': period,
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat(),
+            'mood_analytics': mood_analytics,
+            'word_count_analytics': word_count_analytics
+        })
+
+        response['Cache-Control'] = 'public, max-age=1800, s-maxage=1800'
+        response['Vary'] = 'Authorization'
+
+        return response
