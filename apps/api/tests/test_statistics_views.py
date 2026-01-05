@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from dateutil.relativedelta import relativedelta
 
 from apps.accounts.tests.factories import UserFactory
 from apps.journal.tests.factories import EntryFactory
@@ -801,7 +802,7 @@ class TestStatisticsViewIntegration:
         assert actual_start.date() == expected_start.date()
 
     def test_period_1y_returns_correct_date_range(self, client):
-        """1y period returns correct 365-day date range."""
+        """1y period returns correct 1-year date range accounting for leap years."""
         user = UserFactory(timezone='Europe/Prague')
         client.force_login(user)
 
@@ -814,13 +815,105 @@ class TestStatisticsViewIntegration:
 
         from zoneinfo import ZoneInfo
         from django.utils import timezone
+        from dateutil.relativedelta import relativedelta
 
         user_tz = ZoneInfo(str(user.timezone))
         now = timezone.now().astimezone(user_tz)
-        expected_start = (now - timedelta(days=365)).replace(hour=0, minute=0, second=0, microsecond=0)
+        expected_start = (now - relativedelta(years=1)).replace(hour=0, minute=0, second=0, microsecond=0)
         actual_start = datetime.fromisoformat(data['start_date']).replace(tzinfo=None)
 
         assert actual_start.date() == expected_start.date()
+
+    def test_period_1y_leap_year_february_29(self, client):
+        """1y period correctly handles February 29 in leap year."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        from django.utils import timezone
+        from dateutil.relativedelta import relativedelta
+
+        user_tz = ZoneInfo(str(user.timezone))
+
+        leap_year_feb_29 = datetime(2024, 2, 29, 12, 0, 0, tzinfo=user_tz)
+
+        from unittest.mock import patch
+        with patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = leap_year_feb_29
+
+            response = client.get(reverse('api:statistics'), {'period': '1y'})
+
+            assert response.status_code == 200
+            data = response.json()
+
+            expected_start = (leap_year_feb_29 - relativedelta(years=1)).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            actual_start = datetime.fromisoformat(data['start_date']).replace(tzinfo=None)
+
+            assert actual_start.year == 2023
+            assert actual_start.month == 2
+            assert actual_start.day == 28
+            assert actual_start.date() == expected_start.date()
+
+    def test_period_1y_accurate_in_2024(self, client):
+        """1y period calculation is accurate in leap year (2024)."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        from django.utils import timezone
+        from dateutil.relativedelta import relativedelta
+
+        user_tz = ZoneInfo(str(user.timezone))
+        leap_year_date = datetime(2024, 6, 15, 12, 0, 0, tzinfo=user_tz)
+
+        from unittest.mock import patch
+        with patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = leap_year_date
+
+            response = client.get(reverse('api:statistics'), {'period': '1y'})
+
+            assert response.status_code == 200
+            data = response.json()
+
+            expected_start = (leap_year_date - relativedelta(years=1)).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            actual_start = datetime.fromisoformat(data['start_date']).replace(tzinfo=None)
+
+            assert actual_start.year == 2023
+            assert actual_start.month == 6
+            assert actual_start.day == 15
+            assert actual_start.date() == expected_start.date()
+
+    def test_period_1y_accurate_in_2025(self, client):
+        """1y period calculation is accurate in non-leap year (2025)."""
+        user = UserFactory(timezone='Europe/Prague')
+        client.force_login(user)
+
+        from django.utils import timezone
+        from dateutil.relativedelta import relativedelta
+
+        user_tz = ZoneInfo(str(user.timezone))
+        non_leap_year_date = datetime(2025, 6, 15, 12, 0, 0, tzinfo=user_tz)
+
+        from unittest.mock import patch
+        with patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = non_leap_year_date
+
+            response = client.get(reverse('api:statistics'), {'period': '1y'})
+
+            assert response.status_code == 200
+            data = response.json()
+
+            expected_start = (non_leap_year_date - relativedelta(years=1)).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            actual_start = datetime.fromisoformat(data['start_date']).replace(tzinfo=None)
+
+            assert actual_start.year == 2024
+            assert actual_start.month == 6
+            assert actual_start.day == 15
+            assert actual_start.date() == expected_start.date()
 
     def test_period_all_returns_all_entries(self, client):
         """all period includes entries from the first entry date."""

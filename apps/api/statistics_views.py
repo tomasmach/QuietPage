@@ -9,6 +9,7 @@ across different time periods.
 import logging
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+from dateutil.relativedelta import relativedelta
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -79,7 +80,7 @@ class StatisticsView(APIView):
         elif period == '90d':
             start_date = now - timedelta(days=90)
         elif period == '1y':
-            start_date = now - timedelta(days=365)
+            start_date = now - relativedelta(years=1)
         elif period == 'all':
             first_entry = Entry.objects.filter(user=user).order_by('created_at').first()
             if first_entry:
