@@ -84,10 +84,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const response = await api.get<{ user: User }>('/auth/me/');
       setUser(response.user);
+      api.setAuthenticated(true);
       syncPreferences(response.user);
     } catch {
       // User not authenticated or error occurred
       setUser(null);
+      api.setAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
@@ -118,6 +120,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       };
       const response = await api.post<{ user: User }>('/auth/login/', payload);
       setUser(response.user);
+      api.setAuthenticated(true);
       syncPreferences(response.user);
     } catch (error) {
       setIsLoading(false);
@@ -133,6 +136,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = async () => {
     // Clear user state immediately to allow navigation before API call
     setUser(null);
+    api.setAuthenticated(false);
     setIsLoading(true);
     try {
       await api.post('/auth/logout/');
@@ -154,6 +158,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const response = await api.post<{ user: User }>('/auth/register/', credentials);
       setUser(response.user);
+      api.setAuthenticated(true);
       syncPreferences(response.user);
     } catch (error) {
       setIsLoading(false);

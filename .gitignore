@@ -5,6 +5,9 @@ styles.md
 howtorun.md
 current_tasks.md
 architect_page.html
+.claude/
+REVIEW_STATISTICS.md
+frontend/src/components/statistics
 
 # Frontend
 frontend/node_modules/
