@@ -19,7 +19,8 @@ interface UseTodayAutoSaveReturn {
  * Hook pro autosave dnešního daily note
  * Postuje na /api/v1/entries/today/
  *
- * KRITICKÉ: Ukládá jen když content není prázdný
+ * Povolit prázdný content pro 750words.com style - jeden záznam na den.
+ * Streak se updatne až když entry má skutečný obsah.
  */
 export function useTodayAutoSave(
   options: TodayAutoSaveOptions = {}
@@ -34,10 +35,8 @@ export function useTodayAutoSave(
   const saveQueueRef = useRef<EntryFormData | null>(null);
 
   const performSave = useCallback(async (data: EntryFormData) => {
-    // KRITICKÉ: Neukládej prázdný content
-    if (!data.content || !data.content.trim()) {
-      return;
-    }
+    // Povolit prázdný content pro 750words.com style
+    // Backend vytvoří prázdný entry, streak se updatne až když má obsah
 
     setIsSaving(true);
     setError(null);

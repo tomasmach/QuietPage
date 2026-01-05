@@ -12,7 +12,7 @@ export function HomePage() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-bg-main relative">
+    <div className="min-h-screen relative" style={{ backgroundColor: 'var(--color-bg-app)' }}>
       {/* Fixed toggles in corners */}
       <LanguageToggle />
       <ThemeToggle />

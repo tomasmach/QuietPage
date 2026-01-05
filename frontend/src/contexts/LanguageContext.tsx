@@ -48,10 +48,12 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     setLanguageState(newLanguage);
     localStorage.setItem(LANGUAGE_STORAGE_KEY, newLanguage);
 
-    // Save to API (fire and forget - don't block UI)
-    api.patch('/settings/profile/', { preferred_language: newLanguage }).catch(() => {
-      // Silently ignore errors - user may not be authenticated
-    });
+    // Save to API only if user is authenticated
+    if (api.isAuthenticated) {
+      api.patch('/settings/profile/', { preferred_language: newLanguage }).catch(() => {
+        // Silently ignore errors
+      });
+    }
   }, []);
 
   /**

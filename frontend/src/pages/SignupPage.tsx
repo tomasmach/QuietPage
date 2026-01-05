@@ -79,7 +79,7 @@ export function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-main flex items-center justify-center p-4 relative">
+    <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ backgroundColor: 'var(--color-bg-app)' }}>
       {/* Fixed toggles in corners */}
       <LanguageToggle />
       <ThemeToggle />
