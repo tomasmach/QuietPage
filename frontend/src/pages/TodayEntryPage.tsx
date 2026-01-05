@@ -40,7 +40,7 @@ export function TodayEntryPage() {
 
   // Auto-create empty entry if it doesn't exist (750words.com style)
   useEffect(() => {
-    if (!isLoading && !exists && !error && !isCreatingEntry) {
+    if (!isLoading && !exists && !error && !isCreatingEntry && !isInitialized) {
       setIsCreatingEntry(true);
       setIsInitialized(true);
       // Create empty entry
@@ -50,7 +50,7 @@ export function TodayEntryPage() {
         tags: [],
       });
     }
-  }, [isLoading, exists, error, isCreatingEntry, autoSave]);
+  }, [isLoading, exists, error, isCreatingEntry, isInitialized, autoSave]);
 
   // Initialize form from entry data POUZE JEDNOU
   useEffect(() => {
