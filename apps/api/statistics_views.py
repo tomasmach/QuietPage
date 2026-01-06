@@ -115,6 +115,25 @@ class StatisticsView(APIView):
 
         return start_date, end_date
 
+    def _categorize_time_of_day(self, hour: int) -> str:
+        """
+        Categorize hour into time-of-day category.
+
+        Args:
+            hour: Hour of day (0-23)
+
+        Returns:
+            str: Time of day category ('morning', 'afternoon', 'evening', 'night')
+        """
+        if 5 <= hour <= 11:
+            return 'morning'
+        elif 12 <= hour <= 17:
+            return 'afternoon'
+        elif 18 <= hour <= 23:
+            return 'evening'
+        else:
+            return 'night'
+
     def _calculate_mood_analytics(self, entries, period_start):
         """
         Calculate mood analytics for a filtered entries queryset.
@@ -283,6 +302,156 @@ class StatisticsView(APIView):
             "best_day": best_day,
         }
 
+    def _calculate_writing_patterns(self, entries, user):
+        """
+        Calculate writing patterns including consistency, time-of-day distribution,
+        day-of-week distribution, and streak history.
+
+        Args:
+            entries: QuerySet of Entry objects already filtered by user and date range
+            user: User object with timezone field
+
+        Returns:
+            dict: Writing patterns statistics including:
+                - consistency_rate: Percentage of days with entries (active_days / total_days)
+                - time_of_day: Distribution of entries by time of day (morning/afternoon/evening/night)
+                - day_of_week: Distribution of entries by day of week (Monday-Sunday)
+                - streak_history: Top 5 longest streaks with start_date, end_date, and length
+        """
+        if not entries.exists():
+            return {
+                "consistency_rate": 0.0,
+                "time_of_day": {"morning": 0, "afternoon": 0, "evening": 0, "night": 0},
+                "day_of_week": {
+                    "Monday": 0,
+                    "Tuesday": 0,
+                    "Wednesday": 0,
+                    "Thursday": 0,
+                    "Friday": 0,
+                    "Saturday": 0,
+                    "Sunday": 0,
+                },
+                "streak_history": [],
+            }
+
+        user_tz = ZoneInfo(str(user.timezone))
+
+        first_entry = entries.order_by("created_at").first()
+        last_entry = entries.order_by("-created_at").first()
+
+        if first_entry and last_entry:
+            start_date_local = first_entry.created_at.astimezone(user_tz)
+            end_date_local = last_entry.created_at.astimezone(user_tz)
+            start_date_normalized = self._normalize_to_local_day(start_date_local, user_tz)
+            end_date_normalized = self._normalize_to_local_day(end_date_local, user_tz)
+            total_days = (end_date_normalized - start_date_normalized).days + 1
+        else:
+            total_days = 0
+
+        active_days = (
+            entries.annotate(day=TruncDate("created_at"))
+            .values("day")
+            .distinct()
+            .count()
+        )
+
+        consistency_rate = (active_days / total_days * 100) if total_days > 0 else 0.0
+
+        time_of_day = {"morning": 0, "afternoon": 0, "evening": 0, "night": 0}
+        for entry in entries:
+            local_time = entry.created_at.astimezone(user_tz)
+            hour = local_time.hour
+            category = self._categorize_time_of_day(hour)
+            time_of_day[category] += 1
+
+        day_of_week_dist = (
+            entries.values("created_at__week_day")
+            .annotate(count=Count("id"))
+            .order_by("created_at__week_day")
+        )
+
+        day_names = {
+            1: "Sunday",
+            2: "Monday",
+            3: "Tuesday",
+            4: "Wednesday",
+            5: "Thursday",
+            6: "Friday",
+            7: "Saturday",
+        }
+
+        day_of_week = {
+            "Monday": 0,
+            "Tuesday": 0,
+            "Wednesday": 0,
+            "Thursday": 0,
+            "Friday": 0,
+            "Saturday": 0,
+            "Sunday": 0,
+        }
+
+        for item in day_of_week_dist:
+            week_day = item["created_at__week_day"]
+            count = item["count"]
+            if week_day in day_names:
+                day_of_week[day_names[week_day]] = count
+
+        daily_entries = (
+            entries.annotate(day=TruncDate("created_at"))
+            .values("day")
+            .annotate(
+                total_words=Sum("word_count"),
+                entries=Count("id"),
+            )
+            .order_by("day")
+        )
+
+        writing_days = []
+        for item in daily_entries:
+            if item["total_words"] and item["total_words"] > 0:
+                writing_days.append(item["day"])
+
+        streaks = []
+        if writing_days:
+            current_streak_start = writing_days[0]
+            current_streak_end = writing_days[0]
+
+            for i in range(1, len(writing_days)):
+                prev_day = writing_days[i - 1]
+                current_day = writing_days[i]
+
+                if (current_day - prev_day).days == 1:
+                    current_streak_end = current_day
+                else:
+                    streak_length = (current_streak_end - current_streak_start).days + 1
+                    streaks.append(
+                        {
+                            "start_date": current_streak_start.isoformat(),
+                            "end_date": current_streak_end.isoformat(),
+                            "length": streak_length,
+                        }
+                    )
+                    current_streak_start = current_day
+                    current_streak_end = current_day
+
+            streak_length = (current_streak_end - current_streak_start).days + 1
+            streaks.append(
+                {
+                    "start_date": current_streak_start.isoformat(),
+                    "end_date": current_streak_end.isoformat(),
+                    "length": streak_length,
+                }
+            )
+
+        streak_history = sorted(streaks, key=lambda x: x["length"], reverse=True)[:5]
+
+        return {
+            "consistency_rate": round(consistency_rate, 2),
+            "time_of_day": time_of_day,
+            "day_of_week": day_of_week,
+            "streak_history": streak_history,
+        }
+
     @method_decorator(vary_on_headers("Authorization"))
     @method_decorator(cache_page(1800, key_prefix=custom_cache_key))
     def get(self, request):
@@ -331,6 +500,7 @@ class StatisticsView(APIView):
         word_count_analytics = self._calculate_word_count_analytics(
             entries, user, start_date
         )
+        writing_patterns = self._calculate_writing_patterns(entries, user)
 
         response = Response(
             {
@@ -339,6 +509,7 @@ class StatisticsView(APIView):
                 "end_date": end_date.isoformat(),
                 "mood_analytics": mood_analytics,
                 "word_count_analytics": word_count_analytics,
+                "writing_patterns": writing_patterns,
             }
         )
 

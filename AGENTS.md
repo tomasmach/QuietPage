@@ -327,7 +327,6 @@ try {
 
 ## Reference Files
 
-- **Full setup guide:** `CLAUDE.md`
-- **Frontend styling:** `frontend/styles.md`
+- **Frontend styling:** `styles.md`
 - **API endpoints:** `apps/api/views.py`
 - **Encryption:** `apps/journal/fields.py` (EncryptedTextField)
