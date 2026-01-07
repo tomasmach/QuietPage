@@ -23,7 +23,11 @@ function createMoodAnalytics(
   distribution: Record<'1' | '2' | '3' | '4' | '5', number>
 ): MoodAnalytics {
   return {
+    average: 3.0,
     distribution,
+    timeline: [],
+    totalRatedEntries: Object.values(distribution).reduce((a, b) => a + b, 0),
+    trend: 'stable',
   }
 }
 

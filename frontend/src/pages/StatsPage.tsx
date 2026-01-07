@@ -7,6 +7,7 @@ import { useStatistics } from '../hooks/useStatistics';
 import { TimeRangeSelector } from '../components/statistics/TimeRangeSelector';
 import { StatsSummaryCards } from '../components/statistics/StatsSummaryCards';
 import { MoodTimelineChart } from '../components/statistics/MoodTimelineChart';
+import { MoodDistributionChart } from '../components/statistics/MoodDistributionChart';
 import { WordCountTimelineChart } from '../components/statistics/WordCountTimelineChart';
 import { FrequencyHeatmap } from '../components/statistics/FrequencyHeatmap';
 import { TimeOfDayChart } from '../components/statistics/TimeOfDayChart';
@@ -53,6 +54,7 @@ export function StatsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <MoodTimelineChart data={data.moodAnalytics} />
               <WordCountTimelineChart data={data.wordCountAnalytics} />
+              <MoodDistributionChart data={data.moodAnalytics} />
             </div>
 
             {/* Writing Patterns Section */}
