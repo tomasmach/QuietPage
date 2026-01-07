@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
+import type { Props as LabelProps } from 'recharts/types/component/Label';
 import type { WritingPatterns } from '../../types/statistics';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -11,6 +12,19 @@ interface ChartDataPoint {
   fullDay: string;
   count: number;
   isMax: boolean;
+}
+
+/** Props interface for Recharts custom tooltip component */
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: ReadonlyArray<{
+    payload: ChartDataPoint;
+  }>;
+}
+
+/** Props interface for Recharts custom label component, extending base Label props */
+interface CustomLabelProps extends LabelProps {
+  payload?: ChartDataPoint;
 }
 
 /**
@@ -43,12 +57,10 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
   }));
 
   // Custom tooltip to show full day name and count
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderTooltip = (props: any) => {
-    const { active, payload } = props;
+  const renderTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (!active || !payload || !payload.length) return null;
 
-    const tooltipData = payload[0].payload as ChartDataPoint;
+    const tooltipData = payload[0].payload;
 
     return (
       <div className="bg-bg-panel border-2 border-border px-4 py-3 shadow-hard">
@@ -70,15 +82,12 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
   };
 
   // Custom label to display count on top of bar for the max value
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderLabel = (props: any) => {
-    const { x, y, width, value, payload } = props;
+  const renderLabel = ({ x, y, width, value, payload }: CustomLabelProps) => {
+    if (!payload?.isMax) return null;
     
     const xNum = typeof x === 'number' ? x : 0;
     const yNum = typeof y === 'number' ? y : 0;
     const widthNum = typeof width === 'number' ? width : 0;
-    
-    if (!(payload as ChartDataPoint)?.isMax) return null;
 
     return (
       <g>
