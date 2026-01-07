@@ -116,6 +116,12 @@ export interface MilestonesAPI {
   milestones: MilestoneAPI[];
 }
 
+export interface GoalStreakAPI {
+  current: number;
+  longest: number;
+  goal: number;
+}
+
 export interface StatisticsDataAPI {
   period: '7d' | '30d' | '90d' | '1y' | 'all';
   start_date: string;
@@ -125,6 +131,7 @@ export interface StatisticsDataAPI {
   writing_patterns: WritingPatternsAPI;
   tag_analytics: TagAnalyticsAPI;
   milestones: MilestonesAPI;
+  goal_streak: GoalStreakAPI;
 }
 
 // ============================================
@@ -216,6 +223,12 @@ export interface Milestones {
   milestones: Milestone[];
 }
 
+export interface GoalStreak {
+  current: number;
+  longest: number;
+  goal: number;
+}
+
 export interface StatisticsData {
   period: '7d' | '30d' | '90d' | '1y' | 'all';
   startDate: string;
@@ -225,6 +238,7 @@ export interface StatisticsData {
   writingPatterns: WritingPatterns;
   tagAnalytics: TagAnalytics;
   milestones: Milestones;
+  goalStreak: GoalStreak;
 }
 
 // ============================================

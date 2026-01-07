@@ -96,6 +96,11 @@ export function useStatistics(period: PeriodType = '30d'): UseStatisticsReturn {
             current: milestone.current,
           })),
         },
+        goalStreak: {
+          current: response.goal_streak.current,
+          longest: response.goal_streak.longest,
+          goal: response.goal_streak.goal,
+        },
       };
 
       setData(statisticsData);
