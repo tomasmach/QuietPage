@@ -372,5 +372,13 @@ export const en: Translations = {
       entries: 'entries',
       noData: 'Keep writing to set your record!',
     },
+    milestones: {
+      title: 'MILESTONES',
+      entries: 'Entries',
+      words: 'Words',
+      streaks: 'Streak Days',
+      achieved: 'Achieved!',
+      noData: 'No milestones yet',
+    },
   },
 };

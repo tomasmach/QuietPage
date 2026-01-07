@@ -12,3 +12,4 @@ export { TagAnalyticsChart } from './TagAnalyticsChart';
 export { MoodDistributionChart } from './MoodDistributionChart';
 export { MoodTrendBadge } from './MoodTrendBadge';
 export { BestDayHighlight } from './BestDayHighlight';
+export { MilestonesGrid } from './MilestonesGrid';

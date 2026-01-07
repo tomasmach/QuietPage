@@ -362,6 +362,14 @@ export interface Translations {
       entries: string;
       noData: string;
     };
+    milestones: {
+      title: string;
+      entries: string;
+      words: string;
+      streaks: string;
+      achieved: string;
+      noData: string;
+    };
   };
 }
 
@@ -736,6 +744,14 @@ export const cs: Translations = {
       words: 'slov',
       entries: 'zápisů',
       noData: 'Piš dál a vytvoř si rekord!',
+    },
+    milestones: {
+      title: 'MILNÍKY',
+      entries: 'Zápisů',
+      words: 'Slov',
+      streaks: 'Dní v sérii',
+      achieved: 'Dosaženo!',
+      noData: 'Zatím žádné milníky',
     },
   },
 };
