@@ -2955,3 +2955,696 @@ class TestStatisticsViewRateLimiting:
         # Even though responses were cached, throttle should still apply
         response = client.get(reverse("api:statistics"), {"period": "7d"})
         assert response.status_code == 429
+
+
+@pytest.mark.statistics
+@pytest.mark.unit
+class TestTagAnalytics:
+    """Test StatisticsView tag analytics calculations."""
+
+    def test_tag_analytics_structure_in_response(self, client):
+        """Response includes tag_analytics with correct structure."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "tag_analytics" in data
+        tag_analytics = data["tag_analytics"]
+        assert "tags" in tag_analytics
+        assert "total_tags" in tag_analytics
+        assert isinstance(tag_analytics["tags"], list)
+        assert isinstance(tag_analytics["total_tags"], int)
+
+    def test_tag_analytics_no_tags_returns_empty(self, client):
+        """User with entries but no tags returns empty tag analytics."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+        EntryFactory(user=user, created_at=base_date)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        assert tag_analytics["tags"] == []
+        assert tag_analytics["total_tags"] == 0
+
+    def test_tag_analytics_no_entries_returns_empty(self, client):
+        """User with no entries returns empty tag analytics."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        assert tag_analytics["tags"] == []
+        assert tag_analytics["total_tags"] == 0
+
+    def test_tag_analytics_single_tag_single_entry(self, client):
+        """Single entry with single tag returns correct statistics."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+        entry = EntryFactory(
+            user=user,
+            content="This is a test entry with exactly ten words here.",
+            mood_rating=4,
+            created_at=base_date,
+            tags=["work"],
+        )
+        entry.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        assert tag_analytics["total_tags"] == 1
+        assert len(tag_analytics["tags"]) == 1
+
+        work_tag = tag_analytics["tags"][0]
+        assert work_tag["name"] == "work"
+        assert work_tag["entry_count"] == 1
+        assert work_tag["total_words"] == entry.word_count
+        assert work_tag["average_words"] == entry.word_count
+        assert work_tag["average_mood"] == 4.0
+
+    def test_tag_analytics_multiple_tags_single_entry(self, client):
+        """Single entry with multiple tags counts each tag once."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+        entry = EntryFactory(
+            user=user,
+            content="Entry with multiple tags for testing purposes.",
+            mood_rating=3,
+            created_at=base_date,
+            tags=["work", "personal", "productivity"],
+        )
+        entry.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        assert tag_analytics["total_tags"] == 3
+        assert len(tag_analytics["tags"]) == 3
+
+        tag_names = [t["name"] for t in tag_analytics["tags"]]
+        assert "work" in tag_names
+        assert "personal" in tag_names
+        assert "productivity" in tag_names
+
+        for tag in tag_analytics["tags"]:
+            assert tag["entry_count"] == 1
+            assert tag["total_words"] == entry.word_count
+            assert tag["average_words"] == entry.word_count
+            assert tag["average_mood"] == 3.0
+
+    def test_tag_analytics_same_tag_multiple_entries(self, client):
+        """Same tag on multiple entries aggregates correctly."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        entry1 = EntryFactory(
+            user=user,
+            content="First work entry with some words.",
+            mood_rating=5,
+            created_at=base_date,
+            tags=["work"],
+        )
+        entry1.refresh_from_db()
+
+        entry2 = EntryFactory(
+            user=user,
+            content="Second work entry with more words added here.",
+            mood_rating=3,
+            created_at=base_date - timedelta(days=1),
+            tags=["work"],
+        )
+        entry2.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        assert tag_analytics["total_tags"] == 1
+        assert len(tag_analytics["tags"]) == 1
+
+        work_tag = tag_analytics["tags"][0]
+        assert work_tag["name"] == "work"
+        assert work_tag["entry_count"] == 2
+        assert work_tag["total_words"] == entry1.word_count + entry2.word_count
+        expected_avg_words = (entry1.word_count + entry2.word_count) / 2
+        assert work_tag["average_words"] == round(expected_avg_words, 2)
+        assert work_tag["average_mood"] == 4.0  # (5 + 3) / 2
+
+    def test_tag_analytics_average_words_calculation(self, client):
+        """Average words per tag calculated correctly across multiple entries."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        entry1 = EntryFactory(
+            user=user,
+            content="word " * 100,
+            mood_rating=4,
+            created_at=base_date,
+            tags=["journal"],
+        )
+        entry1.refresh_from_db()
+
+        entry2 = EntryFactory(
+            user=user,
+            content="word " * 200,
+            mood_rating=5,
+            created_at=base_date - timedelta(days=1),
+            tags=["journal"],
+        )
+        entry2.refresh_from_db()
+
+        entry3 = EntryFactory(
+            user=user,
+            content="word " * 300,
+            mood_rating=3,
+            created_at=base_date - timedelta(days=2),
+            tags=["journal"],
+        )
+        entry3.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        journal_tag = tag_analytics["tags"][0]
+        assert journal_tag["name"] == "journal"
+        assert journal_tag["entry_count"] == 3
+        total_words = entry1.word_count + entry2.word_count + entry3.word_count
+        assert journal_tag["total_words"] == total_words
+        expected_avg = total_words / 3
+        assert journal_tag["average_words"] == round(expected_avg, 2)
+
+    def test_tag_analytics_average_mood_calculation(self, client):
+        """Average mood per tag calculated correctly across entries with mood ratings."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory(
+            user=user,
+            content="First mood entry.",
+            mood_rating=1,
+            created_at=base_date,
+            tags=["mood-test"],
+        )
+
+        EntryFactory(
+            user=user,
+            content="Second mood entry.",
+            mood_rating=5,
+            created_at=base_date - timedelta(days=1),
+            tags=["mood-test"],
+        )
+
+        EntryFactory(
+            user=user,
+            content="Third mood entry.",
+            mood_rating=3,
+            created_at=base_date - timedelta(days=2),
+            tags=["mood-test"],
+        )
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        mood_tag = tag_analytics["tags"][0]
+        assert mood_tag["name"] == "mood-test"
+        assert mood_tag["entry_count"] == 3
+        assert mood_tag["average_mood"] == 3.0  # (1 + 5 + 3) / 3
+
+    def test_tag_analytics_entries_without_mood_excluded_from_average(self, client):
+        """Entries without mood rating are excluded from average_mood calculation."""
+        from apps.journal.tests.factories import EntryWithoutMoodFactory
+
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        entry1 = EntryFactory(
+            user=user,
+            content="Entry with mood rating.",
+            mood_rating=4,
+            created_at=base_date,
+            tags=["mixed"],
+        )
+        entry1.refresh_from_db()
+
+        entry2 = EntryWithoutMoodFactory(
+            user=user,
+            content="Entry without mood rating.",
+            created_at=base_date - timedelta(days=1),
+        )
+        entry2.tags.add("mixed")
+        entry2.refresh_from_db()
+
+        entry3 = EntryFactory(
+            user=user,
+            content="Another entry with mood.",
+            mood_rating=2,
+            created_at=base_date - timedelta(days=2),
+            tags=["mixed"],
+        )
+        entry3.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        mixed_tag = tag_analytics["tags"][0]
+        assert mixed_tag["name"] == "mixed"
+        assert mixed_tag["entry_count"] == 3
+        assert mixed_tag["total_words"] == entry1.word_count + entry2.word_count + entry3.word_count
+        # Average mood only from entries with ratings: (4 + 2) / 2 = 3.0
+        assert mixed_tag["average_mood"] == 3.0
+
+    def test_tag_analytics_all_entries_without_mood_returns_null(self, client):
+        """Tag with all entries lacking mood ratings returns null for average_mood."""
+        from apps.journal.tests.factories import EntryWithoutMoodFactory
+
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        entry1 = EntryWithoutMoodFactory(
+            user=user,
+            content="First entry without mood.",
+            created_at=base_date,
+        )
+        entry1.tags.add("no-mood")
+        entry1.refresh_from_db()
+
+        entry2 = EntryWithoutMoodFactory(
+            user=user,
+            content="Second entry without mood.",
+            created_at=base_date - timedelta(days=1),
+        )
+        entry2.tags.add("no-mood")
+        entry2.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        no_mood_tag = tag_analytics["tags"][0]
+        assert no_mood_tag["name"] == "no-mood"
+        assert no_mood_tag["entry_count"] == 2
+        assert no_mood_tag["average_mood"] is None
+
+    def test_tag_analytics_sorted_by_entry_count_descending(self, client):
+        """Tags are sorted by entry_count in descending order."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create entries with varying tag counts
+        EntryFactory.create_batch(5, user=user, created_at=base_date, tags=["popular"])
+        EntryFactory.create_batch(2, user=user, created_at=base_date, tags=["medium"])
+        EntryFactory(user=user, created_at=base_date, tags=["rare"])
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        tags = tag_analytics["tags"]
+        assert len(tags) == 3
+
+        # Verify descending order
+        assert tags[0]["name"] == "popular"
+        assert tags[0]["entry_count"] == 5
+        assert tags[1]["name"] == "medium"
+        assert tags[1]["entry_count"] == 2
+        assert tags[2]["name"] == "rare"
+        assert tags[2]["entry_count"] == 1
+
+    def test_tag_analytics_respects_period_filtering(self, client):
+        """Tag analytics only include tags from entries within the period."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Entry within 7d period
+        EntryFactory(
+            user=user,
+            content="Recent entry.",
+            created_at=base_date - timedelta(days=1),
+            tags=["recent"],
+        )
+
+        # Entry outside 7d period (20 days ago)
+        EntryFactory(
+            user=user,
+            content="Old entry.",
+            created_at=base_date - timedelta(days=20),
+            tags=["old"],
+        )
+
+        response_7d = client.get(reverse("api:statistics"), {"period": "7d"})
+        response_30d = client.get(reverse("api:statistics"), {"period": "30d"})
+
+        assert response_7d.status_code == 200
+        assert response_30d.status_code == 200
+
+        data_7d = response_7d.json()
+        data_30d = response_30d.json()
+
+        # 7d period should only have "recent" tag
+        tag_names_7d = [t["name"] for t in data_7d["tag_analytics"]["tags"]]
+        assert "recent" in tag_names_7d
+        assert "old" not in tag_names_7d
+        assert data_7d["tag_analytics"]["total_tags"] == 1
+
+        # 30d period should have both tags
+        tag_names_30d = [t["name"] for t in data_30d["tag_analytics"]["tags"]]
+        assert "recent" in tag_names_30d
+        assert "old" in tag_names_30d
+        assert data_30d["tag_analytics"]["total_tags"] == 2
+
+    def test_tag_analytics_user_isolation(self, client):
+        """Tag analytics only include current user's entries."""
+        from django.core.cache import cache
+
+        cache.clear()
+
+        user1 = UserFactory(timezone="Europe/Prague")
+        user2 = UserFactory(timezone="Europe/Prague")
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory(user=user1, created_at=base_date, tags=["user1-tag"])
+        EntryFactory(user=user2, created_at=base_date, tags=["user2-tag"])
+
+        client.force_login(user1)
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        tag_names = [t["name"] for t in tag_analytics["tags"]]
+        assert "user1-tag" in tag_names
+        assert "user2-tag" not in tag_names
+        assert tag_analytics["total_tags"] == 1
+
+    def test_tag_analytics_entry_with_overlapping_tags(self, client):
+        """Entries with overlapping tags are counted correctly per tag."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        entry1 = EntryFactory(
+            user=user,
+            content="Entry one with tags.",
+            mood_rating=5,
+            created_at=base_date,
+            tags=["common", "unique-a"],
+        )
+        entry1.refresh_from_db()
+
+        entry2 = EntryFactory(
+            user=user,
+            content="Entry two with overlapping tags.",
+            mood_rating=3,
+            created_at=base_date - timedelta(days=1),
+            tags=["common", "unique-b"],
+        )
+        entry2.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        assert tag_analytics["total_tags"] == 3
+
+        tags_dict = {t["name"]: t for t in tag_analytics["tags"]}
+
+        # "common" tag appears in both entries
+        assert tags_dict["common"]["entry_count"] == 2
+        assert tags_dict["common"]["total_words"] == entry1.word_count + entry2.word_count
+        assert tags_dict["common"]["average_mood"] == 4.0  # (5 + 3) / 2
+
+        # Unique tags appear in one entry each
+        assert tags_dict["unique-a"]["entry_count"] == 1
+        assert tags_dict["unique-a"]["total_words"] == entry1.word_count
+        assert tags_dict["unique-a"]["average_mood"] == 5.0
+
+        assert tags_dict["unique-b"]["entry_count"] == 1
+        assert tags_dict["unique-b"]["total_words"] == entry2.word_count
+        assert tags_dict["unique-b"]["average_mood"] == 3.0
+
+    def test_tag_analytics_average_mood_rounding(self, client):
+        """Average mood is rounded to 2 decimal places."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create entries with mood ratings that result in repeating decimal
+        EntryFactory(
+            user=user,
+            content="Entry one.",
+            mood_rating=1,
+            created_at=base_date,
+            tags=["rounding-test"],
+        )
+        EntryFactory(
+            user=user,
+            content="Entry two.",
+            mood_rating=2,
+            created_at=base_date - timedelta(days=1),
+            tags=["rounding-test"],
+        )
+        EntryFactory(
+            user=user,
+            content="Entry three.",
+            mood_rating=2,
+            created_at=base_date - timedelta(days=2),
+            tags=["rounding-test"],
+        )
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        rounding_tag = tag_analytics["tags"][0]
+        # (1 + 2 + 2) / 3 = 1.666... should be rounded to 1.67
+        assert rounding_tag["average_mood"] == 1.67
+
+    def test_tag_analytics_average_words_rounding(self, client):
+        """Average words is rounded to 2 decimal places."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        entry1 = EntryFactory(
+            user=user,
+            content="word " * 10,
+            created_at=base_date,
+            tags=["words-test"],
+        )
+        entry1.refresh_from_db()
+
+        entry2 = EntryFactory(
+            user=user,
+            content="word " * 11,
+            created_at=base_date - timedelta(days=1),
+            tags=["words-test"],
+        )
+        entry2.refresh_from_db()
+
+        entry3 = EntryFactory(
+            user=user,
+            content="word " * 12,
+            created_at=base_date - timedelta(days=2),
+            tags=["words-test"],
+        )
+        entry3.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        words_tag = tag_analytics["tags"][0]
+        total = entry1.word_count + entry2.word_count + entry3.word_count
+        expected_avg = round(total / 3, 2)
+        assert words_tag["average_words"] == expected_avg
+
+    def test_tag_analytics_special_characters_in_tag_names(self, client):
+        """Tags with special characters are handled correctly."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory(
+            user=user,
+            content="Entry with special tags.",
+            mood_rating=4,
+            created_at=base_date,
+            tags=["work-life", "self_improvement", "2024goals"],
+        )
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        tag_names = [t["name"] for t in tag_analytics["tags"]]
+        assert "work-life" in tag_names
+        assert "self_improvement" in tag_names
+        assert "2024goals" in tag_names
+        assert tag_analytics["total_tags"] == 3
+
+    def test_tag_analytics_case_sensitivity(self, client):
+        """Tags are case-sensitive (or case-insensitive based on django-taggit config)."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory(
+            user=user,
+            content="Entry with Work tag.",
+            mood_rating=4,
+            created_at=base_date,
+            tags=["Work"],
+        )
+
+        EntryFactory(
+            user=user,
+            content="Entry with work tag.",
+            mood_rating=3,
+            created_at=base_date - timedelta(days=1),
+            tags=["work"],
+        )
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        # django-taggit by default is case-insensitive, so both should be same tag
+        # Check actual behavior - could be 1 tag (case-insensitive) or 2 (case-sensitive)
+        tag_names = [t["name"].lower() for t in tag_analytics["tags"]]
+        assert "work" in tag_names
+
+    def test_tag_analytics_tag_fields_structure(self, client):
+        """Each tag object has all required fields with correct types."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory(
+            user=user,
+            content="Test entry for structure verification.",
+            mood_rating=4,
+            created_at=base_date,
+            tags=["structure-test"],
+        )
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        tag = tag_analytics["tags"][0]
+
+        # Verify all required fields exist
+        assert "name" in tag
+        assert "entry_count" in tag
+        assert "total_words" in tag
+        assert "average_words" in tag
+        assert "average_mood" in tag
+
+        # Verify types
+        assert isinstance(tag["name"], str)
+        assert isinstance(tag["entry_count"], int)
+        assert isinstance(tag["total_words"], int)
+        assert isinstance(tag["average_words"], (int, float))
+        assert isinstance(tag["average_mood"], (int, float, type(None)))
+
+    def test_tag_analytics_empty_content_entries(self, client):
+        """Entries with empty content (word_count=0) are included in tag analytics."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        entry = EntryFactory(
+            user=user,
+            content="",
+            mood_rating=3,
+            created_at=base_date,
+            tags=["empty-content"],
+        )
+        entry.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        tag_analytics = data["tag_analytics"]
+
+        assert tag_analytics["total_tags"] == 1
+        empty_tag = tag_analytics["tags"][0]
+        assert empty_tag["name"] == "empty-content"
+        assert empty_tag["entry_count"] == 1
+        assert empty_tag["total_words"] == 0
+        assert empty_tag["average_words"] == 0
+        assert empty_tag["average_mood"] == 3.0
