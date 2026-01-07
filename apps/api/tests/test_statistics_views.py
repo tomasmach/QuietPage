@@ -2146,7 +2146,9 @@ class TestWritingPatternsConsistencyRate:
         user_tz = ZoneInfo("Europe/Prague")
         base_date = timezone.now().astimezone(user_tz)
 
-        for i in range(7):
+        # '7d' period spans 8 days (7 days ago normalized to start of day + today)
+        # So we need 8 days of entries for 100% consistency
+        for i in range(8):
             day_date = base_date - timedelta(days=i)
             EntryFactory(user=user, created_at=day_date.replace(hour=12))
 
@@ -2179,8 +2181,10 @@ class TestWritingPatternsConsistencyRate:
         user_tz = ZoneInfo("Europe/Prague")
         base_date = timezone.now().astimezone(user_tz)
 
-        EntryFactory(user=user, created_at=base_date.replace(hour=12))
-        EntryFactory(user=user, created_at=(base_date - timedelta(days=1)).replace(hour=12))
+        # '7d' period spans 8 days, so 4 entries = 50% consistency
+        for i in range(4):
+            day_date = base_date - timedelta(days=i)
+            EntryFactory(user=user, created_at=day_date.replace(hour=12))
 
         response = client.get(reverse("api:statistics"), {"period": "7d"})
 
@@ -2188,7 +2192,7 @@ class TestWritingPatternsConsistencyRate:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        assert writing_patterns["consistency_rate"] == 50.0
 
     def test_consistency_rate_counts_only_active_days(self, client):
         """Consistency rate only counts days with at least one entry."""
@@ -2198,6 +2202,7 @@ class TestWritingPatternsConsistencyRate:
         user_tz = ZoneInfo("Europe/Prague")
         base_date = timezone.now().astimezone(user_tz)
 
+        # Multiple entries on the same day count as 1 active day
         EntryFactory(user=user, created_at=base_date.replace(hour=10))
         EntryFactory(user=user, created_at=base_date.replace(hour=14))
         EntryFactory(user=user, created_at=base_date.replace(hour=18))
@@ -2210,7 +2215,8 @@ class TestWritingPatternsConsistencyRate:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        # '7d' period spans 8 days, 2 active days = 25%
+        assert writing_patterns["consistency_rate"] == 25.0
 
     def test_consistency_rate_multiple_entries_same_day_counted_once(self, client):
         """Multiple entries on same day count as one active day."""
@@ -2231,10 +2237,11 @@ class TestWritingPatternsConsistencyRate:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        # '7d' period spans 8 days, 2 active days (despite multiple entries) = 25%
+        assert writing_patterns["consistency_rate"] == 25.0
 
     def test_consistency_rate_75_percent_three_of_four_days(self, client):
-        """Consistency rate is 75% when entries on 3 out of 4 days."""
+        """Consistency rate is 37.5% when entries on 3 out of 8 days."""
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
@@ -2251,7 +2258,8 @@ class TestWritingPatternsConsistencyRate:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        # '7d' period spans 8 days, 3 active days = 37.5%
+        assert writing_patterns["consistency_rate"] == 37.5
 
     def test_consistency_rate_all_period(self, client):
         """Consistency rate calculation works correctly with 'all' period."""
@@ -2261,6 +2269,7 @@ class TestWritingPatternsConsistencyRate:
         user_tz = ZoneInfo("Europe/Prague")
         base_date = timezone.now().astimezone(user_tz)
 
+        # Create entries for 5 consecutive days
         for i in range(5):
             day_date = base_date - timedelta(days=i)
             EntryFactory(user=user, created_at=day_date.replace(hour=12))
@@ -2271,6 +2280,8 @@ class TestWritingPatternsConsistencyRate:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
+        # 'all' period spans from first entry (base_date - 4 days) to end of today (base_date)
+        # That's 5 consecutive days with entries = 100%
         assert writing_patterns["consistency_rate"] == 100.0
 
     def test_consistency_rate_30d_period(self, client):
@@ -2281,6 +2292,7 @@ class TestWritingPatternsConsistencyRate:
         user_tz = ZoneInfo("Europe/Prague")
         base_date = timezone.now().astimezone(user_tz)
 
+        # Create entries for 10 days
         for i in range(10):
             day_date = base_date - timedelta(days=i)
             EntryFactory(user=user, created_at=day_date.replace(hour=12))
@@ -2291,7 +2303,9 @@ class TestWritingPatternsConsistencyRate:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        # '30d' period spans 31 days (30 days ago + today), 10 active days
+        expected_rate = round((10 / 31) * 100, 2)
+        assert writing_patterns["consistency_rate"] == expected_rate
 
     def test_consistency_rate_across_dst_transition(self, client):
         """Consistency rate calculation is correct during DST transition."""
@@ -2304,6 +2318,7 @@ class TestWritingPatternsConsistencyRate:
         with patch("django.utils.timezone.now") as mock_now:
             mock_now.return_value = spring_forward
 
+            # Create entries on 2 days
             EntryFactory(user=user, created_at=spring_forward - timedelta(days=1))
             EntryFactory(user=user, created_at=spring_forward)
 
@@ -2313,7 +2328,8 @@ class TestWritingPatternsConsistencyRate:
             data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        # '7d' period spans 8 days, 2 active days = 25%
+        assert writing_patterns["consistency_rate"] == 25.0
 
 
 @pytest.mark.statistics
@@ -2685,6 +2701,7 @@ class TestWritingPatternsIntegration:
         user_tz = ZoneInfo("America/New_York")
         base_date = timezone.now().astimezone(user_tz)
 
+        # Create entry on 1 day
         EntryFactory(user=user, created_at=base_date.replace(hour=1))
 
         response = client.get(reverse("api:statistics"), {"period": "7d"})
@@ -2693,16 +2710,18 @@ class TestWritingPatternsIntegration:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        # '7d' period spans 8 days, 1 active day = 12.5%
+        assert writing_patterns["consistency_rate"] == 12.5
 
     def test_consistency_rate_single_day_with_entries(self, client):
-        """Consistency rate is 100% when all entries are on a single day."""
+        """Consistency rate correctly handles multiple entries on a single day."""
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
         user_tz = ZoneInfo("Europe/Prague")
         base_date = timezone.now().astimezone(user_tz)
 
+        # Multiple entries on the same day still count as 1 active day
         EntryFactory.create_batch(5, user=user, created_at=base_date.replace(hour=10))
 
         response = client.get(reverse("api:statistics"), {"period": "7d"})
@@ -2711,7 +2730,8 @@ class TestWritingPatternsIntegration:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        # '7d' period spans 8 days, 1 active day = 12.5%
+        assert writing_patterns["consistency_rate"] == 12.5
 
     def test_consistency_rate_entries_at_boundaries(self, client):
         """Entries at day boundaries (00:00, 23:59) count correctly."""
@@ -2722,6 +2742,7 @@ class TestWritingPatternsIntegration:
         base_date = timezone.now().astimezone(user_tz)
         day_start = base_date.replace(hour=0, minute=0, second=0, microsecond=0)
 
+        # Two entries on today (start and end), one entry yesterday
         EntryFactory(user=user, created_at=day_start + timedelta(hours=0))
         EntryFactory(user=user, created_at=day_start + timedelta(hours=23, minutes=59))
         EntryFactory(user=user, created_at=(day_start - timedelta(days=1)).replace(hour=12))
@@ -2732,7 +2753,8 @@ class TestWritingPatternsIntegration:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        # '7d' period spans 8 days, 2 active days = 25%
+        assert writing_patterns["consistency_rate"] == 25.0
 
     def test_consistency_rate_period_90d(self, client):
         """Consistency rate calculation works correctly with 90d period."""
@@ -2742,6 +2764,7 @@ class TestWritingPatternsIntegration:
         user_tz = ZoneInfo("Europe/Prague")
         base_date = timezone.now().astimezone(user_tz)
 
+        # Create entries for 15 consecutive days
         for i in range(15):
             day_date = base_date - timedelta(days=i)
             EntryFactory(user=user, created_at=day_date.replace(hour=12))
@@ -2752,7 +2775,9 @@ class TestWritingPatternsIntegration:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        # '90d' period spans 91 days (90 days ago + today), 15 active days
+        expected_rate = round((15 / 91) * 100, 2)
+        assert writing_patterns["consistency_rate"] == expected_rate
 
     def test_consistency_rate_with_gaps(self, client):
         """Consistency rate accounts for gaps between entries."""
@@ -2762,6 +2787,7 @@ class TestWritingPatternsIntegration:
         user_tz = ZoneInfo("Europe/Prague")
         base_date = timezone.now().astimezone(user_tz)
 
+        # Create entries with gaps: today, 3 days ago, 6 days ago
         EntryFactory(user=user, created_at=base_date.replace(hour=12))
         EntryFactory(user=user, created_at=(base_date - timedelta(days=3)).replace(hour=12))
         EntryFactory(user=user, created_at=(base_date - timedelta(days=6)).replace(hour=12))
@@ -2772,17 +2798,19 @@ class TestWritingPatternsIntegration:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        expected_rate = round((3 / 7) * 100, 2)
+        # '7d' period spans 8 days (7 days ago + today), 3 active days
+        expected_rate = round((3 / 8) * 100, 2)
         assert writing_patterns["consistency_rate"] == expected_rate
 
     def test_consistency_rate_33_percent_one_of_three_days(self, client):
-        """Consistency rate is approximately 33.33% when entries on 1 out of 3 days."""
+        """Consistency rate is 37.5% when entries on 3 consecutive days of 8-day period."""
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
         user_tz = ZoneInfo("Europe/Prague")
         base_date = timezone.now().astimezone(user_tz)
 
+        # Create 3 consecutive entries
         EntryFactory(user=user, created_at=base_date.replace(hour=12))
         EntryFactory(user=user, created_at=(base_date - timedelta(days=1)).replace(hour=12))
         EntryFactory(user=user, created_at=(base_date - timedelta(days=2)).replace(hour=12))
@@ -2793,7 +2821,8 @@ class TestWritingPatternsIntegration:
         data = response.json()
         writing_patterns = data["writing_patterns"]
 
-        assert writing_patterns["consistency_rate"] == 100.0
+        # '7d' period spans 8 days, 3 active days = 37.5%
+        assert writing_patterns["consistency_rate"] == 37.5
 
 
 @pytest.mark.statistics

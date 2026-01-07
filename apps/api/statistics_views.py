@@ -323,7 +323,7 @@ class StatisticsView(APIView):
             "best_day": best_day,
         }
 
-    def _calculate_writing_patterns(self, entries, user):
+    def _calculate_writing_patterns(self, entries, user, start_date, end_date):
         """
         Calculate writing patterns including consistency, time-of-day distribution,
         day-of-week distribution, and streak history.
@@ -331,6 +331,8 @@ class StatisticsView(APIView):
         Args:
             entries: QuerySet of Entry objects already filtered by user and date range
             user: User object with timezone field
+            start_date: Start datetime of the requested period
+            end_date: End datetime of the requested period
 
         Returns:
             dict: Writing patterns statistics including:
@@ -357,17 +359,10 @@ class StatisticsView(APIView):
 
         user_tz = ZoneInfo(str(user.timezone))
 
-        first_entry = entries.order_by("created_at").first()
-        last_entry = entries.order_by("-created_at").first()
-
-        if first_entry and last_entry:
-            start_date_local = first_entry.created_at.astimezone(user_tz)
-            end_date_local = last_entry.created_at.astimezone(user_tz)
-            start_date_normalized = self._normalize_to_local_day(start_date_local, user_tz)
-            end_date_normalized = self._normalize_to_local_day(end_date_local, user_tz)
-            total_days = (end_date_normalized - start_date_normalized).days + 1
-        else:
-            total_days = 0
+        # Calculate total days in the requested period
+        start_date_normalized = self._normalize_to_local_day(start_date, user_tz)
+        end_date_normalized = self._normalize_to_local_day(end_date, user_tz)
+        total_days = (end_date_normalized - start_date_normalized).days + 1
 
         active_days = (
             entries.annotate(day=TruncDate("created_at", tzinfo=user_tz))
@@ -522,7 +517,7 @@ class StatisticsView(APIView):
         word_count_analytics = self._calculate_word_count_analytics(
             entries, user, start_date, user_tz
         )
-        writing_patterns = self._calculate_writing_patterns(entries, user)
+        writing_patterns = self._calculate_writing_patterns(entries, user, start_date, end_date)
 
         response = Response(
             {
