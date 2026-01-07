@@ -90,6 +90,19 @@ export interface WritingPatternsAPI {
   }[];
 }
 
+export interface TagDataAPI {
+  name: string;
+  entry_count: number;
+  total_words: number;
+  average_words: number;
+  average_mood: number | null;
+}
+
+export interface TagAnalyticsAPI {
+  tags: TagDataAPI[];
+  total_tags: number;
+}
+
 export interface StatisticsDataAPI {
   period: '7d' | '30d' | '90d' | '1y' | 'all';
   start_date: string;
@@ -97,6 +110,7 @@ export interface StatisticsDataAPI {
   mood_analytics: MoodAnalyticsAPI;
   word_count_analytics: WordCountAnalyticsAPI;
   writing_patterns: WritingPatternsAPI;
+  tag_analytics: TagAnalyticsAPI;
 }
 
 // ============================================
@@ -164,6 +178,19 @@ export interface WritingPatterns {
   }[];
 }
 
+export interface TagData {
+  name: string;
+  entryCount: number;
+  totalWords: number;
+  averageWords: number;
+  averageMood: number | null;
+}
+
+export interface TagAnalytics {
+  tags: TagData[];
+  totalTags: number;
+}
+
 export interface StatisticsData {
   period: '7d' | '30d' | '90d' | '1y' | 'all';
   startDate: string;
@@ -171,6 +198,7 @@ export interface StatisticsData {
   moodAnalytics: MoodAnalytics;
   wordCountAnalytics: WordCountAnalytics;
   writingPatterns: WritingPatterns;
+  tagAnalytics: TagAnalytics;
 }
 
 // ============================================

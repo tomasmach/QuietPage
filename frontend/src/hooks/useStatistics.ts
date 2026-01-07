@@ -78,6 +78,16 @@ export function useStatistics(period: PeriodType = '30d'): UseStatisticsReturn {
             length: streak.length,
           })),
         },
+        tagAnalytics: {
+          tags: response.tag_analytics.tags.map(tag => ({
+            name: tag.name,
+            entryCount: tag.entry_count,
+            totalWords: tag.total_words,
+            averageWords: tag.average_words,
+            averageMood: tag.average_mood,
+          })),
+          totalTags: response.tag_analytics.total_tags,
+        },
       };
 
       setData(statisticsData);
