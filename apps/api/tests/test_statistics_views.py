@@ -3648,3 +3648,247 @@ class TestTagAnalytics:
         assert empty_tag["total_words"] == 0
         assert empty_tag["average_words"] == 0
         assert empty_tag["average_mood"] == 3.0
+
+
+@pytest.mark.statistics
+@pytest.mark.unit
+class TestGoalStreakCalculation:
+    """Tests for goal streak calculation (consecutive days meeting daily word goal)."""
+
+    def test_goal_streak_response_structure(self, client):
+        """Goal streak returns correct structure with current, longest, and goal."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "goal_streak" in data
+        goal_streak = data["goal_streak"]
+        assert "current" in goal_streak
+        assert "longest" in goal_streak
+        assert "goal" in goal_streak
+
+    def test_goal_streak_no_entries_returns_zero(self, client):
+        """User with no entries has zero goal streak."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        assert goal_streak["current"] == 0
+        assert goal_streak["longest"] == 0
+        assert goal_streak["goal"] == user.daily_word_goal
+
+    def test_goal_streak_entries_below_goal_returns_zero(self, client):
+        """Entries below daily word goal don't count toward goal streak."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=750)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create entries with less than 750 words
+        EntryFactory(user=user, content="word " * 500, created_at=base_date)
+        EntryFactory(
+            user=user, content="word " * 500, created_at=base_date - timedelta(days=1)
+        )
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        assert goal_streak["current"] == 0
+        assert goal_streak["longest"] == 0
+
+    def test_goal_streak_single_day_meeting_goal(self, client):
+        """Single day meeting goal returns streak of 1."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=750)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory(user=user, content="word " * 800, created_at=base_date)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        assert goal_streak["current"] == 1
+        assert goal_streak["longest"] == 1
+
+    def test_goal_streak_consecutive_days(self, client):
+        """Consecutive days meeting goal extends streak."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=750)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        for i in range(5):
+            EntryFactory(
+                user=user, content="word " * 800, created_at=base_date - timedelta(days=i)
+            )
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        assert goal_streak["current"] == 5
+        assert goal_streak["longest"] == 5
+
+    def test_goal_streak_gap_resets_current(self, client):
+        """Gap in goal days resets current streak but preserves longest."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=750)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # 3-day streak ending today
+        for i in range(3):
+            EntryFactory(
+                user=user, content="word " * 800, created_at=base_date - timedelta(days=i)
+            )
+
+        # 5-day streak from 10 days ago (with gap)
+        for i in range(5):
+            EntryFactory(
+                user=user,
+                content="word " * 800,
+                created_at=base_date - timedelta(days=10 + i),
+            )
+
+        response = client.get(reverse("api:statistics"), {"period": "30d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        assert goal_streak["current"] == 3
+        assert goal_streak["longest"] == 5
+
+    def test_goal_streak_multiple_entries_same_day_sums_words(self, client):
+        """Multiple entries on same day are summed to check against goal."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=750)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Two entries that together meet the goal
+        EntryFactory(user=user, content="word " * 400, created_at=base_date)
+        EntryFactory(user=user, content="word " * 400, created_at=base_date)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        assert goal_streak["current"] == 1
+        assert goal_streak["longest"] == 1
+
+    def test_goal_streak_yesterday_counts_as_current(self, client):
+        """Last goal day being yesterday still counts for current streak."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=750)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+        yesterday = base_date - timedelta(days=1)
+
+        for i in range(3):
+            EntryFactory(
+                user=user, content="word " * 800, created_at=yesterday - timedelta(days=i)
+            )
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        assert goal_streak["current"] == 3
+
+    def test_goal_streak_two_days_ago_resets_current(self, client):
+        """Last goal day being 2+ days ago resets current streak to 0."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=750)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+        two_days_ago = base_date - timedelta(days=2)
+
+        for i in range(5):
+            EntryFactory(
+                user=user, content="word " * 800, created_at=two_days_ago - timedelta(days=i)
+            )
+
+        response = client.get(reverse("api:statistics"), {"period": "30d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        assert goal_streak["current"] == 0
+        assert goal_streak["longest"] == 5
+
+    def test_goal_streak_respects_user_timezone(self, client):
+        """Goal streak calculation uses user's timezone for day boundaries."""
+        user = UserFactory(timezone="America/New_York", daily_word_goal=750)
+        client.force_login(user)
+
+        # Create entry at 11 PM New York time (next day in UTC)
+        ny_tz = ZoneInfo("America/New_York")
+        now_ny = timezone.now().astimezone(ny_tz)
+        late_night = now_ny.replace(hour=23, minute=30)
+
+        EntryFactory(user=user, content="word " * 800, created_at=late_night)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        # Should be counted as today's entry in NY timezone
+        assert goal_streak["current"] == 1
+
+    def test_goal_streak_uses_user_daily_word_goal(self, client):
+        """Goal streak uses user's configured daily_word_goal."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=500)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # 550 words - meets 500 goal but not default 750
+        EntryFactory(user=user, content="word " * 550, created_at=base_date)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        assert goal_streak["current"] == 1
+        assert goal_streak["goal"] == 500
+
+    def test_goal_streak_returns_user_goal_value(self, client):
+        """Goal field in response matches user's daily_word_goal setting."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=1000)
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        goal_streak = data["goal_streak"]
+
+        assert goal_streak["goal"] == 1000

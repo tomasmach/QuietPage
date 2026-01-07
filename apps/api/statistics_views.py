@@ -58,6 +58,7 @@ class StatisticsView(APIView):
         - word_count_analytics: Word count stats (total, average, daily breakdown)
         - writing_patterns: Consistency, time-of-day, day-of-week, streak history
         - tag_analytics: Tag usage statistics (entry count, words, mood per tag)
+        - goal_streak: Consecutive days meeting daily word goal (current, longest, goal)
 
     Query Parameters:
         - period: Time period ('7d', '30d', '90d', '1y', 'all'). Defaults to '7d'
@@ -541,6 +542,84 @@ class StatisticsView(APIView):
 
         return {"milestones": milestones}
 
+    def _calculate_goal_streak(self, user):
+        """
+        Calculate goal streak - consecutive days meeting daily word goal.
+
+        Unlike regular streak (any entry with content), goal streak tracks
+        consecutive days where the user's total word count >= daily_word_goal.
+
+        Args:
+            user: User object with timezone and daily_word_goal fields
+
+        Returns:
+            dict: Goal streak statistics including:
+                - current: Current consecutive days meeting goal (ending today or yesterday)
+                - longest: All-time longest goal streak
+                - goal: User's daily_word_goal for reference
+        """
+        from apps.journal.models import Entry
+
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+        today = now.date()
+        yesterday = today - timedelta(days=1)
+
+        # Get all entries with content, grouped by day with total word count
+        daily_totals = (
+            Entry.objects.filter(user=user, word_count__gt=0)
+            .annotate(day=TruncDate("created_at", tzinfo=user_tz))
+            .values("day")
+            .annotate(total_words=Sum("word_count"))
+            .order_by("day")
+        )
+
+        # Filter to only days meeting the goal
+        goal_days = sorted([
+            item["day"]
+            for item in daily_totals
+            if item["total_words"] >= user.daily_word_goal
+        ])
+
+        if not goal_days:
+            return {
+                "current": 0,
+                "longest": 0,
+                "goal": user.daily_word_goal,
+            }
+
+        # Calculate current goal streak (working backwards from today/yesterday)
+        current_streak = 0
+        
+        # Check if streak is still active (last goal day is today or yesterday)
+        last_goal_day = goal_days[-1]
+        if last_goal_day == today or last_goal_day == yesterday:
+            # Count consecutive days backwards from the last goal day
+            current_streak = 1
+            for i in range(len(goal_days) - 2, -1, -1):
+                expected_date = last_goal_day - timedelta(days=current_streak)
+                if goal_days[i] == expected_date:
+                    current_streak += 1
+                else:
+                    break
+
+        # Calculate longest goal streak (scan through all goal days)
+        longest_streak = 1 if goal_days else 0
+        temp_streak = 1
+
+        for i in range(1, len(goal_days)):
+            if goal_days[i] - goal_days[i - 1] == timedelta(days=1):
+                temp_streak += 1
+                longest_streak = max(longest_streak, temp_streak)
+            else:
+                temp_streak = 1
+
+        return {
+            "current": current_streak,
+            "longest": longest_streak,
+            "goal": user.daily_word_goal,
+        }
+
     def _calculate_tag_analytics(self, entries):
         """
         Calculate tag analytics for a filtered entries queryset.
@@ -635,6 +714,7 @@ class StatisticsView(APIView):
                 - writing_patterns: Writing habits and consistency data
                 - tag_analytics: Tag usage statistics
                 - milestones: Achievement milestones (based on ALL user data)
+                - goal_streak: Consecutive days meeting daily word goal (all-time)
 
         Caching:
             - Server-side: 30 minutes (1800 seconds)
@@ -674,6 +754,7 @@ class StatisticsView(APIView):
         writing_patterns = self._calculate_writing_patterns(entries, user, start_date, end_date)
         tag_analytics = self._calculate_tag_analytics(entries)
         milestones = self._calculate_milestones(user, all_entries)
+        goal_streak = self._calculate_goal_streak(user)
 
         return Response(
             {
@@ -685,5 +766,6 @@ class StatisticsView(APIView):
                 "writing_patterns": writing_patterns,
                 "tag_analytics": tag_analytics,
                 "milestones": milestones,
+                "goal_streak": goal_streak,
             }
         )
