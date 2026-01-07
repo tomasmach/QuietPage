@@ -335,6 +335,7 @@ export const en: Translations = {
     wordCountTimeline: {
       title: 'WORD COUNT TIMELINE',
       noData: 'NO WRITING DATA AVAILABLE',
+      wordsLabel: 'Words',
     },
     error: {
       unableToLoad: 'UNABLE TO LOAD STATISTICS',

@@ -325,6 +325,7 @@ export interface Translations {
     wordCountTimeline: {
       title: string;
       noData: string;
+      wordsLabel: string;
     };
     error: {
       unableToLoad: string;
@@ -675,6 +676,7 @@ export const cs: Translations = {
     wordCountTimeline: {
       title: 'VÝVOJ POČTU SLOV',
       noData: 'ŽÁDNÁ DATA O PSANÍ',
+      wordsLabel: 'Slov',
     },
     error: {
       unableToLoad: 'NELZE NAČÍST STATISTIKY',

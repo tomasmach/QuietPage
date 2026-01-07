@@ -1,3 +1,9 @@
+/**
+ * Word count timeline chart component.
+ *
+ * Displays a timeline area chart showing daily word counts over a period.
+ * Uses brutalist design with solid fill (no gradients) per styles.md guidelines.
+ */
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { WordCountAnalytics } from '../../types/statistics';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -32,12 +38,6 @@ export function WordCountTimelineChart({ data }: WordCountTimelineChartProps) {
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <AreaChart data={chartData}>
-          <defs>
-            <linearGradient id="wordCountGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0}/>
-            </linearGradient>
-          </defs>
           <CartesianGrid
             strokeDasharray="0"
             stroke="var(--color-border)"
@@ -59,13 +59,16 @@ export function WordCountTimelineChart({ data }: WordCountTimelineChartProps) {
               fontFamily: 'IBM Plex Mono',
               fontSize: '12px',
             }}
+            formatter={(value: number | undefined) => [value ?? 0, t('statistics.wordCountTimeline.wordsLabel')]}
           />
           <Area
             type="monotone"
             dataKey="words"
+            name={t('statistics.wordCountTimeline.wordsLabel')}
             stroke="var(--color-accent)"
             strokeWidth={2}
-            fill="url(#wordCountGradient)"
+            fill="var(--color-accent)"
+            fillOpacity={0.15}
           />
         </AreaChart>
       </ResponsiveContainer>
