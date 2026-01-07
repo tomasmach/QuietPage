@@ -88,6 +88,14 @@ export function useStatistics(period: PeriodType = '30d'): UseStatisticsReturn {
           })),
           totalTags: response.tag_analytics.total_tags,
         },
+        milestones: {
+          milestones: response.milestones.milestones.map(milestone => ({
+            type: milestone.type,
+            value: milestone.value,
+            achieved: milestone.achieved,
+            current: milestone.current,
+          })),
+        },
       };
 
       setData(statisticsData);

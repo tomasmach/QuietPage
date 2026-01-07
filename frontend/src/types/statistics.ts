@@ -103,6 +103,19 @@ export interface TagAnalyticsAPI {
   total_tags: number;
 }
 
+export type MilestoneType = 'entries' | 'words' | 'streak';
+
+export interface MilestoneAPI {
+  type: MilestoneType;
+  value: number;
+  achieved: boolean;
+  current: number;
+}
+
+export interface MilestonesAPI {
+  milestones: MilestoneAPI[];
+}
+
 export interface StatisticsDataAPI {
   period: '7d' | '30d' | '90d' | '1y' | 'all';
   start_date: string;
@@ -111,6 +124,7 @@ export interface StatisticsDataAPI {
   word_count_analytics: WordCountAnalyticsAPI;
   writing_patterns: WritingPatternsAPI;
   tag_analytics: TagAnalyticsAPI;
+  milestones: MilestonesAPI;
 }
 
 // ============================================
@@ -191,6 +205,17 @@ export interface TagAnalytics {
   totalTags: number;
 }
 
+export interface Milestone {
+  type: MilestoneType;
+  value: number;
+  achieved: boolean;
+  current: number;
+}
+
+export interface Milestones {
+  milestones: Milestone[];
+}
+
 export interface StatisticsData {
   period: '7d' | '30d' | '90d' | '1y' | 'all';
   startDate: string;
@@ -199,6 +224,7 @@ export interface StatisticsData {
   wordCountAnalytics: WordCountAnalytics;
   writingPatterns: WritingPatterns;
   tagAnalytics: TagAnalytics;
+  milestones: Milestones;
 }
 
 // ============================================
