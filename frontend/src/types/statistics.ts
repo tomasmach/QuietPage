@@ -122,6 +122,26 @@ export interface GoalStreakAPI {
   goal: number;
 }
 
+export interface LongestEntryAPI {
+  date: string;
+  word_count: number;
+  title: string | null;
+  entry_id: string;
+}
+
+export interface MostWordsInDayAPI {
+  date: string;
+  word_count: number;
+  entry_count: number;
+}
+
+export interface PersonalRecordsAPI {
+  longest_entry: LongestEntryAPI | null;
+  most_words_in_day: MostWordsInDayAPI | null;
+  longest_streak: number;
+  longest_goal_streak: number;
+}
+
 export interface StatisticsDataAPI {
   period: '7d' | '30d' | '90d' | '1y' | 'all';
   start_date: string;
@@ -132,6 +152,7 @@ export interface StatisticsDataAPI {
   tag_analytics: TagAnalyticsAPI;
   milestones: MilestonesAPI;
   goal_streak: GoalStreakAPI;
+  personal_records: PersonalRecordsAPI;
 }
 
 // ============================================
@@ -229,6 +250,26 @@ export interface GoalStreak {
   goal: number;
 }
 
+export interface LongestEntry {
+  date: string;
+  wordCount: number;
+  title: string | null;
+  entryId: string;
+}
+
+export interface MostWordsInDay {
+  date: string;
+  wordCount: number;
+  entryCount: number;
+}
+
+export interface PersonalRecords {
+  longestEntry: LongestEntry | null;
+  mostWordsInDay: MostWordsInDay | null;
+  longestStreak: number;
+  longestGoalStreak: number;
+}
+
 export interface StatisticsData {
   period: '7d' | '30d' | '90d' | '1y' | 'all';
   startDate: string;
@@ -239,6 +280,7 @@ export interface StatisticsData {
   tagAnalytics: TagAnalytics;
   milestones: Milestones;
   goalStreak: GoalStreak;
+  personalRecords: PersonalRecords;
 }
 
 // ============================================

@@ -101,6 +101,21 @@ export function useStatistics(period: PeriodType = '30d'): UseStatisticsReturn {
           longest: response.goal_streak.longest,
           goal: response.goal_streak.goal,
         },
+        personalRecords: {
+          longestEntry: response.personal_records.longest_entry ? {
+            date: response.personal_records.longest_entry.date,
+            wordCount: response.personal_records.longest_entry.word_count,
+            title: response.personal_records.longest_entry.title,
+            entryId: response.personal_records.longest_entry.entry_id,
+          } : null,
+          mostWordsInDay: response.personal_records.most_words_in_day ? {
+            date: response.personal_records.most_words_in_day.date,
+            wordCount: response.personal_records.most_words_in_day.word_count,
+            entryCount: response.personal_records.most_words_in_day.entry_count,
+          } : null,
+          longestStreak: response.personal_records.longest_streak,
+          longestGoalStreak: response.personal_records.longest_goal_streak,
+        },
       };
 
       setData(statisticsData);
