@@ -254,6 +254,19 @@ export interface Translations {
       less: string;
       more: string;
     };
+    timeOfDayChart: {
+      title: string;
+      notEnoughData: string;
+      morning: string;
+      afternoon: string;
+      evening: string;
+      night: string;
+      morningDesc: string;
+      afternoonDesc: string;
+      eveningDesc: string;
+      nightDesc: string;
+      entries: string;
+    };
   };
 }
 
@@ -520,6 +533,19 @@ export const cs: Translations = {
       words: 'slov',
       less: 'MÉNĚ',
       more: 'VÍCE',
+    },
+    timeOfDayChart: {
+      title: 'DENNÍ DOBA PSANÍ',
+      notEnoughData: 'Nedostatek dat',
+      morning: 'Ráno',
+      afternoon: 'Odpoledne',
+      evening: 'Večer',
+      night: 'Noc',
+      morningDesc: 'Ráno: 5:00 – 11:59',
+      afternoonDesc: 'Odpoledne: 12:00 – 17:59',
+      eveningDesc: 'Večer: 18:00 – 23:59',
+      nightDesc: 'Noc: 0:00 – 4:59',
+      entries: 'záznamů',
     },
   },
 };

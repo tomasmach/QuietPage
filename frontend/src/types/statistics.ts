@@ -45,12 +45,31 @@ export interface WordCountAnalyticsAPI {
   } | null;
 }
 
+export interface WritingPatternsAPI {
+  consistency_rate: number;
+  time_of_day: {
+    morning: number;
+    afternoon: number;
+    evening: number;
+    night: number;
+  };
+  day_of_week: {
+    [key: string]: number;
+  };
+  streak_history: {
+    start_date: string;
+    end_date: string;
+    length: number;
+  }[];
+}
+
 export interface StatisticsDataAPI {
   period: '7d' | '30d' | '90d' | '1y' | 'all';
   start_date: string;
   end_date: string;
   mood_analytics: MoodAnalyticsAPI;
   word_count_analytics: WordCountAnalyticsAPI;
+  writing_patterns: WritingPatternsAPI;
 }
 
 // ============================================
@@ -93,12 +112,31 @@ export interface WordCountAnalytics {
   } | null;
 }
 
+export interface WritingPatterns {
+  consistencyRate: number;
+  timeOfDay: {
+    morning: number;
+    afternoon: number;
+    evening: number;
+    night: number;
+  };
+  dayOfWeek: {
+    [key: string]: number;
+  };
+  streakHistory: {
+    startDate: string;
+    endDate: string;
+    length: number;
+  }[];
+}
+
 export interface StatisticsData {
   period: '7d' | '30d' | '90d' | '1y' | 'all';
   startDate: string;
   endDate: string;
   moodAnalytics: MoodAnalytics;
   wordCountAnalytics: WordCountAnalytics;
+  writingPatterns: WritingPatterns;
 }
 
 // ============================================

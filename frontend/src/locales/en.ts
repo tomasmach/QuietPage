@@ -264,5 +264,18 @@ export const en: Translations = {
       less: 'LESS',
       more: 'MORE',
     },
+    timeOfDayChart: {
+      title: 'TIME OF DAY DISTRIBUTION',
+      notEnoughData: 'Not enough data',
+      morning: 'Morning',
+      afternoon: 'Afternoon',
+      evening: 'Evening',
+      night: 'Night',
+      morningDesc: 'Morning: 5 AM – 12 PM',
+      afternoonDesc: 'Afternoon: 12 PM – 6 PM',
+      eveningDesc: 'Evening: 6 PM – 12 AM',
+      nightDesc: 'Night: 12 AM – 5 AM',
+      entries: 'entries',
+    },
   },
 };
