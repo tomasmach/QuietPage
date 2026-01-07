@@ -14,6 +14,7 @@ from dateutil.relativedelta import relativedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from django.db.models import Sum, Avg, Count, Q
 from django.db.models.functions import TruncDate
 from django.utils import timezone
@@ -62,6 +63,10 @@ class StatisticsView(APIView):
     Authentication:
         - Requires authenticated user (IsAuthenticated)
 
+    Rate Limiting:
+        - 100 requests per hour per user (prevents abuse of expensive database queries)
+        - Uses ScopedRateThrottle with 'statistics' scope
+
     Caching:
         - Results are cached for 30 minutes using database cache backend
         - Cache key includes user.id, period, and last_entry_date for automatic invalidation
@@ -69,6 +74,8 @@ class StatisticsView(APIView):
     """
 
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'statistics'
 
     def _normalize_to_local_day(self, dt, user_tz):
         """

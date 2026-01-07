@@ -280,5 +280,6 @@ REST_FRAMEWORK = {
         'register': '5/hour',
         'entries_create': '100/day',
         'avatar_upload': '10/hour',
+        'statistics': '100/hour',  # Expensive queries - limit to prevent database exhaustion
     },
 }
