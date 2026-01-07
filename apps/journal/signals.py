@@ -59,3 +59,52 @@ def invalidate_dashboard_cache_on_delete(sender, instance, **kwargs):
     """
     cache_key = f'dashboard_stats_{instance.user.id}'
     cache.delete(cache_key)
+
+
+@receiver(post_save, sender=Entry)
+def invalidate_statistics_cache_on_save(sender, instance, **kwargs):
+    """
+    Invalidate cached statistics when an entry is created or updated.
+    
+    Statistics cache uses pattern: statistics_{user.id}_{period}_{last_entry_date}
+    Since we can't predict which periods are cached, we invalidate all variants.
+    """
+    _invalidate_statistics_cache(instance.user)
+
+
+@receiver(post_delete, sender=Entry)
+def invalidate_statistics_cache_on_delete(sender, instance, **kwargs):
+    """
+    Invalidate cached statistics when an entry is deleted.
+    
+    Statistics cache uses pattern: statistics_{user.id}_{period}_{last_entry_date}
+    Since we can't predict which periods are cached, we invalidate all variants.
+    """
+    _invalidate_statistics_cache(instance.user)
+
+
+def _invalidate_statistics_cache(user):
+    """
+    Helper function to invalidate all statistics cache variants for a user.
+    
+    Refreshes user from database to get the latest last_entry_date, which may have
+    been updated by update_user_streak signal handler.
+    
+    Args:
+        user: User object whose statistics cache should be invalidated
+    """
+    # Refresh user to get latest last_entry_date (may have been updated by update_user_streak)
+    user.refresh_from_db()
+    
+    # All valid period values from statistics_views.py
+    periods = ['7d', '30d', '90d', '1y', 'all']
+    
+    # Get last_entry_date for cache key (matches custom_cache_key in statistics_views.py)
+    last_entry_date = (
+        user.last_entry_date.isoformat() if user.last_entry_date else 'none'
+    )
+    
+    # Invalidate cache for all period variants
+    for period in periods:
+        cache_key = f'statistics_{user.id}_{period}_{last_entry_date}'
+        cache.delete(cache_key)
