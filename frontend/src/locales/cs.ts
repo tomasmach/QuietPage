@@ -338,6 +338,13 @@ export interface Translations {
       lastYear: string;
       allTime: string;
     };
+    tagAnalytics: {
+      title: string;
+      entries: string;
+      avgWords: string;
+      avgMood: string;
+      noTags: string;
+    };
   };
 }
 
@@ -688,6 +695,13 @@ export const cs: Translations = {
       last90Days: 'POSLEDNÍCH 90 DNÍ',
       lastYear: 'POSLEDNÍ ROK',
       allTime: 'CELÉ OBDOBÍ',
+    },
+    tagAnalytics: {
+      title: 'ANALÝZA ŠTÍTKŮ',
+      entries: 'zápisů',
+      avgWords: 'prům. slov',
+      avgMood: 'prům. nálada',
+      noTags: 'Zatím žádné štítky',
     },
   },
 };

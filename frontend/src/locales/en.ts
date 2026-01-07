@@ -348,5 +348,12 @@ export const en: Translations = {
       lastYear: 'LAST YEAR',
       allTime: 'ALL TIME',
     },
+    tagAnalytics: {
+      title: 'TAG ANALYTICS',
+      entries: 'entries',
+      avgWords: 'avg. words',
+      avgMood: 'avg. mood',
+      noTags: 'No tags used yet',
+    },
   },
 };
