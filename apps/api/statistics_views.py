@@ -376,7 +376,7 @@ class StatisticsView(APIView):
         consistency_rate = (active_days / total_days * 100) if total_days > 0 else 0.0
 
         time_of_day = {"morning": 0, "afternoon": 0, "evening": 0, "night": 0}
-        for entry in entries:
+        for entry in entries.only('created_at'):
             local_time = entry.created_at.astimezone(user_tz)
             hour = local_time.hour
             category = self._categorize_time_of_day(hour)
