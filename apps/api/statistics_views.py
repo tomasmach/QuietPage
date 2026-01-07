@@ -27,8 +27,20 @@ logger = logging.getLogger(__name__)
 
 
 def custom_cache_key(request):
+    """
+    Generate cache key for statistics endpoint.
+    
+    Note: cache_page decorator passes a standard Django HttpRequest,
+    not DRF's Request wrapper, so we use request.GET instead of query_params.
+    
+    Args:
+        request: Django HttpRequest object
+        
+    Returns:
+        str: Cache key in format 'statistics_{user_id}_{period}_{last_entry_date}'
+    """
     user = request.user
-    period = request.query_params.get("period", "7d")
+    period = request.GET.get("period", "7d")
     last_entry_date = (
         user.last_entry_date.isoformat() if user.last_entry_date else "none"
     )
