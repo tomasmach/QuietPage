@@ -157,7 +157,24 @@ The application uses a strict 3-column layout. Borders are explicit.
 
 ---
 
-## 7. IMPLEMENTATION CHECKLIST
+## 7. SEMANTIC EXCEPTIONS
+
+The brutalist philosophy (no gradients, no soft effects) has **limited exceptions** when color carries direct semantic meaning tied to the data being displayed.
+
+### Acceptable Exceptions:
+- **Fire/Streak theming:** Amber-to-orange gradient (`from-amber-500 to-orange-600`) for active goal streaks. The gradient represents "fire" — the heat of a maintained streak. See `GoalStreakCard.tsx`.
+- **Time-of-day colors:** Morning/afternoon/evening indicators may use contextual warm/cool tones if they directly represent temporal data.
+- **Status indicators:** Success/warning/error states may use semantic colors (green/amber/red) beyond the standard palette.
+
+### Rules for Exceptions:
+1. The color/effect must have **direct semantic meaning** (not decorative)
+2. Keep it **contained** to the specific component — don't bleed into surrounding UI
+3. Maintain **hard borders** and **sharp corners** even when using gradients
+4. Document the exception in the component's docstring
+
+---
+
+## 8. IMPLEMENTATION CHECKLIST
 1. [ ] Install `lucide-react`.
 2. [ ] Add `IBM Plex Mono` via Google Fonts.
 3. [ ] Set up CSS variables for `Midnight` (default) and `Paper`.

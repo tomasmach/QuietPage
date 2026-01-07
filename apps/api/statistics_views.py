@@ -23,6 +23,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.utils.decorators import method_decorator
 
 from apps.journal.models import Entry
+from apps.api.serializers import StatisticsSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -828,17 +829,17 @@ class StatisticsView(APIView):
         goal_streak = self._calculate_goal_streak(user)
         personal_records = self._calculate_personal_records(user, all_entries, goal_streak)
 
-        return Response(
-            {
-                "period": period,
-                "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat(),
-                "mood_analytics": mood_analytics,
-                "word_count_analytics": word_count_analytics,
-                "writing_patterns": writing_patterns,
-                "tag_analytics": tag_analytics,
-                "milestones": milestones,
-                "goal_streak": goal_streak,
-                "personal_records": personal_records,
-            }
-        )
+        data = {
+            "period": period,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat(),
+            "mood_analytics": mood_analytics,
+            "word_count_analytics": word_count_analytics,
+            "writing_patterns": writing_patterns,
+            "tag_analytics": tag_analytics,
+            "milestones": milestones,
+            "goal_streak": goal_streak,
+            "personal_records": personal_records,
+        }
+        serializer = StatisticsSerializer(data)
+        return Response(serializer.data)

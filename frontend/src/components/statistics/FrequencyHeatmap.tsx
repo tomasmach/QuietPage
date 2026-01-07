@@ -9,6 +9,7 @@ interface FrequencyHeatmapProps {
 
 interface DayData {
   date: Date;
+  dateKey: string; // YYYY-MM-DD format for consistent comparisons
   wordCount: number;
   isInPeriod: boolean;
 }
@@ -133,16 +134,38 @@ function groupIntoWeeks(days: DayData[]): DayData[][] {
 }
 
 /**
- * Generates array of dates for the last 90 days, including padding
+ * Formats a Date to YYYY-MM-DD string in local time (not UTC).
+ * This avoids timezone issues when comparing dates.
  */
-function generateDateArray(endDate: Date): DayData[] {
+function toLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Parses a YYYY-MM-DD string to a Date in local time.
+ * Using string parsing avoids timezone offset issues that occur with new Date(isoString).
+ */
+function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+/**
+ * Generates array of dates for the last 90 days, including padding.
+ * Uses YYYY-MM-DD strings for date comparisons to avoid timezone issues.
+ */
+function generateDateArray(endDateStr: string): DayData[] {
   const days: DayData[] = [];
-  const today = new Date(endDate);
-  today.setHours(0, 0, 0, 0);
+  const today = parseLocalDate(endDateStr);
   
   // Calculate start date (90 days ago)
   const startDate = new Date(today);
   startDate.setDate(startDate.getDate() - DAYS_TO_SHOW + 1);
+  const startDateKey = toLocalDateString(startDate);
+  const endDateKey = endDateStr;
   
   // Find the Sunday before start date (to align weeks)
   const firstDayOfWeek = startDate.getDay();
@@ -154,9 +177,11 @@ function generateDateArray(endDate: Date): DayData[] {
   // Generate all days from aligned start to today
   const currentDate = new Date(alignedStartDate);
   while (currentDate <= today) {
-    const isInPeriod = currentDate >= startDate && currentDate <= today;
+    const dateKey = toLocalDateString(currentDate);
+    const isInPeriod = dateKey >= startDateKey && dateKey <= endDateKey;
     days.push({
       date: new Date(currentDate),
+      dateKey,
       wordCount: 0,
       isInPeriod,
     });
@@ -167,21 +192,21 @@ function generateDateArray(endDate: Date): DayData[] {
 }
 
 /**
- * Merges timeline data with date array
+ * Merges timeline data with date array.
+ * Uses dateKey (YYYY-MM-DD string) for comparisons to avoid timezone issues.
  */
 function mergeDayData(days: DayData[], timeline: WordCountAnalytics['timeline']): DayData[] {
   const timelineMap = new Map<string, number>();
   
   // Build map of date -> total word count
+  // API returns dates as YYYY-MM-DD strings, use directly
   timeline.forEach(({ date, wordCount }) => {
-    const dateKey = new Date(date).toISOString().split('T')[0];
-    timelineMap.set(dateKey, (timelineMap.get(dateKey) || 0) + wordCount);
+    timelineMap.set(date, (timelineMap.get(date) || 0) + wordCount);
   });
   
-  // Merge with generated days
+  // Merge with generated days using dateKey for consistent comparison
   return days.map(day => {
-    const dateKey = day.date.toISOString().split('T')[0];
-    const wordCount = timelineMap.get(dateKey) || 0;
+    const wordCount = timelineMap.get(day.dateKey) || 0;
     return { ...day, wordCount };
   });
 }
@@ -226,14 +251,15 @@ export function FrequencyHeatmap({ data }: FrequencyHeatmapProps) {
   );
   
   // Generate date array and merge with timeline data
-  const endDate = data.timeline.length > 0 
-    ? new Date(data.timeline[data.timeline.length - 1].date)
-    : new Date();
+  // Use the date string directly from API (YYYY-MM-DD format) to avoid timezone issues
+  const endDateStr = data.timeline.length > 0 
+    ? data.timeline[data.timeline.length - 1].date
+    : toLocalDateString(new Date());
   
   // Get locale code for date formatting
   const localeCode = language === 'cs' ? 'cs-CZ' : 'en-US';
 
-  const days = generateDateArray(endDate);
+  const days = generateDateArray(endDateStr);
   const mergedDays = mergeDayData(days, data.timeline);
   const weeks = groupIntoWeeks(mergedDays);
   const monthLabels = getMonthLabels(weeks, localeCode);

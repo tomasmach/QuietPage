@@ -14,6 +14,14 @@ interface ChartData {
   [key: string]: string | number; // Index signature for Recharts compatibility
 }
 
+/** Props interface for Recharts custom tooltip component */
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: ReadonlyArray<{
+    payload: ChartData;
+  }>;
+}
+
 /**
  * TimeOfDayChart displays the distribution of entries across different times of day
  * as a donut chart with distinct colors for each period.
@@ -74,7 +82,7 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
 
   // Custom label to display percentage on each segment
   const renderLabel = (props: { value: number }): string => {
-    const percentage = ((props.value / total) * 100).toFixed(0);
+    const percentage = total > 0 ? ((props.value / total) * 100).toFixed(0) : '0';
     return props.value > 0 ? `${percentage}%` : '';
   };
 
@@ -108,13 +116,11 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
   };
 
   // Custom tooltip
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderTooltip = (props: any) => {
-    const { active, payload } = props;
+  const renderTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (!active || !payload || !payload.length) return null;
 
-    const tooltipData = payload[0].payload as ChartData;
-    const percentage = ((tooltipData.value / total) * 100).toFixed(1);
+    const tooltipData = payload[0].payload;
+    const percentage = total > 0 ? ((tooltipData.value / total) * 100).toFixed(1) : '0.0';
 
     return (
       <div className="bg-bg-panel border-2 border-border px-4 py-3 shadow-hard">

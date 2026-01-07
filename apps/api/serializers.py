@@ -162,17 +162,91 @@ class DashboardStatsSerializer(serializers.Serializer):
     total_words = serializers.IntegerField()
 
 
+class MilestoneSerializer(serializers.Serializer):
+    """
+    Serializer for individual milestone items.
+
+    Represents a single achievement milestone (entries, words, or streak).
+    """
+    type = serializers.ChoiceField(choices=['entries', 'words', 'streak'])
+    value = serializers.IntegerField()
+    achieved = serializers.BooleanField()
+    current = serializers.IntegerField()
+
+
+class MilestonesSerializer(serializers.Serializer):
+    """
+    Serializer for milestones container.
+
+    Wraps the list of milestone items.
+    """
+    milestones = MilestoneSerializer(many=True)
+
+
+class GoalStreakSerializer(serializers.Serializer):
+    """
+    Serializer for goal streak statistics.
+
+    Tracks consecutive days meeting the daily word goal.
+    """
+    current = serializers.IntegerField()
+    longest = serializers.IntegerField()
+    goal = serializers.IntegerField()
+
+
+class LongestEntryRecordSerializer(serializers.Serializer):
+    """
+    Serializer for longest entry personal record.
+
+    Contains information about the user's longest single entry.
+    """
+    date = serializers.CharField()
+    word_count = serializers.IntegerField()
+    title = serializers.CharField(allow_null=True)
+    entry_id = serializers.CharField()
+
+
+class MostWordsInDayRecordSerializer(serializers.Serializer):
+    """
+    Serializer for most words in a day personal record.
+
+    Contains information about the user's most productive writing day.
+    """
+    date = serializers.CharField()
+    word_count = serializers.IntegerField()
+    entry_count = serializers.IntegerField()
+
+
+class PersonalRecordsSerializer(serializers.Serializer):
+    """
+    Serializer for all-time personal records.
+
+    Contains the user's best achievements across all time.
+    """
+    longest_entry = LongestEntryRecordSerializer(allow_null=True)
+    most_words_in_day = MostWordsInDayRecordSerializer(allow_null=True)
+    longest_streak = serializers.IntegerField()
+    longest_goal_streak = serializers.IntegerField()
+
+
 class StatisticsSerializer(serializers.Serializer):
     """
     Serializer for statistics API response.
 
-    Defines the structure for aggregated journal analytics.
+    Defines the structure for aggregated journal analytics including
+    mood trends, word counts, writing patterns, tags, milestones,
+    goal streaks, and personal records.
     """
     period = serializers.CharField()
+    start_date = serializers.CharField()
+    end_date = serializers.CharField()
     mood_analytics = serializers.DictField()
     word_count_analytics = serializers.DictField()
     writing_patterns = serializers.DictField()
     tag_analytics = serializers.DictField()
+    milestones = MilestonesSerializer()
+    goal_streak = GoalStreakSerializer()
+    personal_records = PersonalRecordsSerializer()
 
     def validate_period(self, value):
         """

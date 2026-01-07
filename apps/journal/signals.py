@@ -1,12 +1,19 @@
 """
 Django signals for journal app.
+
+This module contains signal handlers for Entry model events including
+streak updates and cache invalidation.
 """
+
+import logging
 
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
 from .models import Entry
 from .utils import update_user_streak
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=Entry)
@@ -87,24 +94,43 @@ def _invalidate_statistics_cache(user):
     """
     Helper function to invalidate all statistics cache variants for a user.
     
-    Refreshes user from database to get the latest last_entry_date, which may have
-    been updated by update_user_streak signal handler.
+    Invalidates both old and new cache keys to handle the race condition where
+    update_user_streak may have updated last_entry_date between cache creation
+    and invalidation. By capturing the old value before refresh and invalidating
+    both keys, we ensure stale cache entries are always removed.
     
     Args:
         user: User object whose statistics cache should be invalidated
     """
-    # Refresh user to get latest last_entry_date (may have been updated by update_user_streak)
-    user.refresh_from_db()
-    
     # All valid period values from statistics_views.py
     periods = ['7d', '30d', '90d', '1y', 'all']
     
-    # Get last_entry_date for cache key (matches custom_cache_key in statistics_views.py)
-    last_entry_date = (
+    # Capture OLD last_entry_date before refresh (may differ from DB if update_user_streak ran)
+    old_last_entry_date = (
         user.last_entry_date.isoformat() if user.last_entry_date else 'none'
     )
     
-    # Invalidate cache for all period variants
-    for period in periods:
-        cache_key = f'statistics_{user.id}_{period}_{last_entry_date}'
-        cache.delete(cache_key)
+    # Refresh user to get latest last_entry_date (may have been updated by update_user_streak)
+    user.refresh_from_db()
+    
+    # Get NEW last_entry_date after refresh
+    new_last_entry_date = (
+        user.last_entry_date.isoformat() if user.last_entry_date else 'none'
+    )
+    
+    # Collect unique dates to invalidate (avoids duplicate deletions if dates are same)
+    dates_to_invalidate = {old_last_entry_date, new_last_entry_date}
+    
+    # Invalidate cache for all period variants with both old and new dates
+    invalidated_count = 0
+    for last_entry_date in dates_to_invalidate:
+        for period in periods:
+            cache_key = f'statistics_{user.id}_{period}_{last_entry_date}'
+            cache.delete(cache_key)
+            invalidated_count += 1
+    
+    if old_last_entry_date != new_last_entry_date:
+        logger.debug(
+            'Invalidated statistics cache for user %s: old_date=%s, new_date=%s, keys=%d',
+            user.id, old_last_entry_date, new_last_entry_date, invalidated_count
+        )
