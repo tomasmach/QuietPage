@@ -14,6 +14,7 @@ import { TimeOfDayChart } from '../components/statistics/TimeOfDayChart';
 import { DayOfWeekChart } from '../components/statistics/DayOfWeekChart';
 import { StreakHistoryList } from '../components/statistics/StreakHistoryList';
 import { TagAnalyticsChart } from '../components/statistics/TagAnalyticsChart';
+import { BestDayHighlight } from '../components/statistics/BestDayHighlight';
 import { StatisticsLoading } from '../components/statistics/StatisticsLoading';
 import { StatisticsError } from '../components/statistics/StatisticsError';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -49,6 +50,9 @@ export function StatsPage() {
           <div className="space-y-8">
             {/* Summary Cards */}
             <StatsSummaryCards data={data} />
+
+            {/* Best Day Highlight */}
+            <BestDayHighlight data={data.wordCountAnalytics.bestDay ?? undefined} />
 
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
