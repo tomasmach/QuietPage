@@ -56,6 +56,8 @@ class StatisticsView(APIView):
         - period: Time period (7d, 30d, 90d, 1y, all)
         - mood_analytics: Mood trends (average, distribution, daily breakdown)
         - word_count_analytics: Word count stats (total, average, daily breakdown)
+        - writing_patterns: Consistency, time-of-day, day-of-week, streak history
+        - tag_analytics: Tag usage statistics (entry count, words, mood per tag)
 
     Query Parameters:
         - period: Time period ('7d', '30d', '90d', '1y', 'all'). Defaults to '7d'
@@ -468,6 +470,81 @@ class StatisticsView(APIView):
             "streak_history": streak_history,
         }
 
+    def _calculate_tag_analytics(self, entries):
+        """
+        Calculate tag analytics for a filtered entries queryset.
+
+        Args:
+            entries: QuerySet of Entry objects already filtered by user and date range
+
+        Returns:
+            dict: Tag statistics including:
+                - tags: List of tag objects with statistics:
+                    - name: Tag name
+                    - entry_count: Number of entries with this tag
+                    - total_words: Total words written in entries with this tag
+                    - average_words: Average words per entry with this tag
+                    - average_mood: Average mood rating for entries with this tag (null if no ratings)
+                - total_tags: Total number of unique tags used
+        """
+        if not entries.exists():
+            return {
+                "tags": [],
+                "total_tags": 0,
+            }
+
+        # Get all tags used in the filtered entries
+        # Use django-taggit's prefetch to efficiently get tag data
+        tag_stats = {}
+        
+        # Prefetch tags for efficiency
+        entries_with_tags = entries.prefetch_related('tags')
+        
+        for entry in entries_with_tags:
+            for tag in entry.tags.all():
+                if tag.name not in tag_stats:
+                    tag_stats[tag.name] = {
+                        "entry_count": 0,
+                        "total_words": 0,
+                        "mood_ratings": [],
+                    }
+                
+                tag_stats[tag.name]["entry_count"] += 1
+                tag_stats[tag.name]["total_words"] += entry.word_count
+                if entry.mood_rating is not None:
+                    tag_stats[tag.name]["mood_ratings"].append(entry.mood_rating)
+
+        # Calculate averages and format output
+        tags_list = []
+        for tag_name, stats in tag_stats.items():
+            average_words = (
+                stats["total_words"] / stats["entry_count"]
+                if stats["entry_count"] > 0
+                else 0
+            )
+            
+            average_mood = None
+            if stats["mood_ratings"]:
+                average_mood = round(
+                    sum(stats["mood_ratings"]) / len(stats["mood_ratings"]), 2
+                )
+            
+            tags_list.append({
+                "name": tag_name,
+                "entry_count": stats["entry_count"],
+                "total_words": stats["total_words"],
+                "average_words": round(average_words, 2),
+                "average_mood": average_mood,
+            })
+
+        # Sort by entry count (most used tags first)
+        tags_list.sort(key=lambda x: x["entry_count"], reverse=True)
+
+        return {
+            "tags": tags_list,
+            "total_tags": len(tags_list),
+        }
+
     @method_decorator(vary_on_headers("Authorization"))
     @method_decorator(cache_page(1800, key_prefix=custom_cache_key))
     def get(self, request):
@@ -484,6 +561,8 @@ class StatisticsView(APIView):
                 - end_date: End date of period (ISO format)
                 - mood_analytics: Mood trends data
                 - word_count_analytics: Word count data
+                - writing_patterns: Writing habits and consistency data
+                - tag_analytics: Tag usage statistics
 
         Caching:
             - Server-side: 30 minutes (1800 seconds)
@@ -518,6 +597,7 @@ class StatisticsView(APIView):
             entries, user, start_date, user_tz
         )
         writing_patterns = self._calculate_writing_patterns(entries, user, start_date, end_date)
+        tag_analytics = self._calculate_tag_analytics(entries)
 
         response = Response(
             {
@@ -527,6 +607,7 @@ class StatisticsView(APIView):
                 "mood_analytics": mood_analytics,
                 "word_count_analytics": word_count_analytics,
                 "writing_patterns": writing_patterns,
+                "tag_analytics": tag_analytics,
             }
         )
 
