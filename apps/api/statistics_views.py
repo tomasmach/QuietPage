@@ -348,13 +348,13 @@ class StatisticsView(APIView):
                 "consistency_rate": 0.0,
                 "time_of_day": {"morning": 0, "afternoon": 0, "evening": 0, "night": 0},
                 "day_of_week": {
-                    "Monday": 0,
-                    "Tuesday": 0,
-                    "Wednesday": 0,
-                    "Thursday": 0,
-                    "Friday": 0,
-                    "Saturday": 0,
-                    "Sunday": 0,
+                    "monday": 0,
+                    "tuesday": 0,
+                    "wednesday": 0,
+                    "thursday": 0,
+                    "friday": 0,
+                    "saturday": 0,
+                    "sunday": 0,
                 },
                 "streak_history": [],
             }
@@ -395,23 +395,23 @@ class StatisticsView(APIView):
         )
 
         day_names = {
-            1: "Sunday",
-            2: "Monday",
-            3: "Tuesday",
-            4: "Wednesday",
-            5: "Thursday",
-            6: "Friday",
-            7: "Saturday",
+            1: "sunday",
+            2: "monday",
+            3: "tuesday",
+            4: "wednesday",
+            5: "thursday",
+            6: "friday",
+            7: "saturday",
         }
 
         day_of_week = {
-            "Monday": 0,
-            "Tuesday": 0,
-            "Wednesday": 0,
-            "Thursday": 0,
-            "Friday": 0,
-            "Saturday": 0,
-            "Sunday": 0,
+            "monday": 0,
+            "tuesday": 0,
+            "wednesday": 0,
+            "thursday": 0,
+            "friday": 0,
+            "saturday": 0,
+            "sunday": 0,
         }
 
         for item in day_of_week_dist:

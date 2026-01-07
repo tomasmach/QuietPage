@@ -1707,13 +1707,13 @@ class TestWritingPatternsDayOfWeek:
         day_of_week = data["writing_patterns"]["day_of_week"]
 
         assert len(day_of_week) == 7
-        assert "Monday" in day_of_week
-        assert "Tuesday" in day_of_week
-        assert "Wednesday" in day_of_week
-        assert "Thursday" in day_of_week
-        assert "Friday" in day_of_week
-        assert "Saturday" in day_of_week
-        assert "Sunday" in day_of_week
+        assert "monday" in day_of_week
+        assert "tuesday" in day_of_week
+        assert "wednesday" in day_of_week
+        assert "thursday" in day_of_week
+        assert "friday" in day_of_week
+        assert "saturday" in day_of_week
+        assert "sunday" in day_of_week
 
         for day in day_of_week.values():
             assert day == 0
@@ -1735,7 +1735,7 @@ class TestWritingPatternsDayOfWeek:
         day_of_week = data["writing_patterns"]["day_of_week"]
 
         days_list = list(day_of_week.keys())
-        expected_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        expected_order = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
         assert days_list == expected_order
 
     def test_day_of_week_calendar_order_with_sunday_most_entries(self, client):
@@ -1759,11 +1759,11 @@ class TestWritingPatternsDayOfWeek:
         day_of_week = data["writing_patterns"]["day_of_week"]
 
         days_list = list(day_of_week.keys())
-        expected_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        expected_order = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
         assert days_list == expected_order
 
-        assert day_of_week["Sunday"] == 10
-        assert day_of_week["Monday"] == 1
+        assert day_of_week["sunday"] == 10
+        assert day_of_week["monday"] == 1
 
     def test_day_of_week_single_entry_counted_correctly(self, client):
         """Single entry is counted under correct day of week."""
@@ -1782,13 +1782,13 @@ class TestWritingPatternsDayOfWeek:
         data = response.json()
         day_of_week = data["writing_patterns"]["day_of_week"]
 
-        assert day_of_week["Monday"] == 1
-        assert day_of_week["Tuesday"] == 0
-        assert day_of_week["Wednesday"] == 0
-        assert day_of_week["Thursday"] == 0
-        assert day_of_week["Friday"] == 0
-        assert day_of_week["Saturday"] == 0
-        assert day_of_week["Sunday"] == 0
+        assert day_of_week["monday"] == 1
+        assert day_of_week["tuesday"] == 0
+        assert day_of_week["wednesday"] == 0
+        assert day_of_week["thursday"] == 0
+        assert day_of_week["friday"] == 0
+        assert day_of_week["saturday"] == 0
+        assert day_of_week["sunday"] == 0
 
     def test_day_of_week_multiple_entries_same_day(self, client):
         """Multiple entries on same day are all counted correctly."""
@@ -1807,7 +1807,7 @@ class TestWritingPatternsDayOfWeek:
         data = response.json()
         day_of_week = data["writing_patterns"]["day_of_week"]
 
-        assert day_of_week["Wednesday"] == 5
+        assert day_of_week["wednesday"] == 5
         assert sum(day_of_week.values()) == 5
 
     def test_day_of_week_entries_across_multiple_weeks(self, client):
@@ -1834,7 +1834,7 @@ class TestWritingPatternsDayOfWeek:
         data = response.json()
         day_of_week = data["writing_patterns"]["day_of_week"]
 
-        assert day_of_week["Friday"] == 9
+        assert day_of_week["friday"] == 9
 
     def test_day_of_week_distribution_all_days_with_entries(self, client):
         """Entries on all 7 days are counted correctly."""
@@ -1866,13 +1866,13 @@ class TestWritingPatternsDayOfWeek:
         data = response.json()
         day_of_week = data["writing_patterns"]["day_of_week"]
 
-        assert day_of_week["Monday"] == 1
-        assert day_of_week["Tuesday"] == 2
-        assert day_of_week["Wednesday"] == 3
-        assert day_of_week["Thursday"] == 4
-        assert day_of_week["Friday"] == 5
-        assert day_of_week["Saturday"] == 6
-        assert day_of_week["Sunday"] == 7
+        assert day_of_week["monday"] == 1
+        assert day_of_week["tuesday"] == 2
+        assert day_of_week["wednesday"] == 3
+        assert day_of_week["thursday"] == 4
+        assert day_of_week["friday"] == 5
+        assert day_of_week["saturday"] == 6
+        assert day_of_week["sunday"] == 7
         assert sum(day_of_week.values()) == 28
 
     def test_day_of_week_multiple_entries_per_day_across_weeks(self, client):
@@ -1897,13 +1897,13 @@ class TestWritingPatternsDayOfWeek:
         data = response.json()
         day_of_week = data["writing_patterns"]["day_of_week"]
 
-        assert day_of_week["Tuesday"] == 9
-        assert day_of_week["Monday"] == 0
-        assert day_of_week["Wednesday"] == 0
-        assert day_of_week["Thursday"] == 0
-        assert day_of_week["Friday"] == 0
-        assert day_of_week["Saturday"] == 0
-        assert day_of_week["Sunday"] == 0
+        assert day_of_week["tuesday"] == 9
+        assert day_of_week["monday"] == 0
+        assert day_of_week["wednesday"] == 0
+        assert day_of_week["thursday"] == 0
+        assert day_of_week["friday"] == 0
+        assert day_of_week["saturday"] == 0
+        assert day_of_week["sunday"] == 0
         assert sum(day_of_week.values()) == 9
 
     def test_day_of_week_week_boundary_crossing(self, client):
@@ -1928,9 +1928,9 @@ class TestWritingPatternsDayOfWeek:
         data = response.json()
         day_of_week = data["writing_patterns"]["day_of_week"]
 
-        assert day_of_week["Saturday"] == 1
-        assert day_of_week["Sunday"] == 1
-        assert day_of_week["Monday"] == 1
+        assert day_of_week["saturday"] == 1
+        assert day_of_week["sunday"] == 1
+        assert day_of_week["monday"] == 1
 
     def test_day_of_week_timezone_awareness(self, client):
         """Day of week uses user's timezone, not UTC."""
@@ -1952,7 +1952,7 @@ class TestWritingPatternsDayOfWeek:
             data_tokyo = response_tokyo.json()
             day_of_week_tokyo = data_tokyo["writing_patterns"]["day_of_week"]
 
-            assert day_of_week_tokyo["Tuesday"] == 1
+            assert day_of_week_tokyo["tuesday"] == 1
 
     def test_day_of_week_dst_transition_spring_forward(self, client):
         """Day of week calculation is correct during spring forward DST transition."""
@@ -1988,7 +1988,7 @@ class TestWritingPatternsDayOfWeek:
             data = response.json()
             day_of_week = data["writing_patterns"]["day_of_week"]
 
-            assert day_of_week["Sunday"] == 3
+            assert day_of_week["sunday"] == 3
 
     def test_day_of_week_dst_transition_fall_back(self, client):
         """Day of week calculation is correct during fall back DST transition."""
@@ -2024,7 +2024,7 @@ class TestWritingPatternsDayOfWeek:
             data = response.json()
             day_of_week = data["writing_patterns"]["day_of_week"]
 
-            assert day_of_week["Sunday"] == 3
+            assert day_of_week["sunday"] == 3
 
     def test_day_of_week_period_filtering(self, client):
         """Day of week aggregation respects period parameter."""
@@ -2054,8 +2054,8 @@ class TestWritingPatternsDayOfWeek:
         day_of_week_7d = data_7d["writing_patterns"]["day_of_week"]
         day_of_week_30d = data_30d["writing_patterns"]["day_of_week"]
 
-        assert day_of_week_7d["Monday"] == 1
-        assert day_of_week_30d["Monday"] == 2
+        assert day_of_week_7d["monday"] == 1
+        assert day_of_week_30d["monday"] == 2
 
     def test_day_of_week_all_period_includes_all_entries(self, client):
         """'all' period includes entries for all time in day of week aggregation."""
@@ -2079,7 +2079,7 @@ class TestWritingPatternsDayOfWeek:
         data = response.json()
         day_of_week = data["writing_patterns"]["day_of_week"]
 
-        assert day_of_week["Wednesday"] == 10
+        assert day_of_week["wednesday"] == 10
 
     def test_day_of_week_weekend_vs_weekday(self, client):
         """Entries correctly categorized as weekend vs weekday."""
@@ -2103,8 +2103,8 @@ class TestWritingPatternsDayOfWeek:
         data = response.json()
         day_of_week = data["writing_patterns"]["day_of_week"]
 
-        weekday_total = day_of_week["Monday"] + day_of_week["Tuesday"] + day_of_week["Wednesday"] + day_of_week["Thursday"] + day_of_week["Friday"]
-        weekend_total = day_of_week["Saturday"] + day_of_week["Sunday"]
+        weekday_total = day_of_week["monday"] + day_of_week["tuesday"] + day_of_week["wednesday"] + day_of_week["thursday"] + day_of_week["friday"]
+        weekend_total = day_of_week["saturday"] + day_of_week["sunday"]
 
         assert weekday_total == 4
         assert weekend_total == 11
@@ -2388,13 +2388,13 @@ class TestWritingPatternsIntegration:
             "night": 0,
         }
         assert writing_patterns["day_of_week"] == {
-            "Monday": 0,
-            "Tuesday": 0,
-            "Wednesday": 0,
-            "Thursday": 0,
-            "Friday": 0,
-            "Saturday": 0,
-            "Sunday": 0,
+            "monday": 0,
+            "tuesday": 0,
+            "wednesday": 0,
+            "thursday": 0,
+            "friday": 0,
+            "saturday": 0,
+            "sunday": 0,
         }
         assert writing_patterns["streak_history"] == []
 
@@ -2595,17 +2595,17 @@ class TestWritingPatternsIntegration:
         day_of_week_tokyo = data_tokyo["writing_patterns"]["day_of_week"]
 
         day_names = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
         ]
 
-        prague_day_name = prague_date.strftime("%A")
-        tokyo_day_name = tokyo_date.strftime("%A")
+        prague_day_name = prague_date.strftime("%A").lower()
+        tokyo_day_name = tokyo_date.strftime("%A").lower()
 
         assert prague_day_name in day_names
         assert tokyo_day_name in day_names
