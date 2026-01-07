@@ -351,6 +351,11 @@ export interface Translations {
       entries: string;
       noData: string;
     };
+    moodTrend: {
+      improving: string;
+      declining: string;
+      stable: string;
+    };
   };
 }
 
@@ -714,6 +719,11 @@ export const cs: Translations = {
       rating: 'Hodnocení',
       entries: 'zápisů',
       noData: 'Zatím žádná data o náladě',
+    },
+    moodTrend: {
+      improving: 'Zlepšuje se',
+      declining: 'Zhoršuje se',
+      stable: 'Stabilní',
     },
   },
 };

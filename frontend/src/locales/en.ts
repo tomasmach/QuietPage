@@ -361,5 +361,10 @@ export const en: Translations = {
       entries: 'entries',
       noData: 'No mood data yet',
     },
+    moodTrend: {
+      improving: 'Improving',
+      declining: 'Declining',
+      stable: 'Stable',
+    },
   },
 };

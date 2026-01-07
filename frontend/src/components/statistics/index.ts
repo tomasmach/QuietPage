@@ -10,3 +10,4 @@ export { DayOfWeekChart } from './DayOfWeekChart';
 export { StreakHistoryList } from './StreakHistoryList';
 export { TagAnalyticsChart } from './TagAnalyticsChart';
 export { MoodDistributionChart } from './MoodDistributionChart';
+export { MoodTrendBadge } from './MoodTrendBadge';
