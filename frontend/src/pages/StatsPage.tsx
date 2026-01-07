@@ -12,6 +12,7 @@ import { FrequencyHeatmap } from '../components/statistics/FrequencyHeatmap';
 import { TimeOfDayChart } from '../components/statistics/TimeOfDayChart';
 import { DayOfWeekChart } from '../components/statistics/DayOfWeekChart';
 import { StreakHistoryList } from '../components/statistics/StreakHistoryList';
+import { TagAnalyticsChart } from '../components/statistics/TagAnalyticsChart';
 import { StatisticsLoading } from '../components/statistics/StatisticsLoading';
 import { StatisticsError } from '../components/statistics/StatisticsError';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -66,6 +67,7 @@ export function StatsPage() {
                 <TimeOfDayChart data={data.writingPatterns} />
                 <DayOfWeekChart data={data.writingPatterns} />
                 <StreakHistoryList data={data.writingPatterns} />
+                <TagAnalyticsChart data={data.tagAnalytics} />
               </div>
             </div>
           </div>
