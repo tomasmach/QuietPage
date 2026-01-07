@@ -146,13 +146,14 @@ class StatisticsView(APIView):
         else:
             return 'night'
 
-    def _calculate_mood_analytics(self, entries, period_start):
+    def _calculate_mood_analytics(self, entries, period_start, user_tz):
         """
         Calculate mood analytics for a filtered entries queryset.
 
         Args:
             entries: QuerySet of Entry objects already filtered by user and date range
             period_start: Start datetime of the period (for trend calculation)
+            user_tz: ZoneInfo timezone object for the user
 
         Returns:
             dict: Mood statistics including:
@@ -181,7 +182,7 @@ class StatisticsView(APIView):
             distribution[str(rating)] = rated_entries.filter(mood_rating=rating).count()
 
         daily_data = (
-            rated_entries.annotate(day=TruncDate("created_at"))
+            rated_entries.annotate(day=TruncDate("created_at", tzinfo=user_tz))
             .values("day")
             .annotate(
                 avg_mood=Avg("mood_rating", filter=Q(mood_rating__isnull=False)),
@@ -236,7 +237,7 @@ class StatisticsView(APIView):
             "trend": trend,
         }
 
-    def _calculate_word_count_analytics(self, entries, user, period_start):
+    def _calculate_word_count_analytics(self, entries, user, period_start, user_tz):
         """
         Calculate word count analytics for a filtered entries queryset.
 
@@ -244,6 +245,7 @@ class StatisticsView(APIView):
             entries: QuerySet of Entry objects already filtered by user and date range
             user: User object for daily_word_goal reference
             period_start: Start datetime of the period (not directly used, kept for consistency)
+            user_tz: ZoneInfo timezone object for the user
 
         Returns:
             dict: Word count statistics including:
@@ -261,7 +263,7 @@ class StatisticsView(APIView):
         average_per_entry = total_words / total_entries if total_entries > 0 else 0
 
         daily_data = (
-            entries.annotate(day=TruncDate("created_at"))
+            entries.annotate(day=TruncDate("created_at", tzinfo=user_tz))
             .values("day")
             .annotate(total_words=Sum("word_count"), entries=Count("id"))
             .order_by("day")
@@ -409,7 +411,7 @@ class StatisticsView(APIView):
                 day_of_week[day_names[week_day]] = count
 
         daily_entries = (
-            entries.annotate(day=TruncDate("created_at"))
+            entries.annotate(day=TruncDate("created_at", tzinfo=user_tz))
             .values("day")
             .annotate(
                 total_words=Sum("word_count"),
@@ -504,13 +506,14 @@ class StatisticsView(APIView):
         except ValueError as e:
             return Response({"error": str(e)}, status=400)
 
+        user_tz = ZoneInfo(str(user.timezone))
         entries = Entry.objects.filter(
             user=user, created_at__gte=start_date, created_at__lte=end_date
         )
 
-        mood_analytics = self._calculate_mood_analytics(entries, start_date)
+        mood_analytics = self._calculate_mood_analytics(entries, start_date, user_tz)
         word_count_analytics = self._calculate_word_count_analytics(
-            entries, user, start_date
+            entries, user, start_date, user_tz
         )
         writing_patterns = self._calculate_writing_patterns(entries, user)
 
