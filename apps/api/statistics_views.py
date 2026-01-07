@@ -366,8 +366,11 @@ class StatisticsView(APIView):
         end_date_normalized = self._normalize_to_local_day(end_date, user_tz)
         total_days = (end_date_normalized - start_date_normalized).days + 1
 
+        # Only count days with actual writing (word_count > 0) for consistency
+        # with streak calculation logic in signals.py
         active_days = (
-            entries.annotate(day=TruncDate("created_at", tzinfo=user_tz))
+            entries.filter(word_count__gt=0)
+            .annotate(day=TruncDate("created_at", tzinfo=user_tz))
             .values("day")
             .distinct()
             .count()
@@ -375,15 +378,18 @@ class StatisticsView(APIView):
 
         consistency_rate = (active_days / total_days * 100) if total_days > 0 else 0.0
 
+        # Filter entries with actual content for writing pattern analysis
+        entries_with_content = entries.filter(word_count__gt=0)
+
         time_of_day = {"morning": 0, "afternoon": 0, "evening": 0, "night": 0}
-        for entry in entries.only('created_at'):
+        for entry in entries_with_content.only('created_at'):
             local_time = entry.created_at.astimezone(user_tz)
             hour = local_time.hour
             category = self._categorize_time_of_day(hour)
             time_of_day[category] += 1
 
         day_of_week_dist = (
-            entries.values("created_at__week_day")
+            entries_with_content.values("created_at__week_day")
             .annotate(count=Count("id"))
             .order_by("created_at__week_day")
         )
@@ -414,8 +420,10 @@ class StatisticsView(APIView):
             if week_day in day_names:
                 day_of_week[day_names[week_day]] = count
 
+        # Group entries with content by day for streak calculation
+        # Since we've already filtered by word_count > 0, all days will have total_words > 0
         daily_entries = (
-            entries.annotate(day=TruncDate("created_at", tzinfo=user_tz))
+            entries_with_content.annotate(day=TruncDate("created_at", tzinfo=user_tz))
             .values("day")
             .annotate(
                 total_words=Sum("word_count"),
@@ -426,6 +434,7 @@ class StatisticsView(APIView):
 
         writing_days = []
         for item in daily_entries:
+            # Already filtered by word_count > 0, but keep check for safety
             if item["total_words"] and item["total_words"] > 0:
                 writing_days.append(item["day"])
 
