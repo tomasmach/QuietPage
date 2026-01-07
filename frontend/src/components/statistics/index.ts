@@ -4,3 +4,7 @@ export { MoodTimelineChart } from './MoodTimelineChart';
 export { WordCountTimelineChart } from './WordCountTimelineChart';
 export { StatisticsLoading } from './StatisticsLoading';
 export { StatisticsError } from './StatisticsError';
+export { FrequencyHeatmap } from './FrequencyHeatmap';
+export { TimeOfDayChart } from './TimeOfDayChart';
+export { DayOfWeekChart } from './DayOfWeekChart';
+export { StreakHistoryList } from './StreakHistoryList';
