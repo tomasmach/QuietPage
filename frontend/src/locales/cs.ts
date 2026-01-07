@@ -267,6 +267,29 @@ export interface Translations {
       nightDesc: string;
       entries: string;
     };
+    dayOfWeekChart: {
+      title: string;
+      notEnoughData: string;
+      yAxisLabel: string;
+      mostProductive: string;
+      mostProductiveDay: string;
+      daySingular: string;
+      daysPlural: string;
+      monday: string;
+      mondayAbbr: string;
+      tuesday: string;
+      tuesdayAbbr: string;
+      wednesday: string;
+      wednesdayAbbr: string;
+      thursday: string;
+      thursdayAbbr: string;
+      friday: string;
+      fridayAbbr: string;
+      saturday: string;
+      saturdayAbbr: string;
+      sunday: string;
+      sundayAbbr: string;
+    };
   };
 }
 
@@ -546,6 +569,29 @@ export const cs: Translations = {
       eveningDesc: 'Večer: 18:00 – 23:59',
       nightDesc: 'Noc: 0:00 – 4:59',
       entries: 'záznamů',
+    },
+    dayOfWeekChart: {
+      title: 'AKTIVITA V TÝDNU',
+      notEnoughData: 'Nedostatek dat',
+      yAxisLabel: 'Počet dní',
+      mostProductive: 'Nejproduktivnější',
+      mostProductiveDay: 'Nejproduktivnější den',
+      daySingular: 'den',
+      daysPlural: 'dní',
+      monday: 'Pondělí',
+      mondayAbbr: 'Po',
+      tuesday: 'Úterý',
+      tuesdayAbbr: 'Út',
+      wednesday: 'Středa',
+      wednesdayAbbr: 'St',
+      thursday: 'Čtvrtek',
+      thursdayAbbr: 'Čt',
+      friday: 'Pátek',
+      fridayAbbr: 'Pá',
+      saturday: 'Sobota',
+      saturdayAbbr: 'So',
+      sunday: 'Neděle',
+      sundayAbbr: 'Ne',
     },
   },
 };
