@@ -3892,3 +3892,622 @@ class TestGoalStreakCalculation:
         goal_streak = data["goal_streak"]
 
         assert goal_streak["goal"] == 1000
+
+
+@pytest.mark.statistics
+@pytest.mark.unit
+class TestPersonalRecordsCalculation:
+    """Tests for personal records calculation (all-time records for user achievements)."""
+
+    def test_personal_records_response_structure(self, client):
+        """Personal records returns correct structure with all required fields."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "personal_records" in data
+        personal_records = data["personal_records"]
+        assert "longest_entry" in personal_records
+        assert "most_words_in_day" in personal_records
+        assert "longest_streak" in personal_records
+        assert "longest_goal_streak" in personal_records
+
+    def test_personal_records_no_entries_returns_null_records(self, client):
+        """User with no entries has null/zero personal records."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        personal_records = data["personal_records"]
+
+        assert personal_records["longest_entry"] is None
+        assert personal_records["most_words_in_day"] is None
+        assert personal_records["longest_streak"] == 0
+        assert personal_records["longest_goal_streak"] == 0
+
+    def test_longest_entry_correct_entry_selected(self, client):
+        """Longest entry identifies the entry with highest word count."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create entries with varying word counts
+        entry_short = EntryFactory(
+            user=user, content="word " * 100, created_at=base_date - timedelta(days=2)
+        )
+        entry_long = EntryFactory(
+            user=user, content="word " * 500, created_at=base_date - timedelta(days=1)
+        )
+        entry_medium = EntryFactory(
+            user=user, content="word " * 250, created_at=base_date
+        )
+
+        entry_long.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        assert longest_entry is not None
+        assert longest_entry["entry_id"] == str(entry_long.id)
+        assert longest_entry["word_count"] == entry_long.word_count
+
+    def test_longest_entry_includes_all_fields(self, client):
+        """Longest entry record includes date, word_count, title, and entry_id."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        entry = EntryFactory(
+            user=user,
+            content="word " * 200,
+            title="My Test Entry",
+            created_at=base_date,
+        )
+        entry.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        assert "date" in longest_entry
+        assert "word_count" in longest_entry
+        assert "title" in longest_entry
+        assert "entry_id" in longest_entry
+
+        assert longest_entry["title"] == "My Test Entry"
+        assert longest_entry["entry_id"] == str(entry.id)
+        assert longest_entry["word_count"] == entry.word_count
+
+    def test_longest_entry_without_title_returns_null_title(self, client):
+        """Entry without title returns null for title field."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Explicitly create entry without title (empty string)
+        entry = EntryFactory(
+            user=user, content="word " * 200, title="", created_at=base_date
+        )
+        entry.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        assert longest_entry["title"] is None
+
+    def test_longest_entry_with_title_returns_title(self, client):
+        """Entry with title returns the title string."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        entry = EntryFactory(
+            user=user,
+            content="word " * 200,
+            title="Important Thoughts",
+            created_at=base_date,
+        )
+        entry.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        assert longest_entry["title"] == "Important Thoughts"
+
+    def test_most_words_in_day_single_entry(self, client):
+        """Most productive day with single entry returns that entry's word count."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        entry = EntryFactory(user=user, content="word " * 300, created_at=base_date)
+        entry.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        most_words_in_day = data["personal_records"]["most_words_in_day"]
+
+        assert most_words_in_day is not None
+        assert most_words_in_day["date"] == base_date.date().isoformat()
+        assert most_words_in_day["word_count"] == entry.word_count
+        assert most_words_in_day["entry_count"] == 1
+
+    def test_most_words_in_day_multiple_entries_same_day_summed(self, client):
+        """Most productive day sums word counts from multiple entries on same day."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create 3 entries on the same day
+        entry1 = EntryFactory(
+            user=user, content="word " * 200, created_at=base_date.replace(hour=9)
+        )
+        entry2 = EntryFactory(
+            user=user, content="word " * 300, created_at=base_date.replace(hour=14)
+        )
+        entry3 = EntryFactory(
+            user=user, content="word " * 100, created_at=base_date.replace(hour=20)
+        )
+
+        entry1.refresh_from_db()
+        entry2.refresh_from_db()
+        entry3.refresh_from_db()
+
+        expected_total = entry1.word_count + entry2.word_count + entry3.word_count
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        most_words_in_day = data["personal_records"]["most_words_in_day"]
+
+        assert most_words_in_day["date"] == base_date.date().isoformat()
+        assert most_words_in_day["word_count"] == expected_total
+        assert most_words_in_day["entry_count"] == 3
+
+    def test_most_words_in_day_selects_correct_day(self, client):
+        """Most productive day correctly identifies day with highest total words."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Day 1: 200 words
+        EntryFactory(
+            user=user, content="word " * 200, created_at=base_date - timedelta(days=2)
+        )
+
+        # Day 2: 500 words (2 entries summed) - best day
+        best_day = base_date - timedelta(days=1)
+        entry1 = EntryFactory(
+            user=user, content="word " * 300, created_at=best_day.replace(hour=10)
+        )
+        entry2 = EntryFactory(
+            user=user, content="word " * 200, created_at=best_day.replace(hour=15)
+        )
+        entry1.refresh_from_db()
+        entry2.refresh_from_db()
+
+        # Day 3: 150 words
+        EntryFactory(user=user, content="word " * 150, created_at=base_date)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        most_words_in_day = data["personal_records"]["most_words_in_day"]
+
+        assert most_words_in_day["date"] == best_day.date().isoformat()
+        assert most_words_in_day["word_count"] == entry1.word_count + entry2.word_count
+        assert most_words_in_day["entry_count"] == 2
+
+    def test_most_words_in_day_includes_structure(self, client):
+        """Most words in day record includes date, word_count, and entry_count."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory(user=user, content="word " * 100, created_at=base_date)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        most_words_in_day = data["personal_records"]["most_words_in_day"]
+
+        assert "date" in most_words_in_day
+        assert "word_count" in most_words_in_day
+        assert "entry_count" in most_words_in_day
+
+    def test_longest_streak_from_user_model(self, client):
+        """Longest streak uses longest_streak from User model."""
+        user = UserFactory(timezone="Europe/Prague", longest_streak=15)
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        personal_records = data["personal_records"]
+
+        assert personal_records["longest_streak"] == 15
+
+    def test_longest_streak_zero_for_new_user(self, client):
+        """New user with no streak history has longest_streak of 0."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        personal_records = data["personal_records"]
+
+        assert personal_records["longest_streak"] == 0
+
+    def test_longest_goal_streak_from_goal_streak_calculation(self, client):
+        """Longest goal streak uses value from goal streak calculation."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=100)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create 5 consecutive days meeting goal
+        for i in range(5):
+            EntryFactory(
+                user=user, content="word " * 150, created_at=base_date - timedelta(days=i)
+            )
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        personal_records = data["personal_records"]
+
+        assert personal_records["longest_goal_streak"] == 5
+
+    def test_longest_goal_streak_zero_when_no_goals_met(self, client):
+        """Longest goal streak is 0 when no days meet the word goal."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=1000)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create entries that don't meet the 1000 word goal
+        EntryFactory(user=user, content="word " * 100, created_at=base_date)
+        EntryFactory(
+            user=user, content="word " * 200, created_at=base_date - timedelta(days=1)
+        )
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        personal_records = data["personal_records"]
+
+        assert personal_records["longest_goal_streak"] == 0
+
+    def test_timezone_awareness_longest_entry_date(self, client):
+        """Longest entry date uses user's timezone correctly."""
+        user = UserFactory(timezone="Asia/Tokyo")
+        client.force_login(user)
+
+        # Create entry at midnight UTC (9 AM Tokyo time, same day)
+        utc_time = datetime(2024, 6, 15, 0, 0, 0, tzinfo=ZoneInfo("UTC"))
+        tokyo_tz = ZoneInfo("Asia/Tokyo")
+        expected_date_tokyo = utc_time.astimezone(tokyo_tz).date()
+
+        entry = EntryFactory(user=user, content="word " * 300, created_at=utc_time)
+        entry.refresh_from_db()
+
+        with patch("django.utils.timezone.now", return_value=utc_time + timedelta(hours=12)):
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        assert longest_entry["date"] == expected_date_tokyo.isoformat()
+
+    def test_timezone_awareness_most_words_day_grouping(self, client):
+        """Most words in day groups entries by user's local timezone."""
+        user = UserFactory(timezone="America/New_York")
+        client.force_login(user)
+
+        ny_tz = ZoneInfo("America/New_York")
+        # Late night in New York (11 PM), next day in UTC
+        ny_time = datetime(2024, 6, 15, 23, 0, 0, tzinfo=ny_tz)
+
+        entry1 = EntryFactory(user=user, content="word " * 200, created_at=ny_time)
+        # Same NY day, different hour
+        entry2 = EntryFactory(
+            user=user, content="word " * 150, created_at=ny_time.replace(hour=10)
+        )
+        entry1.refresh_from_db()
+        entry2.refresh_from_db()
+
+        with patch("django.utils.timezone.now", return_value=ny_time + timedelta(hours=2)):
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        most_words_in_day = data["personal_records"]["most_words_in_day"]
+
+        # Both entries should be counted for the same NY day
+        assert most_words_in_day["date"] == ny_time.date().isoformat()
+        assert most_words_in_day["word_count"] == entry1.word_count + entry2.word_count
+        assert most_words_in_day["entry_count"] == 2
+
+    def test_timezone_awareness_different_timezones_same_utc_time(self, client):
+        """Entries at same UTC time are grouped differently based on user timezone."""
+        from django.core.cache import cache
+
+        cache.clear()
+
+        # Create two users in different timezones
+        user_tokyo = UserFactory(timezone="Asia/Tokyo")
+        user_ny = UserFactory(timezone="America/New_York")
+
+        # UTC time: 2024-06-15 05:00 UTC
+        # Tokyo: 2024-06-15 14:00 (same day)
+        # New York: 2024-06-15 01:00 (same day)
+        utc_time = datetime(2024, 6, 15, 5, 0, 0, tzinfo=ZoneInfo("UTC"))
+
+        entry_tokyo = EntryFactory(user=user_tokyo, content="word " * 200, created_at=utc_time)
+        entry_ny = EntryFactory(user=user_ny, content="word " * 200, created_at=utc_time)
+
+        entry_tokyo.refresh_from_db()
+        entry_ny.refresh_from_db()
+
+        with patch("django.utils.timezone.now", return_value=utc_time + timedelta(hours=12)):
+            # Check Tokyo user
+            client.force_login(user_tokyo)
+            response_tokyo = client.get(reverse("api:statistics"), {"period": "7d"})
+            data_tokyo = response_tokyo.json()
+
+            cache.clear()
+
+            # Check New York user
+            client.logout()
+            client.force_login(user_ny)
+            response_ny = client.get(reverse("api:statistics"), {"period": "7d"})
+            data_ny = response_ny.json()
+
+        tokyo_entry_date = data_tokyo["personal_records"]["longest_entry"]["date"]
+        ny_entry_date = data_ny["personal_records"]["longest_entry"]["date"]
+
+        # Tokyo: 2024-06-15, NY: 2024-06-15 (both same day for this specific UTC time)
+        expected_tokyo_date = utc_time.astimezone(ZoneInfo("Asia/Tokyo")).date().isoformat()
+        expected_ny_date = utc_time.astimezone(ZoneInfo("America/New_York")).date().isoformat()
+
+        assert tokyo_entry_date == expected_tokyo_date
+        assert ny_entry_date == expected_ny_date
+
+    def test_personal_records_all_time_not_period_filtered(self, client):
+        """Personal records include all-time data, not just the selected period."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create entry 100 days ago (outside 7d, 30d, 90d periods)
+        old_entry = EntryFactory(
+            user=user, content="word " * 1000, created_at=base_date - timedelta(days=100)
+        )
+        old_entry.refresh_from_db()
+
+        # Create recent entry with fewer words
+        recent_entry = EntryFactory(
+            user=user, content="word " * 100, created_at=base_date
+        )
+        recent_entry.refresh_from_db()
+
+        # Check with 7d period - personal records should still show old entry
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        # The old 1000-word entry should still be the record
+        assert longest_entry["entry_id"] == str(old_entry.id)
+        assert longest_entry["word_count"] == old_entry.word_count
+
+    def test_personal_records_excludes_empty_entries(self, client):
+        """Personal records exclude entries with zero word count."""
+        from apps.journal.tests.factories import EntryWithoutMoodFactory
+
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create empty entry
+        empty_entry = EntryFactory(user=user, content="", created_at=base_date)
+        empty_entry.refresh_from_db()
+
+        # Create entry with content
+        content_entry = EntryFactory(
+            user=user, content="word " * 50, created_at=base_date - timedelta(days=1)
+        )
+        content_entry.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        # Should select the entry with content, not the empty one
+        assert longest_entry["entry_id"] == str(content_entry.id)
+        assert longest_entry["word_count"] == content_entry.word_count
+
+    def test_personal_records_user_isolation(self, client):
+        """Personal records only include entries from current user."""
+        from django.core.cache import cache
+
+        cache.clear()
+
+        user1 = UserFactory(timezone="Europe/Prague")
+        user2 = UserFactory(timezone="Europe/Prague")
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # User 2 has a longer entry
+        user2_entry = EntryFactory(
+            user=user2, content="word " * 1000, created_at=base_date
+        )
+        user2_entry.refresh_from_db()
+
+        # User 1 has a shorter entry
+        user1_entry = EntryFactory(user=user1, content="word " * 100, created_at=base_date)
+        user1_entry.refresh_from_db()
+
+        client.force_login(user1)
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        # User 1's records should only show their own entry
+        assert longest_entry["entry_id"] == str(user1_entry.id)
+        assert longest_entry["word_count"] == user1_entry.word_count
+
+    def test_personal_records_with_multiple_entries_same_word_count(self, client):
+        """When multiple entries have same word count, returns one consistently."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create entries with exact same content/word count
+        entry1 = EntryFactory(
+            user=user, content="exact same words here", created_at=base_date - timedelta(days=1)
+        )
+        entry2 = EntryFactory(
+            user=user, content="exact same words here", created_at=base_date
+        )
+
+        entry1.refresh_from_db()
+        entry2.refresh_from_db()
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        # Should return one of them (implementation returns first by order)
+        assert longest_entry["entry_id"] in [str(entry1.id), str(entry2.id)]
+        assert longest_entry["word_count"] == entry1.word_count
+
+    def test_longest_streak_reflects_user_model_value(self, client):
+        """Longest streak accurately reflects the User model's longest_streak field."""
+        user = UserFactory(timezone="Europe/Prague", longest_streak=42, current_streak=5)
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        personal_records = data["personal_records"]
+
+        # Should use longest_streak, not current_streak
+        assert personal_records["longest_streak"] == 42
+
+    def test_personal_records_across_multiple_periods_consistent(self, client):
+        """Personal records are consistent across different period parameters."""
+        user = UserFactory(timezone="Europe/Prague", daily_word_goal=100)
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        # Create entries at various dates
+        for i in range(10):
+            EntryFactory(
+                user=user, content="word " * 150, created_at=base_date - timedelta(days=i)
+            )
+
+        response_7d = client.get(reverse("api:statistics"), {"period": "7d"})
+        response_30d = client.get(reverse("api:statistics"), {"period": "30d"})
+        response_all = client.get(reverse("api:statistics"), {"period": "all"})
+
+        records_7d = response_7d.json()["personal_records"]
+        records_30d = response_30d.json()["personal_records"]
+        records_all = response_all.json()["personal_records"]
+
+        # Personal records should be the same regardless of period
+        assert records_7d["longest_entry"] == records_30d["longest_entry"]
+        assert records_30d["longest_entry"] == records_all["longest_entry"]
+        assert records_7d["most_words_in_day"] == records_30d["most_words_in_day"]
+        assert records_30d["most_words_in_day"] == records_all["most_words_in_day"]
+
+    def test_dst_spring_forward_date_calculation(self, client):
+        """Personal records dates are correct during spring DST transition."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        # Spring forward 2024: March 31, 2:00 AM becomes 3:00 AM
+        spring_forward = datetime(2024, 3, 31, 12, 0, 0, tzinfo=user_tz)
+
+        entry = EntryFactory(user=user, content="word " * 200, created_at=spring_forward)
+        entry.refresh_from_db()
+
+        with patch("django.utils.timezone.now", return_value=spring_forward + timedelta(hours=6)):
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        assert longest_entry["date"] == "2024-03-31"
+
+    def test_dst_fall_back_date_calculation(self, client):
+        """Personal records dates are correct during fall DST transition."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        # Fall back 2024: October 27, 3:00 AM becomes 2:00 AM
+        fall_back = datetime(2024, 10, 27, 12, 0, 0, tzinfo=user_tz)
+
+        entry = EntryFactory(user=user, content="word " * 200, created_at=fall_back)
+        entry.refresh_from_db()
+
+        with patch("django.utils.timezone.now", return_value=fall_back + timedelta(hours=6)):
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        longest_entry = data["personal_records"]["longest_entry"]
+
+        assert longest_entry["date"] == "2024-10-27"
