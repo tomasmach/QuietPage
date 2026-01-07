@@ -3,6 +3,27 @@
  *
  * API responses use snake_case (from Django backend)
  * Frontend uses camelCase (React convention)
+ * 
+ * Design System - Color Guidelines (per styles.md):
+ * 
+ * Core Principle: Use CSS variables for theme-aware colors
+ * - Primary: var(--color-accent) - Main interactive/emphasis color
+ * - Muted: var(--color-text-muted) - Secondary/de-emphasized elements
+ * - Borders: var(--color-border) - All borders (always 2px solid)
+ * - Background: var(--color-bg-panel) - Cards/widgets
+ * - Shadows: shadow-hard (4px 4px 0px 0px var(--color-shadow))
+ * - Text: var(--color-text-main) for primary, var(--color-text-muted) for secondary
+ * 
+ * Chart Color Recommendations:
+ * - Consistency Rate: var(--color-accent) with progress bar styling
+ * - Time of Day: Semantic colors (amber/orange/purple/blue) - exception for time representation
+ * - Day of Week: var(--color-accent) for highlighted bars, var(--color-text-muted) for others
+ * - Streak History: var(--color-accent) for emphasis, borders and backgrounds per design system
+ * 
+ * Typography:
+ * - Font: IBM Plex Mono (monospace) for ALL text
+ * - Headers: uppercase, bold, tracking-widest
+ * - Use hard shadows (shadow-hard), sharp borders (rounded-none), 2px borders
  */
 
 // ============================================
@@ -54,7 +75,13 @@ export interface WritingPatternsAPI {
     night: number;
   };
   day_of_week: {
-    [key: string]: number;
+    monday: number;
+    tuesday: number;
+    wednesday: number;
+    thursday: number;
+    friday: number;
+    saturday: number;
+    sunday: number;
   };
   streak_history: {
     start_date: string;
@@ -121,7 +148,14 @@ export interface WritingPatterns {
     night: number;
   };
   dayOfWeek: {
-    [key: string]: number;
+    monday: number;
+    tuesday: number;
+    wednesday: number;
+    thursday: number;
+    friday: number;
+    saturday: number;
+    sunday: number;
+    [key: string]: number; // Allow string indexing for dynamic access
   };
   streakHistory: {
     startDate: string;

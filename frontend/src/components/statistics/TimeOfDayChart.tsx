@@ -28,12 +28,14 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
   const { t } = useLanguage();
 
   // Define colors for each time period following the brutalist design system
-  // Using theme-aware colors that work with both Midnight and Paper themes
+  // NOTE: These are semantic colors representing actual time periods (warm morning → cool night)
+  // This is an exception to the monochrome design system due to the semantic nature of the data
+  // For non-semantic charts, use var(--color-accent) and var(--color-text-muted) per styles.md
   const TIME_COLORS = {
-    morning: '#F59E0B',   // Warm amber/orange
-    afternoon: '#FB923C', // Bright orange
-    evening: '#8B5CF6',   // Deep purple
-    night: '#3B82F6',     // Blue
+    morning: '#F59E0B',   // Warm amber - sunrise/morning light
+    afternoon: '#FB923C', // Bright orange - midday sun
+    evening: '#8B5CF6',   // Deep purple - twilight
+    night: '#3B82F6',     // Blue - night sky
   };
 
   // Check if there's any data to display

@@ -248,6 +248,11 @@ export interface Translations {
   };
   statistics: {
     writingPatterns: string;
+    consistencyRate: {
+      title: string;
+      description: string;
+      percentage: string;
+    };
     frequencyHeatmap: {
       title: string;
       noWriting: string;
@@ -563,6 +568,11 @@ export const cs: Translations = {
   },
   statistics: {
     writingPatterns: 'PSACÍ VZORY',
+    consistencyRate: {
+      title: 'KONZISTENCE PSANÍ',
+      description: 'Procento dní, kdy jsi psal(a) ze sledovaného období',
+      percentage: '{rate}% konzistence',
+    },
     frequencyHeatmap: {
       title: 'ČETNOST PSANÍ (90 DNÍ)',
       noWriting: 'Žádné psaní',

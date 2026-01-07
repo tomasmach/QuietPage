@@ -258,6 +258,11 @@ export const en: Translations = {
   },
   statistics: {
     writingPatterns: 'WRITING PATTERNS',
+    consistencyRate: {
+      title: 'WRITING CONSISTENCY',
+      description: 'Percentage of days you wrote during the tracked period',
+      percentage: '{rate}% consistency',
+    },
     frequencyHeatmap: {
       title: 'WRITING FREQUENCY (90 DAYS)',
       noWriting: 'No writing',
