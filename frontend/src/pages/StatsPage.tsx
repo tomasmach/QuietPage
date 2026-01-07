@@ -17,6 +17,7 @@ import { TagAnalyticsChart } from '../components/statistics/TagAnalyticsChart';
 import { BestDayHighlight } from '../components/statistics/BestDayHighlight';
 import { MilestonesGrid } from '../components/statistics/MilestonesGrid';
 import { GoalStreakCard } from '../components/statistics/GoalStreakCard';
+import { PersonalRecordsCard } from '../components/statistics/PersonalRecordsCard';
 import { StatisticsLoading } from '../components/statistics/StatisticsLoading';
 import { StatisticsError } from '../components/statistics/StatisticsError';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -59,8 +60,11 @@ export function StatsPage() {
               <GoalStreakCard data={data.goalStreak} />
             </div>
 
-            {/* Milestones / Achievements */}
-            <MilestonesGrid data={data.milestones} />
+            {/* Milestones & Personal Records */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <MilestonesGrid data={data.milestones} />
+              <PersonalRecordsCard data={data.personalRecords} />
+            </div>
 
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
