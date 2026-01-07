@@ -355,5 +355,11 @@ export const en: Translations = {
       avgMood: 'avg. mood',
       noTags: 'No tags used yet',
     },
+    moodDistribution: {
+      title: 'MOOD DISTRIBUTION',
+      rating: 'Rating',
+      entries: 'entries',
+      noData: 'No mood data yet',
+    },
   },
 };

@@ -9,3 +9,4 @@ export { TimeOfDayChart } from './TimeOfDayChart';
 export { DayOfWeekChart } from './DayOfWeekChart';
 export { StreakHistoryList } from './StreakHistoryList';
 export { TagAnalyticsChart } from './TagAnalyticsChart';
+export { MoodDistributionChart } from './MoodDistributionChart';

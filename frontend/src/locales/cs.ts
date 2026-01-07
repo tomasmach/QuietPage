@@ -345,6 +345,12 @@ export interface Translations {
       avgMood: string;
       noTags: string;
     };
+    moodDistribution: {
+      title: string;
+      rating: string;
+      entries: string;
+      noData: string;
+    };
   };
 }
 
@@ -702,6 +708,12 @@ export const cs: Translations = {
       avgWords: 'prům. slov',
       avgMood: 'prům. nálada',
       noTags: 'Zatím žádné štítky',
+    },
+    moodDistribution: {
+      title: 'ROZLOŽENÍ NÁLAD',
+      rating: 'Hodnocení',
+      entries: 'zápisů',
+      noData: 'Zatím žádná data o náladě',
     },
   },
 };
