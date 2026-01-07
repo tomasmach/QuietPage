@@ -479,6 +479,97 @@ class StatisticsView(APIView):
             "streak_history": streak_history,
         }
 
+    def _calculate_milestones(self, user, all_entries):
+        """
+        Calculate achievement milestones for the user.
+
+        Milestones are calculated based on ALL user data, not filtered by period.
+        This provides a consistent view of user achievements regardless of the
+        selected time period in the statistics view.
+
+        Args:
+            user: User object with streak fields (current_streak, longest_streak)
+            all_entries: QuerySet of ALL Entry objects for the user (not period-filtered)
+
+        Returns:
+            dict: Milestones data including:
+                - milestones: List of milestone objects with:
+                    - type: 'entries', 'words', or 'streak'
+                    - value: Milestone threshold value
+                    - achieved: Boolean indicating if user reached this milestone
+                    - current: User's current value for this milestone type
+                    - label_cs: Czech label for the milestone
+        """
+        # Define milestone thresholds
+        entry_milestones = [1, 10, 50, 100, 365, 500, 1000]
+        word_milestones = [1000, 10000, 50000, 100000, 250000, 500000, 1000000]
+        streak_milestones = [7, 30, 100, 365]
+
+        # Calculate current values
+        total_entries = all_entries.count()
+        total_words = all_entries.aggregate(total=Sum("word_count"))["total"] or 0
+        longest_streak = user.longest_streak
+
+        # Czech labels for milestones
+        entry_labels = {
+            1: "První zápis",
+            10: "10 zápisů",
+            50: "50 zápisů",
+            100: "100 zápisů",
+            365: "Rok zápisů",
+            500: "500 zápisů",
+            1000: "1000 zápisů",
+        }
+        word_labels = {
+            1000: "1 000 slov",
+            10000: "10 000 slov",
+            50000: "50 000 slov",
+            100000: "100 000 slov",
+            250000: "250 000 slov",
+            500000: "500 000 slov",
+            1000000: "Milion slov",
+        }
+        streak_labels = {
+            7: "Týdenní série",
+            30: "Měsíční série",
+            100: "100 dní v řadě",
+            365: "Roční série",
+        }
+
+        milestones = []
+
+        # Entry milestones
+        for value in entry_milestones:
+            milestones.append({
+                "type": "entries",
+                "value": value,
+                "achieved": total_entries >= value,
+                "current": total_entries,
+                "label_cs": entry_labels[value],
+            })
+
+        # Word milestones
+        for value in word_milestones:
+            milestones.append({
+                "type": "words",
+                "value": value,
+                "achieved": total_words >= value,
+                "current": total_words,
+                "label_cs": word_labels[value],
+            })
+
+        # Streak milestones (based on longest_streak from User model)
+        for value in streak_milestones:
+            milestones.append({
+                "type": "streak",
+                "value": value,
+                "achieved": longest_streak >= value,
+                "current": longest_streak,
+                "label_cs": streak_labels[value],
+            })
+
+        return {"milestones": milestones}
+
     def _calculate_tag_analytics(self, entries):
         """
         Calculate tag analytics for a filtered entries queryset.
@@ -572,6 +663,7 @@ class StatisticsView(APIView):
                 - word_count_analytics: Word count data
                 - writing_patterns: Writing habits and consistency data
                 - tag_analytics: Tag usage statistics
+                - milestones: Achievement milestones (based on ALL user data)
 
         Caching:
             - Server-side: 30 minutes (1800 seconds)
@@ -601,12 +693,16 @@ class StatisticsView(APIView):
             user=user, created_at__gte=start_date, created_at__lte=end_date
         )
 
+        # Get ALL entries for milestone calculation (not period-filtered)
+        all_entries = Entry.objects.filter(user=user)
+
         mood_analytics = self._calculate_mood_analytics(entries, start_date, user_tz)
         word_count_analytics = self._calculate_word_count_analytics(
             entries, user, start_date, user_tz
         )
         writing_patterns = self._calculate_writing_patterns(entries, user, start_date, end_date)
         tag_analytics = self._calculate_tag_analytics(entries)
+        milestones = self._calculate_milestones(user, all_entries)
 
         return Response(
             {
@@ -617,5 +713,6 @@ class StatisticsView(APIView):
                 "word_count_analytics": word_count_analytics,
                 "writing_patterns": writing_patterns,
                 "tag_analytics": tag_analytics,
+                "milestones": milestones,
             }
         )
