@@ -380,5 +380,14 @@ export const en: Translations = {
       achieved: 'Achieved!',
       noData: 'No milestones yet',
     },
+    goalStreak: {
+      title: '750 GOAL STREAK',
+      current: 'Current',
+      longest: 'Longest',
+      days: 'days',
+      perDay: 'words/day goal',
+      active: "You're on fire!",
+      inactive: 'Start a new streak today!',
+    },
   },
 };

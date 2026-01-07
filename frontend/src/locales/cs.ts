@@ -370,6 +370,15 @@ export interface Translations {
       achieved: string;
       noData: string;
     };
+    goalStreak: {
+      title: string;
+      current: string;
+      longest: string;
+      days: string;
+      perDay: string;
+      active: string;
+      inactive: string;
+    };
   };
 }
 
@@ -752,6 +761,15 @@ export const cs: Translations = {
       streaks: 'Dní v sérii',
       achieved: 'Dosaženo!',
       noData: 'Zatím žádné milníky',
+    },
+    goalStreak: {
+      title: 'SÉRIE 750 SLOV',
+      current: 'Aktuální',
+      longest: 'Nejdelší',
+      days: 'dní',
+      perDay: 'slov/den cíl',
+      active: 'Jsi v plamenech!',
+      inactive: 'Začni novou sérii dnes!',
     },
   },
 };
