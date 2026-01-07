@@ -498,7 +498,7 @@ class StatisticsView(APIView):
                     - value: Milestone threshold value
                     - achieved: Boolean indicating if user reached this milestone
                     - current: User's current value for this milestone type
-                    - label_cs: Czech label for the milestone
+            Labels are handled by frontend i18n based on type and value.
         """
         # Define milestone thresholds
         entry_milestones = [1, 10, 50, 100, 365, 500, 1000]
@@ -510,32 +510,6 @@ class StatisticsView(APIView):
         total_words = all_entries.aggregate(total=Sum("word_count"))["total"] or 0
         longest_streak = user.longest_streak
 
-        # Czech labels for milestones
-        entry_labels = {
-            1: "První zápis",
-            10: "10 zápisů",
-            50: "50 zápisů",
-            100: "100 zápisů",
-            365: "Rok zápisů",
-            500: "500 zápisů",
-            1000: "1000 zápisů",
-        }
-        word_labels = {
-            1000: "1 000 slov",
-            10000: "10 000 slov",
-            50000: "50 000 slov",
-            100000: "100 000 slov",
-            250000: "250 000 slov",
-            500000: "500 000 slov",
-            1000000: "Milion slov",
-        }
-        streak_labels = {
-            7: "Týdenní série",
-            30: "Měsíční série",
-            100: "100 dní v řadě",
-            365: "Roční série",
-        }
-
         milestones = []
 
         # Entry milestones
@@ -545,7 +519,6 @@ class StatisticsView(APIView):
                 "value": value,
                 "achieved": total_entries >= value,
                 "current": total_entries,
-                "label_cs": entry_labels[value],
             })
 
         # Word milestones
@@ -555,7 +528,6 @@ class StatisticsView(APIView):
                 "value": value,
                 "achieved": total_words >= value,
                 "current": total_words,
-                "label_cs": word_labels[value],
             })
 
         # Streak milestones (based on longest_streak from User model)
@@ -565,7 +537,6 @@ class StatisticsView(APIView):
                 "value": value,
                 "achieved": longest_streak >= value,
                 "current": longest_streak,
-                "label_cs": streak_labels[value],
             })
 
         return {"milestones": milestones}
