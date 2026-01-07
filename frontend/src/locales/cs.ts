@@ -356,6 +356,12 @@ export interface Translations {
       declining: string;
       stable: string;
     };
+    bestDay: {
+      title: string;
+      words: string;
+      entries: string;
+      noData: string;
+    };
   };
 }
 
@@ -724,6 +730,12 @@ export const cs: Translations = {
       improving: 'Zlepšuje se',
       declining: 'Zhoršuje se',
       stable: 'Stabilní',
+    },
+    bestDay: {
+      title: 'NEJLEPŠÍ DEN PSANÍ',
+      words: 'slov',
+      entries: 'zápisů',
+      noData: 'Piš dál a vytvoř si rekord!',
     },
   },
 };

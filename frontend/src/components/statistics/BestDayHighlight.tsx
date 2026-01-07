@@ -1,0 +1,108 @@
+/**
+ * BestDayHighlight component celebrates the user's best writing day.
+ * 
+ * Features:
+ * - Highlighted card showing the best writing day achievement
+ * - Displays formatted date, word count, and entry count
+ * - Trophy icon for celebratory feel
+ * - Brutalist styling with accent treatment
+ * - Encouraging empty state message
+ */
+
+import { Trophy, Pencil } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
+
+export interface BestDayData {
+  date: string;
+  wordCount: number;
+  entryCount: number;
+}
+
+export interface BestDayHighlightProps {
+  data: BestDayData | undefined;
+}
+
+/**
+ * Formats a date string to localized format (e.g., "Dec 1, 2025")
+ */
+function formatDate(dateString: string, language: 'cs' | 'en'): string {
+  const date = new Date(dateString);
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  };
+  
+  return date.toLocaleDateString(language === 'cs' ? 'cs-CZ' : 'en-US', options);
+}
+
+export function BestDayHighlight({ data }: BestDayHighlightProps) {
+  const { t, language } = useLanguage();
+
+  // Empty state - no best day data yet
+  if (!data) {
+    return (
+      <div className="border-2 border-border bg-bg-panel p-6 rounded-none shadow-hard">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 border-2 border-border bg-bg-app">
+            <Pencil size={20} strokeWidth={2} className="text-text-muted" />
+          </div>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-text-main font-mono">
+            {t('statistics.bestDay.title')}
+          </h3>
+        </div>
+        <p className="text-sm font-mono text-text-muted">
+          {t('statistics.bestDay.noData')}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-2 border-accent bg-accent text-accent-fg p-6 rounded-none shadow-hard relative overflow-hidden">
+      {/* Decorative background pattern */}
+      <div className="absolute top-0 right-0 opacity-10">
+        <Trophy size={120} strokeWidth={1} className="translate-x-8 -translate-y-4" />
+      </div>
+      
+      {/* Header with Trophy */}
+      <div className="flex items-center gap-3 mb-4 relative">
+        <div className="p-2 border-2 border-current bg-accent-fg/10">
+          <Trophy size={20} strokeWidth={2} />
+        </div>
+        <h3 className="text-xs font-bold uppercase tracking-widest font-mono">
+          {t('statistics.bestDay.title')}
+        </h3>
+      </div>
+      
+      {/* Date */}
+      <p className="text-lg font-bold font-mono mb-4 relative capitalize">
+        {formatDate(data.date, language)}
+      </p>
+      
+      {/* Stats */}
+      <div className="flex gap-6 relative">
+        {/* Word Count */}
+        <div>
+          <p className="text-3xl font-bold font-mono">
+            {data.wordCount.toLocaleString(language === 'cs' ? 'cs-CZ' : 'en-US')}
+          </p>
+          <p className="text-xs font-mono opacity-80 uppercase tracking-wider">
+            {t('statistics.bestDay.words')}
+          </p>
+        </div>
+        
+        {/* Entry Count */}
+        <div className="border-l-2 border-current pl-6 opacity-80">
+          <p className="text-3xl font-bold font-mono">
+            {data.entryCount}
+          </p>
+          <p className="text-xs font-mono opacity-80 uppercase tracking-wider">
+            {t('statistics.bestDay.entries')}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -366,5 +366,11 @@ export const en: Translations = {
       declining: 'Declining',
       stable: 'Stable',
     },
+    bestDay: {
+      title: 'BEST WRITING DAY',
+      words: 'words',
+      entries: 'entries',
+      noData: 'Keep writing to set your record!',
+    },
   },
 };
