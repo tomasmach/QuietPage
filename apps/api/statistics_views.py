@@ -542,6 +542,76 @@ class StatisticsView(APIView):
 
         return {"milestones": milestones}
 
+    def _calculate_personal_records(self, user, all_entries, goal_streak_data):
+        """
+        Calculate all-time personal records for the user.
+
+        Personal records are calculated based on ALL user data, not filtered by period.
+        This gives users goals to beat and celebrates past achievements.
+
+        Args:
+            user: User object with longest_streak field
+            all_entries: QuerySet of ALL Entry objects for the user (not period-filtered)
+            goal_streak_data: Result from _calculate_goal_streak() for longest_goal_streak
+
+        Returns:
+            dict: Personal records including:
+                - longest_entry: Entry with highest word_count
+                    - date: ISO date string
+                    - word_count: Number of words
+                    - title: Entry title (if exists, else null)
+                    - entry_id: UUID of the entry
+                - most_words_in_day: Day with highest total words
+                    - date: ISO date string
+                    - word_count: Total words that day
+                    - entry_count: Number of entries that day
+                - longest_streak: User's all-time longest streak (from User model)
+                - longest_goal_streak: All-time longest goal streak
+        """
+        user_tz = ZoneInfo(str(user.timezone))
+
+        # Longest entry (single entry with most words)
+        longest_entry_record = None
+        longest_entry = (
+            all_entries.filter(word_count__gt=0)
+            .order_by("-word_count")
+            .first()
+        )
+        if longest_entry:
+            longest_entry_record = {
+                "date": longest_entry.created_at.astimezone(user_tz).date().isoformat(),
+                "word_count": longest_entry.word_count,
+                "title": longest_entry.title if longest_entry.title else None,
+                "entry_id": str(longest_entry.id),
+            }
+
+        # Most words in a single day (sum of all entries that day)
+        most_words_in_day_record = None
+        daily_totals = (
+            all_entries.filter(word_count__gt=0)
+            .annotate(day=TruncDate("created_at", tzinfo=user_tz))
+            .values("day")
+            .annotate(
+                total_words=Sum("word_count"),
+                entry_count=Count("id"),
+            )
+            .order_by("-total_words")
+            .first()
+        )
+        if daily_totals:
+            most_words_in_day_record = {
+                "date": daily_totals["day"].isoformat(),
+                "word_count": daily_totals["total_words"],
+                "entry_count": daily_totals["entry_count"],
+            }
+
+        return {
+            "longest_entry": longest_entry_record,
+            "most_words_in_day": most_words_in_day_record,
+            "longest_streak": user.longest_streak,
+            "longest_goal_streak": goal_streak_data["longest"],
+        }
+
     def _calculate_goal_streak(self, user):
         """
         Calculate goal streak - consecutive days meeting daily word goal.
@@ -715,6 +785,7 @@ class StatisticsView(APIView):
                 - tag_analytics: Tag usage statistics
                 - milestones: Achievement milestones (based on ALL user data)
                 - goal_streak: Consecutive days meeting daily word goal (all-time)
+                - personal_records: All-time personal records (longest entry, most words in day, etc.)
 
         Caching:
             - Server-side: 30 minutes (1800 seconds)
@@ -755,6 +826,7 @@ class StatisticsView(APIView):
         tag_analytics = self._calculate_tag_analytics(entries)
         milestones = self._calculate_milestones(user, all_entries)
         goal_streak = self._calculate_goal_streak(user)
+        personal_records = self._calculate_personal_records(user, all_entries, goal_streak)
 
         return Response(
             {
@@ -767,5 +839,6 @@ class StatisticsView(APIView):
                 "tag_analytics": tag_analytics,
                 "milestones": milestones,
                 "goal_streak": goal_streak,
+                "personal_records": personal_records,
             }
         )
