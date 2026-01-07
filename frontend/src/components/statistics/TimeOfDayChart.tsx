@@ -41,19 +41,6 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
   // Check if there's any data to display
   const hasData = Object.values(data.timeOfDay).some(value => value > 0);
 
-  if (!hasData) {
-    return (
-      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
-          {t('statistics.timeOfDayChart.title')}
-        </h3>
-        <p className="text-text-muted font-mono text-sm">
-          {t('statistics.timeOfDayChart.notEnoughData')}
-        </p>
-      </div>
-    );
-  }
-
   // Prepare data for Recharts
   const chartData: ChartData[] = [
     {
@@ -121,31 +108,41 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
   };
 
   // Custom tooltip
-  interface TooltipProps {
-    active?: boolean;
-    payload?: Array<{ payload: ChartData }>;
-  }
-  
-  const CustomTooltip = ({ active, payload }: TooltipProps) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderTooltip = (props: any) => {
+    const { active, payload } = props;
     if (!active || !payload || !payload.length) return null;
 
-    const data = payload[0].payload as ChartData;
-    const percentage = ((data.value / total) * 100).toFixed(1);
+    const tooltipData = payload[0].payload as ChartData;
+    const percentage = ((tooltipData.value / total) * 100).toFixed(1);
 
     return (
       <div className="bg-bg-panel border-2 border-border px-4 py-3 shadow-hard">
         <p className="text-xs font-mono font-bold text-text-main uppercase tracking-wide mb-1">
-          {data.name}
+          {tooltipData.name}
         </p>
         <p className="text-xs font-mono text-text-muted">
-          {data.value} {t('statistics.timeOfDayChart.entries')} ({percentage}%)
+          {tooltipData.value} {t('statistics.timeOfDayChart.entries')} ({percentage}%)
         </p>
         <p className="text-[10px] font-mono text-text-muted mt-1">
-          {data.description}
+          {tooltipData.description}
         </p>
       </div>
     );
   };
+
+  if (!hasData) {
+    return (
+      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+          {t('statistics.timeOfDayChart.title')}
+        </h3>
+        <p className="text-text-muted font-mono text-sm">
+          {t('statistics.timeOfDayChart.notEnoughData')}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
@@ -175,7 +172,7 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
               />
             ))}
           </Pie>
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={renderTooltip} />
           <Legend content={renderLegend} />
         </PieChart>
       </ResponsiveContainer>

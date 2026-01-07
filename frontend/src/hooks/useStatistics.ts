@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '../lib/api';
 import type {
   StatisticsData,
@@ -32,7 +32,7 @@ export function useStatistics(period: PeriodType = '30d'): UseStatisticsReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchStatistics = async () => {
+  const fetchStatistics = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -86,11 +86,11 @@ export function useStatistics(period: PeriodType = '30d'): UseStatisticsReturn {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [period]);
 
   useEffect(() => {
     fetchStatistics();
-  }, [period]);
+  }, [fetchStatistics]);
 
   return {
     data,

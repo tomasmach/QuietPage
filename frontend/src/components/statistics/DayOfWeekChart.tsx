@@ -31,19 +31,6 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
   // Check if there's any data to display
   const hasData = Object.values(data.dayOfWeek).some(value => value > 0);
 
-  if (!hasData) {
-    return (
-      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
-          {t('statistics.dayOfWeekChart.title')}
-        </h3>
-        <p className="text-text-muted font-mono text-sm">
-          {t('statistics.dayOfWeekChart.notEnoughData')}
-        </p>
-      </div>
-    );
-  }
-
   // Find the maximum count to highlight the most productive day
   const maxCount = Math.max(...Object.values(data.dayOfWeek));
 
@@ -56,22 +43,24 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
   }));
 
   // Custom tooltip to show full day name and count
-  const CustomTooltip = ({ active, payload }: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderTooltip = (props: any) => {
+    const { active, payload } = props;
     if (!active || !payload || !payload.length) return null;
 
-    const data = payload[0].payload as ChartDataPoint;
+    const tooltipData = payload[0].payload as ChartDataPoint;
 
     return (
       <div className="bg-bg-panel border-2 border-border px-4 py-3 shadow-hard">
         <p className="text-xs font-mono font-bold text-text-main uppercase tracking-wide mb-1">
-          {data.fullDay}
+          {tooltipData.fullDay}
         </p>
         <p className="text-xs font-mono text-text-muted">
-          {data.count} {data.count === 1 
+          {tooltipData.count} {tooltipData.count === 1 
             ? t('statistics.dayOfWeekChart.daySingular') 
             : t('statistics.dayOfWeekChart.daysPlural')}
         </p>
-        {data.isMax && (
+        {tooltipData.isMax && (
           <p className="text-[10px] font-mono text-accent mt-1 font-bold uppercase tracking-wide">
             {t('statistics.dayOfWeekChart.mostProductive')}
           </p>
@@ -81,16 +70,21 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
   };
 
   // Custom label to display count on top of bar for the max value
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderLabel = (props: any) => {
     const { x, y, width, value, payload } = props;
     
-    if (!payload.isMax) return null;
+    const xNum = typeof x === 'number' ? x : 0;
+    const yNum = typeof y === 'number' ? y : 0;
+    const widthNum = typeof width === 'number' ? width : 0;
+    
+    if (!(payload as ChartDataPoint)?.isMax) return null;
 
     return (
       <g>
         <text
-          x={x + width / 2}
-          y={y - 8}
+          x={xNum + widthNum / 2}
+          y={yNum - 8}
           fill="var(--color-accent)"
           textAnchor="middle"
           className="font-mono text-xs font-bold"
@@ -100,6 +94,19 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
       </g>
     );
   };
+
+  if (!hasData) {
+    return (
+      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+          {t('statistics.dayOfWeekChart.title')}
+        </h3>
+        <p className="text-text-muted font-mono text-sm">
+          {t('statistics.dayOfWeekChart.notEnoughData')}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
@@ -144,7 +151,7 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
               }
             }}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+          <Tooltip content={renderTooltip} cursor={{ fill: 'transparent' }} />
           <Bar 
             dataKey="count" 
             radius={[0, 0, 0, 0]}
