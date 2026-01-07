@@ -8,13 +8,19 @@ import { TimeRangeSelector } from '../components/statistics/TimeRangeSelector';
 import { StatsSummaryCards } from '../components/statistics/StatsSummaryCards';
 import { MoodTimelineChart } from '../components/statistics/MoodTimelineChart';
 import { WordCountTimelineChart } from '../components/statistics/WordCountTimelineChart';
+import { FrequencyHeatmap } from '../components/statistics/FrequencyHeatmap';
+import { TimeOfDayChart } from '../components/statistics/TimeOfDayChart';
+import { DayOfWeekChart } from '../components/statistics/DayOfWeekChart';
+import { StreakHistoryList } from '../components/statistics/StreakHistoryList';
 import { StatisticsLoading } from '../components/statistics/StatisticsLoading';
 import { StatisticsError } from '../components/statistics/StatisticsError';
+import { useLanguage } from '../contexts/LanguageContext';
 import type { PeriodType } from '../types/statistics';
 
 export function StatsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('30d');
   const { data, isLoading, error, refetch } = useStatistics(selectedPeriod);
+  const { t } = useLanguage();
 
   return (
     <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
@@ -46,6 +52,21 @@ export function StatsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <MoodTimelineChart data={data.moodAnalytics} />
               <WordCountTimelineChart data={data.wordCountAnalytics} />
+            </div>
+
+            {/* Writing Patterns Section */}
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold uppercase tracking-wide text-text-main font-mono">
+                {t('statistics.writingPatterns')}
+              </h2>
+
+              {/* Writing Patterns Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <FrequencyHeatmap data={data.wordCountAnalytics} />
+                <TimeOfDayChart data={data.writingPatterns} />
+                <DayOfWeekChart data={data.writingPatterns} />
+                <StreakHistoryList data={data.writingPatterns} />
+              </div>
             </div>
           </div>
         ) : null}

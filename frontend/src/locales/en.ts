@@ -257,6 +257,7 @@ export const en: Translations = {
     accountDeleted: 'Account deleted',
   },
   statistics: {
+    writingPatterns: 'WRITING PATTERNS',
     frequencyHeatmap: {
       title: 'WRITING FREQUENCY (90 DAYS)',
       noWriting: 'No writing',

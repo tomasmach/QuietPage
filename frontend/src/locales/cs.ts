@@ -247,6 +247,7 @@ export interface Translations {
     accountDeleted: string;
   };
   statistics: {
+    writingPatterns: string;
     frequencyHeatmap: {
       title: string;
       noWriting: string;
@@ -561,6 +562,7 @@ export const cs: Translations = {
     accountDeleted: 'Účet byl smazán',
   },
   statistics: {
+    writingPatterns: 'PSACÍ VZORY',
     frequencyHeatmap: {
       title: 'ČETNOST PSANÍ (90 DNÍ)',
       noWriting: 'Žádné psaní',
