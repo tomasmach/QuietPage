@@ -608,7 +608,7 @@ class StatisticsView(APIView):
         writing_patterns = self._calculate_writing_patterns(entries, user, start_date, end_date)
         tag_analytics = self._calculate_tag_analytics(entries)
 
-        response = Response(
+        return Response(
             {
                 "period": period,
                 "start_date": start_date.isoformat(),
@@ -619,8 +619,3 @@ class StatisticsView(APIView):
                 "tag_analytics": tag_analytics,
             }
         )
-
-        response["Cache-Control"] = "public, max-age=1800, s-maxage=1800"
-        response["Vary"] = "Authorization"
-
-        return response
