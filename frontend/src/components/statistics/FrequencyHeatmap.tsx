@@ -189,7 +189,7 @@ function mergeDayData(days: DayData[], timeline: WordCountAnalytics['timeline'])
 /**
  * Gets month labels for heatmap columns
  */
-function getMonthLabels(weeks: DayData[][]): { weekIndex: number; label: string }[] {
+function getMonthLabels(weeks: DayData[][], localeCode: string): { weekIndex: number; label: string }[] {
   const labels: { weekIndex: number; label: string }[] = [];
   let lastMonth = -1;
   
@@ -205,7 +205,7 @@ function getMonthLabels(weeks: DayData[][]): { weekIndex: number; label: string 
     if (month !== lastMonth) {
       labels.push({
         weekIndex,
-        label: firstDayOfWeek.date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+        label: firstDayOfWeek.date.toLocaleDateString(localeCode, { month: 'short' }).toUpperCase(),
       });
       lastMonth = month;
     }
@@ -230,13 +230,13 @@ export function FrequencyHeatmap({ data }: FrequencyHeatmapProps) {
     ? new Date(data.timeline[data.timeline.length - 1].date)
     : new Date();
   
+  // Get locale code for date formatting
+  const localeCode = language === 'cs' ? 'cs-CZ' : 'en-US';
+
   const days = generateDateArray(endDate);
   const mergedDays = mergeDayData(days, data.timeline);
   const weeks = groupIntoWeeks(mergedDays);
-  const monthLabels = getMonthLabels(weeks);
-  
-  // Get locale code for date formatting
-  const localeCode = language === 'cs' ? 'cs-CZ' : 'en-US';
+  const monthLabels = getMonthLabels(weeks, localeCode);
   
   const handleMouseEnter = (day: DayData, event: React.MouseEvent<HTMLDivElement>) => {
     if (!day.isInPeriod) return;

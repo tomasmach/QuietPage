@@ -1,16 +1,20 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { MoodAnalytics } from '../../types/statistics';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface MoodTimelineChartProps {
   data: MoodAnalytics;
 }
 
 export function MoodTimelineChart({ data }: MoodTimelineChartProps) {
+  const { t, language } = useLanguage();
+  const localeCode = language === 'cs' ? 'cs-CZ' : 'en-US';
+
   if (!data.timeline || data.timeline.length < 2) {
     return (
       <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none">
         <p className="text-text-muted font-mono text-sm">
-          NOT ENOUGH DATA TO DISPLAY MOOD TRENDS
+          {t('statistics.moodTimeline.notEnoughData')}
         </p>
       </div>
     );
@@ -18,14 +22,14 @@ export function MoodTimelineChart({ data }: MoodTimelineChartProps) {
 
   // Format data for Recharts
   const chartData = data.timeline.map(day => ({
-    date: new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    date: new Date(day.date).toLocaleDateString(localeCode, { month: 'short', day: 'numeric' }),
     mood: day.average,
   }));
 
   return (
     <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
       <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
-        MOOD TIMELINE
+        {t('statistics.moodTimeline.title')}
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData}>

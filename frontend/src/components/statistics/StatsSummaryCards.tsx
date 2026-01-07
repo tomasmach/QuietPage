@@ -1,32 +1,34 @@
 import type { StatisticsData } from '../../types/statistics';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface StatsSummaryCardsProps {
   data: StatisticsData;
 }
 
 export function StatsSummaryCards({ data }: StatsSummaryCardsProps) {
+  const { t } = useLanguage();
   const { moodAnalytics, wordCountAnalytics } = data;
 
   const cards = [
     {
-      label: 'AVG MOOD',
+      label: t('statistics.summaryCards.avgMood'),
       value: moodAnalytics.average ? moodAnalytics.average.toFixed(1) : 'N/A',
-      subtitle: `${moodAnalytics.totalRatedEntries} rated entries`,
+      subtitle: `${moodAnalytics.totalRatedEntries} ${t('statistics.summaryCards.ratedEntries')}`,
     },
     {
-      label: 'TOTAL WORDS',
+      label: t('statistics.summaryCards.totalWords'),
       value: wordCountAnalytics.total.toLocaleString(),
-      subtitle: `${wordCountAnalytics.totalEntries} entries`,
+      subtitle: `${wordCountAnalytics.totalEntries} ${t('statistics.summaryCards.entries')}`,
     },
     {
-      label: 'AVG PER DAY',
+      label: t('statistics.summaryCards.avgPerDay'),
       value: Math.round(wordCountAnalytics.averagePerDay).toLocaleString(),
-      subtitle: 'words',
+      subtitle: t('statistics.summaryCards.words'),
     },
     {
-      label: 'GOAL RATE',
+      label: t('statistics.summaryCards.goalRate'),
       value: `${wordCountAnalytics.goalAchievementRate.toFixed(0)}%`,
-      subtitle: 'days met goal',
+      subtitle: t('statistics.summaryCards.daysMetGoal'),
     },
   ];
 

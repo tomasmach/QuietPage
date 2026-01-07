@@ -1,22 +1,25 @@
 import { type PeriodType } from '../../types/statistics';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface TimeRangeSelectorProps {
   selectedPeriod: PeriodType;
   onPeriodChange: (period: PeriodType) => void;
 }
 
-const PERIODS: { value: PeriodType; label: string }[] = [
-  { value: '7d', label: 'LAST 7 DAYS' },
-  { value: '30d', label: 'LAST 30 DAYS' },
-  { value: '90d', label: 'LAST 90 DAYS' },
-  { value: '1y', label: 'LAST YEAR' },
-  { value: 'all', label: 'ALL TIME' },
+const PERIOD_KEYS: { value: PeriodType; labelKey: string }[] = [
+  { value: '7d', labelKey: 'statistics.timeRange.last7Days' },
+  { value: '30d', labelKey: 'statistics.timeRange.last30Days' },
+  { value: '90d', labelKey: 'statistics.timeRange.last90Days' },
+  { value: '1y', labelKey: 'statistics.timeRange.lastYear' },
+  { value: 'all', labelKey: 'statistics.timeRange.allTime' },
 ];
 
 export function TimeRangeSelector({ selectedPeriod, onPeriodChange }: TimeRangeSelectorProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="flex gap-2 font-mono">
-      {PERIODS.map(({ value, label }) => (
+      {PERIOD_KEYS.map(({ value, labelKey }) => (
         <button
           key={value}
           onClick={() => onPeriodChange(value)}
@@ -30,7 +33,7 @@ export function TimeRangeSelector({ selectedPeriod, onPeriodChange }: TimeRangeS
             }
           `}
         >
-          {label}
+          {t(labelKey)}
         </button>
       ))}
     </div>

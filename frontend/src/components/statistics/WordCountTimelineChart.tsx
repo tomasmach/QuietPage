@@ -1,30 +1,34 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { WordCountAnalytics } from '../../types/statistics';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface WordCountTimelineChartProps {
   data: WordCountAnalytics;
 }
 
 export function WordCountTimelineChart({ data }: WordCountTimelineChartProps) {
+  const { t, language } = useLanguage();
+  const localeCode = language === 'cs' ? 'cs-CZ' : 'en-US';
+
   if (!data.timeline || data.timeline.length === 0) {
     return (
       <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none">
         <p className="text-text-muted font-mono text-sm">
-          NO WRITING DATA AVAILABLE
+          {t('statistics.wordCountTimeline.noData')}
         </p>
       </div>
     );
   }
 
   const chartData = data.timeline.map(day => ({
-    date: new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    date: new Date(day.date).toLocaleDateString(localeCode, { month: 'short', day: 'numeric' }),
     words: day.wordCount,
   }));
 
   return (
     <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
       <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
-        WORD COUNT TIMELINE
+        {t('statistics.wordCountTimeline.title')}
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <AreaChart data={chartData}>

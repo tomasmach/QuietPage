@@ -1,13 +1,17 @@
+import { useLanguage } from '../../contexts/LanguageContext';
+
 interface StatisticsErrorProps {
   error: Error;
   onRetry: () => void;
 }
 
 export function StatisticsError({ error, onRetry }: StatisticsErrorProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="border-2 border-border bg-bg-panel p-12 text-center shadow-hard rounded-none">
       <p className="text-text-main font-mono text-lg mb-4">
-        UNABLE TO LOAD STATISTICS
+        {t('statistics.error.unableToLoad')}
       </p>
       <p className="text-text-muted font-mono text-sm mb-6">
         {error.message}
@@ -21,7 +25,7 @@ export function StatisticsError({ error, onRetry }: StatisticsErrorProps) {
           hover:translate-x-[2px] hover:translate-y-[2px]
         "
       >
-        RETRY
+        {t('statistics.error.retry')}
       </button>
     </div>
   );

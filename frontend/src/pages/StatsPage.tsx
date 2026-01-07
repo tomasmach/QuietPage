@@ -28,7 +28,7 @@ export function StatsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold uppercase tracking-wide text-text-main font-mono">
-            STATISTICS
+            {t('statistics.title')}
           </h1>
         </div>
 

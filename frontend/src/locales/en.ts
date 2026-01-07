@@ -257,6 +257,7 @@ export const en: Translations = {
     accountDeleted: 'Account deleted',
   },
   statistics: {
+    title: 'STATISTICS',
     writingPatterns: 'WRITING PATTERNS',
     consistencyRate: {
       title: 'WRITING CONSISTENCY',
@@ -316,6 +317,35 @@ export const en: Translations = {
       encouragement: 'Your longest streak was {days} days – you can beat it!',
       newRecord: 'Congrats! Your current streak ({days} days) is a new record!',
       matchingRecord: 'Amazing! You matched your record of {days} days!',
+    },
+    summaryCards: {
+      avgMood: 'AVG MOOD',
+      totalWords: 'TOTAL WORDS',
+      avgPerDay: 'AVG PER DAY',
+      goalRate: 'GOAL RATE',
+      ratedEntries: 'rated entries',
+      entries: 'entries',
+      words: 'words',
+      daysMetGoal: 'days met goal',
+    },
+    moodTimeline: {
+      title: 'MOOD TIMELINE',
+      notEnoughData: 'NOT ENOUGH DATA TO DISPLAY MOOD TRENDS',
+    },
+    wordCountTimeline: {
+      title: 'WORD COUNT TIMELINE',
+      noData: 'NO WRITING DATA AVAILABLE',
+    },
+    error: {
+      unableToLoad: 'UNABLE TO LOAD STATISTICS',
+      retry: 'RETRY',
+    },
+    timeRange: {
+      last7Days: 'LAST 7 DAYS',
+      last30Days: 'LAST 30 DAYS',
+      last90Days: 'LAST 90 DAYS',
+      lastYear: 'LAST YEAR',
+      allTime: 'ALL TIME',
     },
   },
 };

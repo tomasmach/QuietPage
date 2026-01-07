@@ -247,6 +247,7 @@ export interface Translations {
     accountDeleted: string;
   };
   statistics: {
+    title: string;
     writingPatterns: string;
     consistencyRate: {
       title: string;
@@ -306,6 +307,35 @@ export interface Translations {
       encouragement: string;
       newRecord: string;
       matchingRecord: string;
+    };
+    summaryCards: {
+      avgMood: string;
+      totalWords: string;
+      avgPerDay: string;
+      goalRate: string;
+      ratedEntries: string;
+      entries: string;
+      words: string;
+      daysMetGoal: string;
+    };
+    moodTimeline: {
+      title: string;
+      notEnoughData: string;
+    };
+    wordCountTimeline: {
+      title: string;
+      noData: string;
+    };
+    error: {
+      unableToLoad: string;
+      retry: string;
+    };
+    timeRange: {
+      last7Days: string;
+      last30Days: string;
+      last90Days: string;
+      lastYear: string;
+      allTime: string;
     };
   };
 }
@@ -567,6 +597,7 @@ export const cs: Translations = {
     accountDeleted: 'Účet byl smazán',
   },
   statistics: {
+    title: 'STATISTIKY',
     writingPatterns: 'PSACÍ VZORY',
     consistencyRate: {
       title: 'KONZISTENCE PSANÍ',
@@ -626,6 +657,35 @@ export const cs: Translations = {
       encouragement: 'Tvůj nejdelší streak byl {days} dní – můžeš ho překonat!',
       newRecord: 'Gratulujeme! Tvůj aktuální streak ({days} dní) je nový rekord!',
       matchingRecord: 'Skvělé! Vyrovnal jsi svůj rekord {days} dní!',
+    },
+    summaryCards: {
+      avgMood: 'PRŮMĚRNÁ NÁLADA',
+      totalWords: 'CELKEM SLOV',
+      avgPerDay: 'PRŮMĚR ZA DEN',
+      goalRate: 'ÚSPĚŠNOST CÍLE',
+      ratedEntries: 'hodnocených záznamů',
+      entries: 'záznamů',
+      words: 'slov',
+      daysMetGoal: 'dní splněn cíl',
+    },
+    moodTimeline: {
+      title: 'VÝVOJ NÁLADY',
+      notEnoughData: 'NEDOSTATEK DAT PRO ZOBRAZENÍ TRENDŮ NÁLADY',
+    },
+    wordCountTimeline: {
+      title: 'VÝVOJ POČTU SLOV',
+      noData: 'ŽÁDNÁ DATA O PSANÍ',
+    },
+    error: {
+      unableToLoad: 'NELZE NAČÍST STATISTIKY',
+      retry: 'ZKUSIT ZNOVU',
+    },
+    timeRange: {
+      last7Days: 'POSLEDNÍCH 7 DNÍ',
+      last30Days: 'POSLEDNÍCH 30 DNÍ',
+      last90Days: 'POSLEDNÍCH 90 DNÍ',
+      lastYear: 'POSLEDNÍ ROK',
+      allTime: 'CELÉ OBDOBÍ',
     },
   },
 };
