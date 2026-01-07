@@ -13,6 +13,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
+from unittest.mock import patch
 
 from apps.accounts.tests.factories import UserFactory
 from apps.journal.tests.factories import EntryFactory
@@ -1421,3 +1422,1375 @@ class TestStatisticsViewIntegration:
             assert "date" in day
             assert "word_count" in day
             assert "entry_count" in day
+
+
+@pytest.mark.statistics
+@pytest.mark.unit
+class TestWritingPatternsTimeOfDay:
+    """Test writing patterns time-of-day categorization."""
+
+    def test_time_of_day_categorization_boundaries(self, client):
+        """Time categorization correctly handles boundary hours."""
+        from apps.api.statistics_views import StatisticsView
+
+        view = StatisticsView()
+
+        assert view._categorize_time_of_day(0) == "night"
+        assert view._categorize_time_of_day(4) == "night"
+        assert view._categorize_time_of_day(5) == "morning"
+        assert view._categorize_time_of_day(11) == "morning"
+        assert view._categorize_time_of_day(12) == "afternoon"
+        assert view._categorize_time_of_day(17) == "afternoon"
+        assert view._categorize_time_of_day(18) == "evening"
+        assert view._categorize_time_of_day(23) == "evening"
+
+    def test_time_of_day_all_hours(self, client):
+        """All hours 0-23 are correctly categorized."""
+        from apps.api.statistics_views import StatisticsView
+
+        view = StatisticsView()
+
+        night_hours = [0, 1, 2, 3, 4]
+        morning_hours = [5, 6, 7, 8, 9, 10, 11]
+        afternoon_hours = [12, 13, 14, 15, 16, 17]
+        evening_hours = [18, 19, 20, 21, 22, 23]
+
+        for hour in night_hours:
+            assert view._categorize_time_of_day(hour) == "night"
+
+        for hour in morning_hours:
+            assert view._categorize_time_of_day(hour) == "morning"
+
+        for hour in afternoon_hours:
+            assert view._categorize_time_of_day(hour) == "afternoon"
+
+        for hour in evening_hours:
+            assert view._categorize_time_of_day(hour) == "evening"
+
+    def test_entries_grouped_by_local_time_not_utc(self, client):
+        """Entries are grouped by local time, not UTC time."""
+        user = UserFactory(timezone="America/New_York")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("America/New_York")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=base_date.replace(hour=7))
+        EntryFactory(user=user, created_at=base_date.replace(hour=13))
+        EntryFactory(user=user, created_at=base_date.replace(hour=19))
+        EntryFactory(user=user, created_at=base_date.replace(hour=2))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        time_of_day = data["writing_patterns"]["time_of_day"]
+
+        assert time_of_day["morning"] == 1
+        assert time_of_day["afternoon"] == 1
+        assert time_of_day["evening"] == 1
+        assert time_of_day["night"] == 1
+
+    def test_entries_grouped_by_local_time_across_timezones(self, client):
+        """Same UTC time categorizes differently based on user's local timezone."""
+        from apps.api.statistics_views import StatisticsView
+        from django.core.cache import cache
+
+        cache.clear()
+
+        user_prague = UserFactory(timezone="Europe/Prague")
+        user_tokyo = UserFactory(timezone="Asia/Tokyo")
+
+        utc_time = timezone.now()
+
+        EntryFactory(user=user_prague, created_at=utc_time)
+        EntryFactory(user=user_tokyo, created_at=utc_time)
+
+        client.force_login(user_prague)
+        response_prague = client.get(reverse("api:statistics"), {"period": "7d"})
+        data_prague = response_prague.json()
+        time_of_day_prague = data_prague["writing_patterns"]["time_of_day"]
+
+        client.logout()
+        cache.clear()
+        client.force_login(user_tokyo)
+        response_tokyo = client.get(reverse("api:statistics"), {"period": "7d"})
+        data_tokyo = response_tokyo.json()
+        time_of_day_tokyo = data_tokyo["writing_patterns"]["time_of_day"]
+
+        prague_hour = utc_time.astimezone(ZoneInfo("Europe/Prague")).hour
+        tokyo_hour = utc_time.astimezone(ZoneInfo("Asia/Tokyo")).hour
+
+        view = StatisticsView()
+        prague_category = view._categorize_time_of_day(prague_hour)
+        tokyo_category = view._categorize_time_of_day(tokyo_hour)
+
+        assert time_of_day_prague[prague_category] == 1
+        assert time_of_day_tokyo[tokyo_category] == 1
+
+    def test_time_of_day_distribution_aggregates_correctly(self, client):
+        """Multiple entries in the same time category are counted correctly."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory.create_batch(3, user=user, created_at=base_date.replace(hour=8))
+        EntryFactory.create_batch(2, user=user, created_at=base_date.replace(hour=14))
+        EntryFactory.create_batch(4, user=user, created_at=base_date.replace(hour=20))
+        EntryFactory.create_batch(1, user=user, created_at=base_date.replace(hour=3))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        time_of_day = data["writing_patterns"]["time_of_day"]
+
+        assert time_of_day["morning"] == 3
+        assert time_of_day["afternoon"] == 2
+        assert time_of_day["evening"] == 4
+        assert time_of_day["night"] == 1
+
+    def test_time_of_day_boundary_moment_after_midnight(self, client):
+        """Entry at 00:00 local time is categorized as night."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        now_local = timezone.now().astimezone(user_tz)
+        midnight_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        EntryFactory(user=user, created_at=midnight_local)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        time_of_day = data["writing_patterns"]["time_of_day"]
+
+        assert time_of_day["night"] == 1
+        assert time_of_day["morning"] == 0
+
+    def test_time_of_day_boundary_moment_before_morning(self, client):
+        """Entry at 04:59 local time is categorized as night, 05:00 as morning."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        now_local = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=now_local.replace(hour=4, minute=59))
+        EntryFactory(user=user, created_at=now_local.replace(hour=5, minute=0))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        time_of_day = data["writing_patterns"]["time_of_day"]
+
+        assert time_of_day["night"] == 1
+        assert time_of_day["morning"] == 1
+
+    def test_time_of_day_boundary_morning_to_afternoon(self, client):
+        """Entry at 11:59 local time is morning, 12:00 is afternoon."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        now_local = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=now_local.replace(hour=11, minute=59))
+        EntryFactory(user=user, created_at=now_local.replace(hour=12, minute=0))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        time_of_day = data["writing_patterns"]["time_of_day"]
+
+        assert time_of_day["morning"] == 1
+        assert time_of_day["afternoon"] == 1
+
+    def test_time_of_day_boundary_afternoon_to_evening(self, client):
+        """Entry at 17:59 local time is afternoon, 18:00 is evening."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        now_local = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=now_local.replace(hour=17, minute=59))
+        EntryFactory(user=user, created_at=now_local.replace(hour=18, minute=0))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        time_of_day = data["writing_patterns"]["time_of_day"]
+
+        assert time_of_day["afternoon"] == 1
+        assert time_of_day["evening"] == 1
+
+    def test_time_of_day_boundary_evening_to_night(self, client):
+        """Entry at 23:59 local time is evening, 00:00 is night."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        now_local = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=now_local.replace(hour=23, minute=59))
+        EntryFactory(user=user, created_at=now_local.replace(hour=0, minute=0))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        time_of_day = data["writing_patterns"]["time_of_day"]
+
+        assert time_of_day["evening"] == 1
+        assert time_of_day["night"] == 1
+
+    def test_time_of_day_with_negative_utc_offset_timezone(self, client):
+        """Time categorization works correctly with negative UTC offset timezone."""
+        user = UserFactory(timezone="America/Los_Angeles")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("America/Los_Angeles")
+        now_local = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=now_local.replace(hour=1))
+        EntryFactory(user=user, created_at=now_local.replace(hour=7))
+        EntryFactory(user=user, created_at=now_local.replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        time_of_day = data["writing_patterns"]["time_of_day"]
+
+        assert time_of_day["night"] == 1
+        assert time_of_day["morning"] == 1
+        assert time_of_day["afternoon"] == 1
+
+    def test_time_of_day_returns_zeros_with_no_entries(self, client):
+        """Writing patterns return all zeros when user has no entries."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        time_of_day = data["writing_patterns"]["time_of_day"]
+
+        assert time_of_day["morning"] == 0
+        assert time_of_day["afternoon"] == 0
+        assert time_of_day["evening"] == 0
+        assert time_of_day["night"] == 0
+
+
+@pytest.mark.statistics
+@pytest.mark.unit
+class TestWritingPatternsDayOfWeek:
+    """Test writing patterns day-of-week aggregation."""
+
+    def test_day_of_week_all_days_present_in_response(self, client):
+        """Response includes all 7 days of week even when no entries exist."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        assert len(day_of_week) == 7
+        assert "Monday" in day_of_week
+        assert "Tuesday" in day_of_week
+        assert "Wednesday" in day_of_week
+        assert "Thursday" in day_of_week
+        assert "Friday" in day_of_week
+        assert "Saturday" in day_of_week
+        assert "Sunday" in day_of_week
+
+        for day in day_of_week.values():
+            assert day == 0
+
+    def test_day_of_week_calendar_order_preserved(self, client):
+        """Days are always returned in calendar order (Mon-Sun) regardless of counts."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
+
+        EntryFactory(user=user, created_at=base_date)
+        EntryFactory(user=user, created_at=base_date)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        days_list = list(day_of_week.keys())
+        expected_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        assert days_list == expected_order
+
+    def test_day_of_week_calendar_order_with_sunday_most_entries(self, client):
+        """Sunday having most entries doesn't change calendar order (Mon-Sun)."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        now = timezone.now().astimezone(user_tz)
+
+        sunday_1 = now - timedelta(days=(now.weekday() + 1) % 7)
+        monday_1 = sunday_1 + timedelta(days=1)
+
+        EntryFactory.create_batch(10, user=user, created_at=sunday_1.replace(hour=12))
+        EntryFactory(user=user, created_at=monday_1.replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "30d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        days_list = list(day_of_week.keys())
+        expected_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        assert days_list == expected_order
+
+        assert day_of_week["Sunday"] == 10
+        assert day_of_week["Monday"] == 1
+
+    def test_day_of_week_single_entry_counted_correctly(self, client):
+        """Single entry is counted under correct day of week."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        now = timezone.now().astimezone(user_tz)
+
+        monday = now - timedelta(days=now.weekday())
+        EntryFactory(user=user, created_at=monday.replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        assert day_of_week["Monday"] == 1
+        assert day_of_week["Tuesday"] == 0
+        assert day_of_week["Wednesday"] == 0
+        assert day_of_week["Thursday"] == 0
+        assert day_of_week["Friday"] == 0
+        assert day_of_week["Saturday"] == 0
+        assert day_of_week["Sunday"] == 0
+
+    def test_day_of_week_multiple_entries_same_day(self, client):
+        """Multiple entries on same day are all counted correctly."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        now = timezone.now().astimezone(user_tz)
+
+        wednesday = now - timedelta(days=now.weekday() - 2)
+        EntryFactory.create_batch(5, user=user, created_at=wednesday.replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        assert day_of_week["Wednesday"] == 5
+        assert sum(day_of_week.values()) == 5
+
+    def test_day_of_week_entries_across_multiple_weeks(self, client):
+        """Entries on same day across multiple weeks are aggregated correctly."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+
+        base_date = datetime(2024, 1, 5, 12, 0, 0, tzinfo=user_tz)
+
+        friday_1 = base_date
+        friday_2 = base_date - timedelta(weeks=1)
+        friday_3 = base_date - timedelta(weeks=2)
+
+        EntryFactory.create_batch(3, user=user, created_at=friday_1)
+        EntryFactory.create_batch(2, user=user, created_at=friday_2)
+        EntryFactory.create_batch(4, user=user, created_at=friday_3)
+
+        with patch("django.utils.timezone.now", return_value=base_date + timedelta(days=1)):
+            response = client.get(reverse("api:statistics"), {"period": "30d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        assert day_of_week["Friday"] == 9
+
+    def test_day_of_week_distribution_all_days_with_entries(self, client):
+        """Entries on all 7 days are counted correctly."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+
+        monday = datetime(2024, 1, 1, 10, 0, 0, tzinfo=user_tz)
+        tuesday = monday + timedelta(days=1)
+        wednesday = monday + timedelta(days=2)
+        thursday = monday + timedelta(days=3)
+        friday = monday + timedelta(days=4)
+        saturday = monday + timedelta(days=5)
+        sunday = monday + timedelta(days=6)
+
+        EntryFactory(user=user, created_at=monday)
+        EntryFactory.create_batch(2, user=user, created_at=tuesday)
+        EntryFactory.create_batch(3, user=user, created_at=wednesday)
+        EntryFactory.create_batch(4, user=user, created_at=thursday)
+        EntryFactory.create_batch(5, user=user, created_at=friday)
+        EntryFactory.create_batch(6, user=user, created_at=saturday)
+        EntryFactory.create_batch(7, user=user, created_at=sunday)
+
+        with patch("django.utils.timezone.now", return_value=sunday + timedelta(days=1)):
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        assert day_of_week["Monday"] == 1
+        assert day_of_week["Tuesday"] == 2
+        assert day_of_week["Wednesday"] == 3
+        assert day_of_week["Thursday"] == 4
+        assert day_of_week["Friday"] == 5
+        assert day_of_week["Saturday"] == 6
+        assert day_of_week["Sunday"] == 7
+        assert sum(day_of_week.values()) == 28
+
+    def test_day_of_week_multiple_entries_per_day_across_weeks(self, client):
+        """Multiple entries per day across multiple weeks counted correctly."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+
+        tuesday_1 = datetime(2024, 1, 16, 12, 0, 0, tzinfo=user_tz)
+        tuesday_2 = datetime(2024, 1, 9, 12, 0, 0, tzinfo=user_tz)
+        tuesday_3 = datetime(2024, 1, 2, 12, 0, 0, tzinfo=user_tz)
+
+        EntryFactory.create_batch(3, user=user, created_at=tuesday_1)
+        EntryFactory.create_batch(2, user=user, created_at=tuesday_2)
+        EntryFactory.create_batch(4, user=user, created_at=tuesday_3)
+
+        with patch("django.utils.timezone.now", return_value=tuesday_1 + timedelta(days=1)):
+            response = client.get(reverse("api:statistics"), {"period": "30d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        assert day_of_week["Tuesday"] == 9
+        assert day_of_week["Monday"] == 0
+        assert day_of_week["Wednesday"] == 0
+        assert day_of_week["Thursday"] == 0
+        assert day_of_week["Friday"] == 0
+        assert day_of_week["Saturday"] == 0
+        assert day_of_week["Sunday"] == 0
+        assert sum(day_of_week.values()) == 9
+
+    def test_day_of_week_week_boundary_crossing(self, client):
+        """Entries near week boundary are assigned to correct day."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+
+        saturday = datetime(2024, 1, 6, 23, 59, 0, tzinfo=user_tz)
+        sunday = datetime(2024, 1, 7, 0, 1, 0, tzinfo=user_tz)
+        monday = datetime(2024, 1, 8, 0, 0, 0, tzinfo=user_tz)
+
+        EntryFactory(user=user, created_at=saturday)
+        EntryFactory(user=user, created_at=sunday)
+        EntryFactory(user=user, created_at=monday)
+
+        with patch("django.utils.timezone.now", return_value=monday + timedelta(days=1)):
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        assert day_of_week["Saturday"] == 1
+        assert day_of_week["Sunday"] == 1
+        assert day_of_week["Monday"] == 1
+
+    def test_day_of_week_timezone_awareness(self, client):
+        """Day of week uses user's timezone, not UTC."""
+        from django.core.cache import cache
+
+        cache.clear()
+
+        user_utc = UserFactory(timezone="UTC")
+        user_tokyo = UserFactory(timezone="Asia/Tokyo")
+
+        utc_time = datetime(2024, 1, 16, 3, 0, 0, tzinfo=ZoneInfo("UTC"))
+
+        EntryFactory(user=user_tokyo, created_at=utc_time)
+
+        with patch("django.utils.timezone.now", return_value=utc_time + timedelta(days=1)):
+            client.force_login(user_tokyo)
+
+            response_tokyo = client.get(reverse("api:statistics"), {"period": "7d"})
+            data_tokyo = response_tokyo.json()
+            day_of_week_tokyo = data_tokyo["writing_patterns"]["day_of_week"]
+
+            assert day_of_week_tokyo["Tuesday"] == 1
+
+    def test_day_of_week_dst_transition_spring_forward(self, client):
+        """Day of week calculation is correct during spring forward DST transition."""
+        from unittest.mock import patch
+
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        spring_forward_2024 = datetime(2024, 3, 31, 12, 0, 0, tzinfo=user_tz)
+
+        with patch("django.utils.timezone.now") as mock_now:
+            mock_now.return_value = spring_forward_2024
+
+            EntryFactory(
+                user=user,
+                created_at=spring_forward_2024,
+            )
+
+            EntryFactory(
+                user=user,
+                created_at=spring_forward_2024 - timedelta(days=7),
+            )
+
+            EntryFactory(
+                user=user,
+                created_at=spring_forward_2024 - timedelta(days=14),
+            )
+
+            response = client.get(reverse("api:statistics"), {"period": "30d"})
+
+            assert response.status_code == 200
+            data = response.json()
+            day_of_week = data["writing_patterns"]["day_of_week"]
+
+            assert day_of_week["Sunday"] == 3
+
+    def test_day_of_week_dst_transition_fall_back(self, client):
+        """Day of week calculation is correct during fall back DST transition."""
+        from unittest.mock import patch
+
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        fall_back_2024 = datetime(2024, 10, 27, 12, 0, 0, tzinfo=user_tz)
+
+        with patch("django.utils.timezone.now") as mock_now:
+            mock_now.return_value = fall_back_2024
+
+            EntryFactory(
+                user=user,
+                created_at=fall_back_2024,
+            )
+
+            EntryFactory(
+                user=user,
+                created_at=fall_back_2024.replace(hour=1, fold=0),
+            )
+
+            EntryFactory(
+                user=user,
+                created_at=fall_back_2024.replace(hour=2, fold=0),
+            )
+
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+            assert response.status_code == 200
+            data = response.json()
+            day_of_week = data["writing_patterns"]["day_of_week"]
+
+            assert day_of_week["Sunday"] == 3
+
+    def test_day_of_week_period_filtering(self, client):
+        """Day of week aggregation respects period parameter."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+
+        monday_recent = datetime(2024, 1, 8, 12, 0, 0, tzinfo=user_tz)
+        monday_old = datetime(2024, 1, 1, 12, 0, 0, tzinfo=user_tz)
+
+        EntryFactory(user=user, created_at=monday_recent)
+        EntryFactory(user=user, created_at=monday_old)
+
+        with patch("django.utils.timezone.now", return_value=monday_recent + timedelta(days=1)):
+            response_7d = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        with patch("django.utils.timezone.now", return_value=monday_recent + timedelta(days=1)):
+            response_30d = client.get(reverse("api:statistics"), {"period": "30d"})
+
+        assert response_7d.status_code == 200
+        assert response_30d.status_code == 200
+
+        data_7d = response_7d.json()
+        data_30d = response_30d.json()
+
+        day_of_week_7d = data_7d["writing_patterns"]["day_of_week"]
+        day_of_week_30d = data_30d["writing_patterns"]["day_of_week"]
+
+        assert day_of_week_7d["Monday"] == 1
+        assert day_of_week_30d["Monday"] == 2
+
+    def test_day_of_week_all_period_includes_all_entries(self, client):
+        """'all' period includes entries for all time in day of week aggregation."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+
+        wednesday_1 = datetime(2024, 1, 3, 12, 0, 0, tzinfo=user_tz)
+        wednesday_2 = datetime(2023, 10, 4, 12, 0, 0, tzinfo=user_tz)
+        wednesday_3 = datetime(2023, 9, 6, 12, 0, 0, tzinfo=user_tz)
+
+        EntryFactory.create_batch(2, user=user, created_at=wednesday_1)
+        EntryFactory.create_batch(3, user=user, created_at=wednesday_2)
+        EntryFactory.create_batch(5, user=user, created_at=wednesday_3)
+
+        with patch("django.utils.timezone.now", return_value=wednesday_1 + timedelta(days=1)):
+            response = client.get(reverse("api:statistics"), {"period": "all"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        assert day_of_week["Wednesday"] == 10
+
+    def test_day_of_week_weekend_vs_weekday(self, client):
+        """Entries correctly categorized as weekend vs weekday."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+
+        monday = datetime(2024, 1, 1, 10, 0, 0, tzinfo=user_tz)
+        saturday = datetime(2024, 1, 6, 10, 0, 0, tzinfo=user_tz)
+        sunday = datetime(2024, 1, 7, 10, 0, 0, tzinfo=user_tz)
+
+        EntryFactory.create_batch(4, user=user, created_at=monday)
+        EntryFactory.create_batch(5, user=user, created_at=saturday)
+        EntryFactory.create_batch(6, user=user, created_at=sunday)
+
+        with patch("django.utils.timezone.now", return_value=sunday + timedelta(days=1)):
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        day_of_week = data["writing_patterns"]["day_of_week"]
+
+        weekday_total = day_of_week["Monday"] + day_of_week["Tuesday"] + day_of_week["Wednesday"] + day_of_week["Thursday"] + day_of_week["Friday"]
+        weekend_total = day_of_week["Saturday"] + day_of_week["Sunday"]
+
+        assert weekday_total == 4
+        assert weekend_total == 11
+
+    def test_day_of_week_consistency_with_entry_count(self, client):
+        """Day of week sums match total entry count for period."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        now = timezone.now().astimezone(user_tz)
+
+        for i in range(21):
+            entry_date = now - timedelta(days=i)
+            EntryFactory(user=user, created_at=entry_date.replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "30d"})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        day_of_week = data["writing_patterns"]["day_of_week"]
+        total_entries = data["word_count_analytics"]["total_entries"]
+
+        assert sum(day_of_week.values()) == total_entries
+        assert total_entries == 21
+
+
+@pytest.mark.statistics
+@pytest.mark.unit
+class TestWritingPatternsConsistencyRate:
+    """Test writing patterns consistency_rate calculation."""
+
+    def test_consistency_rate_100_percent(self, client):
+        """Consistency rate is 100% when entries exist every day."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        for i in range(7):
+            day_date = base_date - timedelta(days=i)
+            EntryFactory(user=user, created_at=day_date.replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_0_percent_no_entries(self, client):
+        """Consistency rate is 0% when user has no entries."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 0.0
+
+    def test_consistency_rate_partial_entries_half_days(self, client):
+        """Consistency rate is 50% when entries on half the days."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=base_date.replace(hour=12))
+        EntryFactory(user=user, created_at=(base_date - timedelta(days=1)).replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_counts_only_active_days(self, client):
+        """Consistency rate only counts days with at least one entry."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=base_date.replace(hour=10))
+        EntryFactory(user=user, created_at=base_date.replace(hour=14))
+        EntryFactory(user=user, created_at=base_date.replace(hour=18))
+
+        EntryFactory(user=user, created_at=(base_date - timedelta(days=1)).replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_multiple_entries_same_day_counted_once(self, client):
+        """Multiple entries on same day count as one active day."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory.create_batch(5, user=user, created_at=base_date.replace(hour=8))
+        EntryFactory.create_batch(3, user=user, created_at=base_date.replace(hour=12))
+
+        EntryFactory.create_batch(2, user=user, created_at=(base_date - timedelta(days=1)).replace(hour=10))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_75_percent_three_of_four_days(self, client):
+        """Consistency rate is 75% when entries on 3 out of 4 days."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=base_date.replace(hour=12))
+        EntryFactory(user=user, created_at=(base_date - timedelta(days=1)).replace(hour=12))
+        EntryFactory(user=user, created_at=(base_date - timedelta(days=2)).replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_all_period(self, client):
+        """Consistency rate calculation works correctly with 'all' period."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        for i in range(5):
+            day_date = base_date - timedelta(days=i)
+            EntryFactory(user=user, created_at=day_date.replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "all"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_30d_period(self, client):
+        """Consistency rate calculation works correctly with 30d period."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        for i in range(10):
+            day_date = base_date - timedelta(days=i)
+            EntryFactory(user=user, created_at=day_date.replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "30d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_across_dst_transition(self, client):
+        """Consistency rate calculation is correct during DST transition."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        spring_forward = datetime(2024, 3, 31, 12, 0, 0, tzinfo=user_tz)
+
+        with patch("django.utils.timezone.now") as mock_now:
+            mock_now.return_value = spring_forward
+
+            EntryFactory(user=user, created_at=spring_forward - timedelta(days=1))
+            EntryFactory(user=user, created_at=spring_forward)
+
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+            assert response.status_code == 200
+            data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+
+@pytest.mark.statistics
+@pytest.mark.integration
+class TestWritingPatternsIntegration:
+    """Integration tests for writing patterns across the statistics API."""
+
+    def test_writing_patterns_key_exists_in_response(self, client):
+        """Statistics API returns writing_patterns key in response."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "writing_patterns" in data
+
+    def test_writing_patterns_contains_all_required_fields(self, client):
+        """writing_patterns dictionary contains all required fields."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        required_fields = [
+            "consistency_rate",
+            "time_of_day",
+            "day_of_week",
+            "streak_history",
+        ]
+
+        for field in required_fields:
+            assert field in writing_patterns, f"Missing required field: {field}"
+
+    def test_writing_patterns_with_no_entries(self, client):
+        """writing_patterns returns correct structure with no entries."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 0.0
+        assert writing_patterns["time_of_day"] == {
+            "morning": 0,
+            "afternoon": 0,
+            "evening": 0,
+            "night": 0,
+        }
+        assert writing_patterns["day_of_week"] == {
+            "Monday": 0,
+            "Tuesday": 0,
+            "Wednesday": 0,
+            "Thursday": 0,
+            "Friday": 0,
+            "Saturday": 0,
+            "Sunday": 0,
+        }
+        assert writing_patterns["streak_history"] == []
+
+    def test_writing_patterns_across_all_time_periods(self, client):
+        """writing_patterns works correctly for all valid time periods."""
+        from django.core.cache import cache
+
+        user = UserFactory(timezone="Europe/Prague")
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        for i in range(5):
+            EntryFactory(user=user, created_at=base_date - timedelta(days=i))
+
+        client.force_login(user)
+
+        periods = ["7d", "30d", "90d", "1y", "all"]
+
+        for period in periods:
+            cache.clear()
+            response = client.get(reverse("api:statistics"), {"period": period})
+
+            assert response.status_code == 200
+            data = response.json()
+
+            assert "writing_patterns" in data
+            writing_patterns = data["writing_patterns"]
+
+            required_fields = [
+                "consistency_rate",
+                "time_of_day",
+                "day_of_week",
+                "streak_history",
+            ]
+
+            for field in required_fields:
+                assert field in writing_patterns
+
+            assert isinstance(writing_patterns["consistency_rate"], float)
+            assert isinstance(writing_patterns["time_of_day"], dict)
+            assert isinstance(writing_patterns["day_of_week"], dict)
+            assert isinstance(writing_patterns["streak_history"], list)
+
+    def test_time_categorization_respects_prague_timezone(self, client):
+        """Entries in Prague timezone categorize correctly by local time."""
+        from django.core.cache import cache
+
+        cache.clear()
+
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=base_date.replace(hour=8))
+        EntryFactory(user=user, created_at=base_date.replace(hour=14))
+        EntryFactory(user=user, created_at=base_date.replace(hour=20))
+        EntryFactory(user=user, created_at=base_date.replace(hour=2))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+        time_of_day = writing_patterns["time_of_day"]
+
+        assert time_of_day["morning"] == 1
+        assert time_of_day["afternoon"] == 1
+        assert time_of_day["evening"] == 1
+        assert time_of_day["night"] == 1
+
+    def test_time_categorization_respects_tokyo_timezone(self, client):
+        """Entries in Tokyo timezone categorize correctly by local time."""
+        from django.core.cache import cache
+
+        cache.clear()
+
+        user = UserFactory(timezone="Asia/Tokyo")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Asia/Tokyo")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=base_date.replace(hour=8))
+        EntryFactory(user=user, created_at=base_date.replace(hour=14))
+        EntryFactory(user=user, created_at=base_date.replace(hour=20))
+        EntryFactory(user=user, created_at=base_date.replace(hour=2))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+        time_of_day = writing_patterns["time_of_day"]
+
+        assert time_of_day["morning"] == 1
+        assert time_of_day["afternoon"] == 1
+        assert time_of_day["evening"] == 1
+        assert time_of_day["night"] == 1
+
+    def test_time_categorization_respects_new_york_timezone(self, client):
+        """Entries in New York timezone categorize correctly by local time."""
+        from django.core.cache import cache
+
+        cache.clear()
+
+        user = UserFactory(timezone="America/New_York")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("America/New_York")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=base_date.replace(hour=8))
+        EntryFactory(user=user, created_at=base_date.replace(hour=14))
+        EntryFactory(user=user, created_at=base_date.replace(hour=20))
+        EntryFactory(user=user, created_at=base_date.replace(hour=2))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+        time_of_day = writing_patterns["time_of_day"]
+
+        assert time_of_day["morning"] == 1
+        assert time_of_day["afternoon"] == 1
+        assert time_of_day["evening"] == 1
+        assert time_of_day["night"] == 1
+
+    def test_same_utc_time_categorizes_differently_by_timezone(self, client):
+        """Same UTC time categorizes differently based on user's local timezone."""
+        from django.core.cache import cache
+        from apps.api.statistics_views import StatisticsView
+
+        cache.clear()
+
+        user_prague = UserFactory(timezone="Europe/Prague")
+        user_tokyo = UserFactory(timezone="Asia/Tokyo")
+
+        utc_time = timezone.now()
+
+        EntryFactory(user=user_prague, created_at=utc_time)
+        EntryFactory(user=user_tokyo, created_at=utc_time)
+
+        client.force_login(user_prague)
+        response_prague = client.get(reverse("api:statistics"), {"period": "7d"})
+        data_prague = response_prague.json()
+        time_of_day_prague = data_prague["writing_patterns"]["time_of_day"]
+
+        client.logout()
+        cache.clear()
+        client.force_login(user_tokyo)
+        response_tokyo = client.get(reverse("api:statistics"), {"period": "7d"})
+        data_tokyo = response_tokyo.json()
+        time_of_day_tokyo = data_tokyo["writing_patterns"]["time_of_day"]
+
+        prague_hour = utc_time.astimezone(ZoneInfo("Europe/Prague")).hour
+        tokyo_hour = utc_time.astimezone(ZoneInfo("Asia/Tokyo")).hour
+
+        view = StatisticsView()
+        prague_category = view._categorize_time_of_day(prague_hour)
+        tokyo_category = view._categorize_time_of_day(tokyo_hour)
+
+        assert time_of_day_prague[prague_category] == 1
+        assert time_of_day_tokyo[tokyo_category] == 1
+
+    def test_day_of_week_categorization_respects_timezone(self, client):
+        """Day of week categorization respects user's local timezone."""
+        from django.core.cache import cache
+
+        cache.clear()
+
+        user_prague = UserFactory(timezone="Europe/Prague")
+        user_tokyo = UserFactory(timezone="Asia/Tokyo")
+
+        user_tz_prague = ZoneInfo("Europe/Prague")
+        user_tz_tokyo = ZoneInfo("Asia/Tokyo")
+
+        base_date_utc = timezone.now()
+
+        prague_date = base_date_utc.astimezone(user_tz_prague)
+        tokyo_date = base_date_utc.astimezone(user_tz_tokyo)
+
+        EntryFactory(user=user_prague, created_at=base_date_utc)
+        EntryFactory(user=user_tokyo, created_at=base_date_utc)
+
+        client.force_login(user_prague)
+        response_prague = client.get(reverse("api:statistics"), {"period": "7d"})
+        data_prague = response_prague.json()
+        day_of_week_prague = data_prague["writing_patterns"]["day_of_week"]
+
+        client.logout()
+        cache.clear()
+        client.force_login(user_tokyo)
+        response_tokyo = client.get(reverse("api:statistics"), {"period": "7d"})
+        data_tokyo = response_tokyo.json()
+        day_of_week_tokyo = data_tokyo["writing_patterns"]["day_of_week"]
+
+        day_names = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
+
+        prague_day_name = prague_date.strftime("%A")
+        tokyo_day_name = tokyo_date.strftime("%A")
+
+        assert prague_day_name in day_names
+        assert tokyo_day_name in day_names
+
+        if prague_date.day == tokyo_date.day:
+            assert day_of_week_prague[prague_day_name] == 1
+            assert day_of_week_tokyo[tokyo_day_name] == 1
+
+    def test_writing_patterns_user_isolation(self, client):
+        """Users only see their own writing patterns."""
+        from django.core.cache import cache
+
+        cache.clear()
+
+        user1 = UserFactory(timezone="Europe/Prague")
+        user2 = UserFactory(timezone="Europe/Prague")
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory.create_batch(5, user=user1, created_at=base_date)
+        EntryFactory.create_batch(3, user=user2, created_at=base_date)
+
+        client.force_login(user1)
+        response_user1 = client.get(reverse("api:statistics"), {"period": "7d"})
+        data_user1 = response_user1.json()
+        writing_patterns_user1 = data_user1["writing_patterns"]
+
+        client.logout()
+        cache.clear()
+        client.force_login(user2)
+        response_user2 = client.get(reverse("api:statistics"), {"period": "7d"})
+        data_user2 = response_user2.json()
+        writing_patterns_user2 = data_user2["writing_patterns"]
+
+        total_entries_user1 = sum(writing_patterns_user1["time_of_day"].values())
+        total_entries_user2 = sum(writing_patterns_user2["time_of_day"].values())
+
+        assert total_entries_user1 == 5
+        assert total_entries_user2 == 3
+
+    def test_streak_history_in_writing_patterns(self, client):
+        """streak_history in writing_patterns returns correct data structure."""
+        user = UserFactory(timezone="Europe/Prague")
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        for i in range(5):
+            EntryFactory(user=user, created_at=base_date - timedelta(days=i))
+
+        client.force_login(user)
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+        streak_history = writing_patterns["streak_history"]
+
+        assert isinstance(streak_history, list)
+        assert len(streak_history) > 0
+
+        streak = streak_history[0]
+        assert "start_date" in streak
+        assert "end_date" in streak
+        assert "length" in streak
+        assert isinstance(streak["length"], int)
+        assert streak["length"] > 0
+
+    def test_consistency_rate_in_writing_patterns(self, client):
+        """consistency_rate in writing_patterns returns float between 0-100."""
+        user = UserFactory(timezone="Europe/Prague")
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        for i in range(3):
+            EntryFactory(user=user, created_at=base_date - timedelta(days=i))
+
+        client.force_login(user)
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+        consistency_rate = writing_patterns["consistency_rate"]
+
+        assert isinstance(consistency_rate, float)
+        assert 0.0 <= consistency_rate <= 100.0
+
+    def test_consistency_rate_timezone_awareness(self, client):
+        """Consistency rate uses user's timezone for day boundaries."""
+        user = UserFactory(timezone="America/New_York")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("America/New_York")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=base_date.replace(hour=1))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_single_day_with_entries(self, client):
+        """Consistency rate is 100% when all entries are on a single day."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory.create_batch(5, user=user, created_at=base_date.replace(hour=10))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_entries_at_boundaries(self, client):
+        """Entries at day boundaries (00:00, 23:59) count correctly."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+        day_start = base_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        EntryFactory(user=user, created_at=day_start + timedelta(hours=0))
+        EntryFactory(user=user, created_at=day_start + timedelta(hours=23, minutes=59))
+        EntryFactory(user=user, created_at=(day_start - timedelta(days=1)).replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_period_90d(self, client):
+        """Consistency rate calculation works correctly with 90d period."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        for i in range(15):
+            day_date = base_date - timedelta(days=i)
+            EntryFactory(user=user, created_at=day_date.replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "90d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0
+
+    def test_consistency_rate_with_gaps(self, client):
+        """Consistency rate accounts for gaps between entries."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=base_date.replace(hour=12))
+        EntryFactory(user=user, created_at=(base_date - timedelta(days=3)).replace(hour=12))
+        EntryFactory(user=user, created_at=(base_date - timedelta(days=6)).replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        expected_rate = round((3 / 7) * 100, 2)
+        assert writing_patterns["consistency_rate"] == expected_rate
+
+    def test_consistency_rate_33_percent_one_of_three_days(self, client):
+        """Consistency rate is approximately 33.33% when entries on 1 out of 3 days."""
+        user = UserFactory(timezone="Europe/Prague")
+        client.force_login(user)
+
+        user_tz = ZoneInfo("Europe/Prague")
+        base_date = timezone.now().astimezone(user_tz)
+
+        EntryFactory(user=user, created_at=base_date.replace(hour=12))
+        EntryFactory(user=user, created_at=(base_date - timedelta(days=1)).replace(hour=12))
+        EntryFactory(user=user, created_at=(base_date - timedelta(days=2)).replace(hour=12))
+
+        response = client.get(reverse("api:statistics"), {"period": "7d"})
+
+        assert response.status_code == 200
+        data = response.json()
+        writing_patterns = data["writing_patterns"]
+
+        assert writing_patterns["consistency_rate"] == 100.0

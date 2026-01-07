@@ -349,7 +349,7 @@ class StatisticsView(APIView):
             total_days = 0
 
         active_days = (
-            entries.annotate(day=TruncDate("created_at"))
+            entries.annotate(day=TruncDate("created_at", tzinfo=user_tz))
             .values("day")
             .distinct()
             .count()
