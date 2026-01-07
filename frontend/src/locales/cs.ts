@@ -290,6 +290,17 @@ export interface Translations {
       sunday: string;
       sundayAbbr: string;
     };
+    streakHistory: {
+      title: string;
+      noData: string;
+      longest: string;
+      current: string;
+      daySingular: string;
+      daysPlural: string;
+      encouragement: string;
+      newRecord: string;
+      matchingRecord: string;
+    };
   };
 }
 
@@ -592,6 +603,17 @@ export const cs: Translations = {
       saturdayAbbr: 'So',
       sunday: 'Neděle',
       sundayAbbr: 'Ne',
+    },
+    streakHistory: {
+      title: 'HISTORIE STREAKU',
+      noData: 'Zatím žádná data o streaku',
+      longest: 'Nejdelší',
+      current: 'Aktuální',
+      daySingular: 'den',
+      daysPlural: 'dní',
+      encouragement: 'Tvůj nejdelší streak byl {days} dní – můžeš ho překonat!',
+      newRecord: 'Gratulujeme! Tvůj aktuální streak ({days} dní) je nový rekord!',
+      matchingRecord: 'Skvělé! Vyrovnal jsi svůj rekord {days} dní!',
     },
   },
 };

@@ -300,5 +300,16 @@ export const en: Translations = {
       sunday: 'Sunday',
       sundayAbbr: 'Sun',
     },
+    streakHistory: {
+      title: 'STREAK HISTORY',
+      noData: 'No streak history yet',
+      longest: 'Longest',
+      current: 'Current',
+      daySingular: 'day',
+      daysPlural: 'days',
+      encouragement: 'Your longest streak was {days} days – you can beat it!',
+      newRecord: 'Congrats! Your current streak ({days} days) is a new record!',
+      matchingRecord: 'Amazing! You matched your record of {days} days!',
+    },
   },
 };
