@@ -24,7 +24,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
       aria-hidden="true"
     >
       <div
-        ref={modalRef as React.RefObject<HTMLElement>}
+        ref={modalRef as React.RefObject<HTMLDivElement>}
         className={cn(
           'bg-bg-panel border-2 border-border shadow-hard max-w-lg w-full mx-4',
           className

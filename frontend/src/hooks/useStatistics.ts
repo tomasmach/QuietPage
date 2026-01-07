@@ -68,6 +68,16 @@ export function useStatistics(period: PeriodType = '30d'): UseStatisticsReturn {
             entryCount: response.word_count_analytics.best_day.entry_count,
           } : null,
         },
+        writingPatterns: {
+          consistencyRate: response.writing_patterns.consistency_rate,
+          timeOfDay: response.writing_patterns.time_of_day,
+          dayOfWeek: response.writing_patterns.day_of_week,
+          streakHistory: response.writing_patterns.streak_history.map(streak => ({
+            startDate: streak.start_date,
+            endDate: streak.end_date,
+            length: streak.length,
+          })),
+        },
       };
 
       setData(statisticsData);

@@ -19,7 +19,7 @@ export function TodayEntryPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const { entry, isLoading, error, exists, refresh } = useTodayEntry();
+  const { entry, isLoading, error, exists } = useTodayEntry();
   const { data: dashboardData } = useDashboard();
   const [content, setContent] = useState('');
   const [moodRating, setMoodRating] = useState<number | null>(null);

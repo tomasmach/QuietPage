@@ -147,7 +147,6 @@ class ApiClient {
       // Create error with full error data preserved
       // For register/login endpoints, the error is in errorData.errors or direct in errorData
       const errorPayload = errorData.errors || errorData;
-      const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
       const error = new Error(JSON.stringify(errorPayload));
 
       // Suppress console errors for expected 403 on auth check endpoints

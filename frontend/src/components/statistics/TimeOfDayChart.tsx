@@ -11,6 +11,7 @@ interface ChartData {
   value: number;
   color: string;
   description: string;
+  [key: string]: string | number; // Index signature for Recharts compatibility
 }
 
 /**
@@ -83,9 +84,9 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
   const total = chartData.reduce((sum, item) => sum + item.value, 0);
 
   // Custom label to display percentage on each segment
-  const renderLabel = (entry: ChartData) => {
-    const percentage = ((entry.value / total) * 100).toFixed(0);
-    return entry.value > 0 ? `${percentage}%` : '';
+  const renderLabel = (props: { value: number }): string => {
+    const percentage = ((props.value / total) * 100).toFixed(0);
+    return props.value > 0 ? `${percentage}%` : '';
   };
 
   // Custom legend renderer with time period descriptions
@@ -118,7 +119,12 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
   };
 
   // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
+  interface TooltipProps {
+    active?: boolean;
+    payload?: Array<{ payload: ChartData }>;
+  }
+  
+  const CustomTooltip = ({ active, payload }: TooltipProps) => {
     if (!active || !payload || !payload.length) return null;
 
     const data = payload[0].payload as ChartData;
