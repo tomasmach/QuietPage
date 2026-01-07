@@ -1,5 +1,6 @@
 import type { StatisticsData } from '../../types/statistics';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { MoodTrendBadge } from './MoodTrendBadge';
 
 interface StatsSummaryCardsProps {
   data: StatisticsData;
@@ -14,6 +15,7 @@ export function StatsSummaryCards({ data }: StatsSummaryCardsProps) {
       label: t('statistics.summaryCards.avgMood'),
       value: moodAnalytics.average ? moodAnalytics.average.toFixed(1) : 'N/A',
       subtitle: `${moodAnalytics.totalRatedEntries} ${t('statistics.summaryCards.ratedEntries')}`,
+      badge: <MoodTrendBadge trend={moodAnalytics.trend} />,
     },
     {
       label: t('statistics.summaryCards.totalWords'),
@@ -42,9 +44,12 @@ export function StatsSummaryCards({ data }: StatsSummaryCardsProps) {
           <p className="text-xs font-bold uppercase tracking-widest text-text-muted font-mono mb-2">
             {card.label}
           </p>
-          <p className="text-3xl font-bold text-text-main font-mono">
-            {card.value}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-3xl font-bold text-text-main font-mono">
+              {card.value}
+            </p>
+            {'badge' in card && card.badge}
+          </div>
           <p className="text-xs text-text-muted font-mono mt-1">
             {card.subtitle}
           </p>
