@@ -14,3 +14,4 @@ export { MoodTrendBadge } from './MoodTrendBadge';
 export { BestDayHighlight } from './BestDayHighlight';
 export { MilestonesGrid } from './MilestonesGrid';
 export { GoalStreakCard } from './GoalStreakCard';
+export { PersonalRecordsCard } from './PersonalRecordsCard';

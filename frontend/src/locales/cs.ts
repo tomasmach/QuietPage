@@ -379,6 +379,17 @@ export interface Translations {
       active: string;
       inactive: string;
     };
+    records: {
+      title: string;
+      longestEntry: string;
+      mostProductiveDay: string;
+      longestStreak: string;
+      longestGoalStreak: string;
+      words: string;
+      days: string;
+      entries: string;
+      noRecords: string;
+    };
   };
 }
 
@@ -770,6 +781,17 @@ export const cs: Translations = {
       perDay: 'slov/den cíl',
       active: 'Jsi v plamenech!',
       inactive: 'Začni novou sérii dnes!',
+    },
+    records: {
+      title: 'OSOBNÍ REKORDY',
+      longestEntry: 'Nejdelší zápis',
+      mostProductiveDay: 'Nejproduktivnější den',
+      longestStreak: 'Nejdelší série',
+      longestGoalStreak: 'Nejdelší série 750',
+      words: 'slov',
+      days: 'dní',
+      entries: 'zápisů',
+      noRecords: 'Začni psát a vytvoř si rekordy!',
     },
   },
 };

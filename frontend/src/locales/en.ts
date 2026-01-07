@@ -389,5 +389,16 @@ export const en: Translations = {
       active: "You're on fire!",
       inactive: 'Start a new streak today!',
     },
+    records: {
+      title: 'PERSONAL RECORDS',
+      longestEntry: 'Longest Entry',
+      mostProductiveDay: 'Most Productive Day',
+      longestStreak: 'Longest Streak',
+      longestGoalStreak: 'Longest 750 Streak',
+      words: 'words',
+      days: 'days',
+      entries: 'entries',
+      noRecords: 'Start writing to set records!',
+    },
   },
 };
