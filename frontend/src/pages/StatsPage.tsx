@@ -15,6 +15,7 @@ import { DayOfWeekChart } from '../components/statistics/DayOfWeekChart';
 import { StreakHistoryList } from '../components/statistics/StreakHistoryList';
 import { TagAnalyticsChart } from '../components/statistics/TagAnalyticsChart';
 import { BestDayHighlight } from '../components/statistics/BestDayHighlight';
+import { MilestonesGrid } from '../components/statistics/MilestonesGrid';
 import { StatisticsLoading } from '../components/statistics/StatisticsLoading';
 import { StatisticsError } from '../components/statistics/StatisticsError';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -53,6 +54,9 @@ export function StatsPage() {
 
             {/* Best Day Highlight */}
             <BestDayHighlight data={data.wordCountAnalytics.bestDay ?? undefined} />
+
+            {/* Milestones / Achievements */}
+            <MilestonesGrid data={data.milestones} />
 
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
