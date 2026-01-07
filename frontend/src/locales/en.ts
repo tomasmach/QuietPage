@@ -256,4 +256,13 @@ export const en: Translations = {
     // Account
     accountDeleted: 'Account deleted',
   },
+  statistics: {
+    frequencyHeatmap: {
+      title: 'WRITING FREQUENCY (90 DAYS)',
+      noWriting: 'No writing',
+      words: 'words',
+      less: 'LESS',
+      more: 'MORE',
+    },
+  },
 };

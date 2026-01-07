@@ -8,6 +8,13 @@ This file provides coding guidelines for AI agents working in the QuietPage repo
 **Stack:** Django 6.0 (REST API) + React 19 + TypeScript + Vite  
 **Key Features:** Field-level encryption (Fernet), timezone-aware streaks, session auth
 
+**Important Context:**  
+This is a personal derivation of **750words.com**, designed around the concept of **one entry per day**. Users are expected to write one daily entry (750+ words recommended but not enforced). While multiple entries per day are technically allowed, the streak system only counts unique days with content (word_count > 0). This one-entry-per-day philosophy influences:
+- Streak calculation (same-day entries don't extend streaks)
+- Dashboard statistics (focuses on daily consistency)
+- UI/UX design (emphasizes daily writing habit)
+- Backdated entries (allowed without breaking current streak)
+
 ---
 
 ## Build, Lint & Test Commands
@@ -168,7 +175,7 @@ except SpecificException as e:
 
 ### Frontend (React/TypeScript)
 
-**Always follow `frontend/styles.md` for UI component patterns.**
+**Always follow `styles.md` for UI component patterns and design system.**
 
 **Imports:**
 ```typescript
@@ -223,7 +230,9 @@ export { MyComponent };
 **Styling:**
 - Use Tailwind CSS classes (no inline styles)
 - Use `cn()` utility for conditional classes
-- Follow brutalist design tokens from `styles.md`
+- Follow brutalist design tokens from `styles.md` (hard shadows, sharp borders, IBM Plex Mono)
+- Respect the "Analog Tech" / "Raw Architect" design philosophy
+- Support both Midnight (default) and Paper themes via CSS variables
 
 **Error Handling:**
 ```typescript
@@ -306,12 +315,25 @@ try {
 
 ## Common Pitfalls & Important Notes
 
-1. **Custom User Model:** `AUTH_USER_MODEL = 'accounts.User'` - NEVER reference `auth.User`
-2. **Streak Calculation:** Handled by signals.py - updates on Entry creation when `word_count > 0`
-3. **Vite Manifest:** Production requires `npm run build` before `collectstatic`
-4. **Catch-all Route:** SPA catch-all MUST be last in `urls.py` (or it catches Django routes)
-5. **Tags:** Entry uses django-taggit with custom `UUIDTaggedItem` (UUID primary keys)
-6. **Empty Content:** Allowed for 750words.com style - streak only updates when `word_count > 0`
+1. **One Entry Per Day Philosophy:** This is a 750words.com derivation focused on daily writing habit
+   - Multiple entries per day are allowed but discouraged by design
+   - Streak system only counts unique days (same-day entries don't extend streak)
+   - Backdated entries are allowed without breaking current streak
+   - Empty entries are allowed (word_count = 0), but streak only updates when content is added
+
+2. **Custom User Model:** `AUTH_USER_MODEL = 'accounts.User'` - NEVER reference `auth.User`
+
+3. **Streak Calculation:** Handled automatically by signals.py
+   - Updates on Entry creation/update when `word_count > 0`
+   - Uses user's timezone for accurate date calculations
+   - Ignores backdated entries (preserves current streak)
+   - Same-day entries don't extend streak (one day = one streak unit)
+
+4. **Vite Manifest:** Production requires `npm run build` before `collectstatic`
+
+5. **Catch-all Route:** SPA catch-all MUST be last in `urls.py` (or it catches Django routes)
+
+6. **Tags:** Entry uses django-taggit with custom `UUIDTaggedItem` (UUID primary keys)
 
 ---
 
@@ -325,8 +347,28 @@ try {
 
 ---
 
+## Design Philosophy (750words.com Style)
+
+**Core Principles:**
+1. **Daily Writing Habit:** Encourage users to write one entry per day (750+ words recommended)
+2. **Distraction-Free:** Minimalist UI focused solely on writing (no social features, no distractions)
+3. **Privacy First:** Content encrypted at rest, no content sharing features
+4. **Streak Motivation:** Writing streaks encourage daily consistency without punishment
+5. **Flexible Content:** Allow empty entries or short notes, but reward substantive writing
+
+**When Adding Features:**
+- Ask: "Does this support daily writing habit?"
+- Avoid: Social features, comparisons with other users, content sharing
+- Prefer: Simple, calm UI with focus on the writing experience
+- Keep: The app private, personal, and distraction-free
+
+---
+
 ## Reference Files
 
-- **Frontend styling:** `styles.md`
-- **API endpoints:** `apps/api/views.py`
+- **Frontend design system:** `styles.md` (brutalist UI patterns, themes, layout)
+- **API endpoints:** `apps/api/views.py` and `apps/api/statistics_views.py`
 - **Encryption:** `apps/journal/fields.py` (EncryptedTextField)
+- **Streak logic:** `apps/journal/utils.py` (update_user_streak, recalculate_user_streak)
+- **User model:** `apps/accounts/models.py` (custom User with timezone, streak fields)
+- **Entry model:** `apps/journal/models.py` (Entry with encryption, word count, tags)

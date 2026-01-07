@@ -246,6 +246,15 @@ export interface Translations {
     entryDeleted: string;
     accountDeleted: string;
   };
+  statistics: {
+    frequencyHeatmap: {
+      title: string;
+      noWriting: string;
+      words: string;
+      less: string;
+      more: string;
+    };
+  };
 }
 
 export const cs: Translations = {
@@ -503,5 +512,14 @@ export const cs: Translations = {
     entryDeleted: 'Záznam byl smazán',
     // Účet
     accountDeleted: 'Účet byl smazán',
+  },
+  statistics: {
+    frequencyHeatmap: {
+      title: 'ČETNOST PSANÍ (90 DNÍ)',
+      noWriting: 'Žádné psaní',
+      words: 'slov',
+      less: 'MÉNĚ',
+      more: 'VÍCE',
+    },
   },
 };
