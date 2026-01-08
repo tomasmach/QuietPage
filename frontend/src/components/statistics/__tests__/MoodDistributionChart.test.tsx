@@ -190,7 +190,7 @@ describe('MoodDistributionChart', () => {
       expect(rating3Label).not.toHaveClass('text-accent')
     })
 
-    it('does not highlight any mood when only one entry exists', () => {
+    it('highlights the single mood when only one entry exists', () => {
       const data = createMoodAnalytics({
         '1': 0,
         '2': 0,
@@ -201,7 +201,7 @@ describe('MoodDistributionChart', () => {
 
       render(<MoodDistributionChart data={data} />)
 
-      // Rating 3 should be highlighted as it's the most common (and only one with data)
+      // Rating 3 should be highlighted as it's the only one with data
       const rating3Label = screen.getByText('statistics.moodDistribution.rating 3')
       expect(rating3Label).toHaveClass('text-accent')
     })
