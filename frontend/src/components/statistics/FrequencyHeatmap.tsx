@@ -243,6 +243,7 @@ export function FrequencyHeatmap() {
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [yearData, setYearData] = useState<TimelineData>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<Error | null>(null);
   
   // Fixed to show last year (365 days) - always, regardless of selected period
   const daysToShow = 365;
@@ -253,6 +254,7 @@ export function FrequencyHeatmap() {
       setIsLoading(true);
       try {
         const response = await api.get<{ word_count_analytics: { timeline: { date: string; word_count: number; entry_count: number }[] } }>('/statistics/', { period: '1y' });
+        setFetchError(null); // Clear error on successful fetch
         setYearData(response.word_count_analytics.timeline.map(day => ({
           date: day.date,
           wordCount: day.word_count,
@@ -260,6 +262,7 @@ export function FrequencyHeatmap() {
         })));
       } catch (error) {
         console.error('Failed to fetch year data for heatmap:', error);
+        setFetchError(error instanceof Error ? error : new Error('Failed to fetch data'));
         setYearData([]);
       } finally {
         setIsLoading(false);
@@ -308,6 +311,26 @@ export function FrequencyHeatmap() {
         </h3>
         <div className="flex items-center justify-center h-32">
           <span className="text-text-muted font-mono text-sm">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+  
+  if (fetchError) {
+    return (
+      <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+          {t('statistics.frequencyHeatmap.title')} (LAST YEAR)
+        </h3>
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center">
+            <p className="text-text-muted font-mono text-sm mb-2">
+              {t('statistics.frequencyHeatmap.loadError')}
+            </p>
+            <p className="text-text-muted font-mono text-xs opacity-70">
+              {fetchError.message}
+            </p>
+          </div>
         </div>
       </div>
     );

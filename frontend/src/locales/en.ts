@@ -278,6 +278,7 @@ export const en: Translations = {
       words: 'words',
       less: 'LESS',
       more: 'MORE',
+      loadError: 'Failed to load heatmap data',
     },
     timeOfDayChart: {
       title: 'TIME OF DAY DISTRIBUTION',

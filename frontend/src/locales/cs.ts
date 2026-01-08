@@ -268,6 +268,7 @@ export interface Translations {
       words: string;
       less: string;
       more: string;
+      loadError: string;
     };
     timeOfDayChart: {
       title: string;
@@ -679,6 +680,7 @@ export const cs: Translations = {
       words: 'slov',
       less: 'MÉNĚ',
       more: 'VÍCE',
+      loadError: 'Nepodařilo se načíst data heatmapy',
     },
     timeOfDayChart: {
       title: 'DENNÍ DOBA PSANÍ',
