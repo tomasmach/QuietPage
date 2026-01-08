@@ -125,6 +125,9 @@ export interface Translations {
     editEntry: string;
     tags: string;
     loadError: string;
+    createError: string;
+    createErrorDetails: string;
+    retryCreate: string;
   };
   settings: {
     title: string;
@@ -525,6 +528,9 @@ export const cs: Translations = {
     editEntry: 'Upravit záznam',
     tags: 'Štítky',
     loadError: 'Chyba při načítání záznamu. Zkuste obnovit stránku.',
+    createError: 'Nepodařilo se vytvořit dnešní záznam',
+    createErrorDetails: 'Po {count} pokusech se nepodařilo vytvořit prázdný záznam. Zkontrolujte připojení k internetu a zkuste to znovu.',
+    retryCreate: 'Zkusit znovu',
   },
   settings: {
     title: 'Nastavení',

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flame } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
@@ -15,6 +15,9 @@ import { useTodayAutoSave } from '../hooks/useTodayAutoSave';
 import { useDashboard } from '../hooks/useDashboard';
 import { useLanguage } from '../contexts/LanguageContext';
 
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY_MS = 1000;
+
 export function TodayEntryPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -26,39 +29,72 @@ export function TodayEntryPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [isCreatingEntry, setIsCreatingEntry] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [createError, setCreateError] = useState<Error | null>(null);
+  
+  const retryCountRef = useRef(0);
+  const retryTimeoutRef = useRef<number | null>(null);
 
   // Auto-save functionality (bez refresh - není potřeba)
   const onSaveSuccess = useCallback(() => {
+    // Reset retry count on successful save
+    retryCountRef.current = 0;
+    setCreateError(null);
+    
     if (isCreatingEntry) {
       setIsCreatingEntry(false);
     }
   }, [isCreatingEntry]);
 
-  const onSaveError = useCallback(() => {
-    // Reset isCreatingEntry to unblock future auto-save attempts
+  const onSaveError = useCallback((err: Error, isCreating: boolean) => {
+    // Always reset isCreatingEntry to unblock future attempts
     setIsCreatingEntry(false);
-    // Optionally reset isInitialized to allow re-initialization
-    setIsInitialized(false);
+    
+    // Only reset isInitialized during creation phase to allow retry
+    // For normal auto-save failures, keep isInitialized=true to prevent re-creation
+    if (isCreating) {
+      retryCountRef.current += 1;
+      
+      if (retryCountRef.current >= MAX_RETRIES) {
+        // Max retries reached - surface error UI
+        setCreateError(err);
+      } else {
+        // Will retry in auto-create effect with exponential backoff
+        setIsInitialized(false);
+      }
+    }
   }, []);
 
   const { save: autoSave, isSaving: isAutoSaving, lastSaved } = useTodayAutoSave({
     onSuccess: onSaveSuccess,
-    onError: onSaveError,
+    onError: (err) => onSaveError(err, isCreatingEntry),
   });
 
   // Auto-create empty entry if it doesn't exist (750words.com style)
+  // with exponential backoff on retry
   useEffect(() => {
-    if (!isLoading && !exists && !error && !isCreatingEntry && !isInitialized) {
-      setIsCreatingEntry(true);
-      setIsInitialized(true);
-      // Create empty entry
-      autoSave({
-        content: '',
-        mood_rating: null,
-        tags: [],
-      });
+    if (!isLoading && !exists && !error && !isCreatingEntry && !isInitialized && !createError) {
+      const retryCount = retryCountRef.current;
+      const delayMs = retryCount > 0 ? INITIAL_RETRY_DELAY_MS * Math.pow(2, retryCount - 1) : 0;
+      
+      retryTimeoutRef.current = setTimeout(() => {
+        setIsCreatingEntry(true);
+        setIsInitialized(true);
+        // Create empty entry
+        autoSave({
+          content: '',
+          mood_rating: null,
+          tags: [],
+        });
+      }, delayMs) as unknown as number;
     }
-  }, [isLoading, exists, error, isCreatingEntry, isInitialized, autoSave]);
+    
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+    };
+  }, [isLoading, exists, error, isCreatingEntry, isInitialized, createError, autoSave]);
 
   // Initialize form from entry data POUZE JEDNOU
   useEffect(() => {
@@ -107,11 +143,44 @@ export function TodayEntryPage() {
         <div className="p-8">
           <Card>
             <p className="text-error">
-              Chyba při načítání záznamu. Zkuste obnovit stránku.
+              {t('entry.loadError')}
             </p>
             <Button onClick={handleCancel} className="mt-4">
               {t('common.cancel')}
             </Button>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Show error UI when max retries reached during entry creation
+  if (createError && retryCountRef.current >= MAX_RETRIES) {
+    return (
+      <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
+        <div className="p-8">
+          <Card>
+            <p className="text-error font-bold mb-2">
+              {t('entry.createError')}
+            </p>
+            <p className="text-text-muted mb-4">
+              {t('entry.createErrorDetails').replace('{count}', String(MAX_RETRIES))}
+            </p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => {
+                  retryCountRef.current = 0;
+                  setCreateError(null);
+                  setIsInitialized(false);
+                }} 
+                variant="primary"
+              >
+                {t('entry.retryCreate')}
+              </Button>
+              <Button onClick={handleCancel} variant="secondary">
+                {t('common.cancel')}
+              </Button>
+            </div>
           </Card>
         </div>
       </AppLayout>

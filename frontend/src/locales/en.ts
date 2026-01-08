@@ -127,6 +127,9 @@ export const en: Translations = {
     editEntry: 'Edit entry',
     tags: 'Tags',
     loadError: 'Error loading entry. Please try refreshing the page.',
+    createError: 'Failed to create today\'s entry',
+    createErrorDetails: 'After {count} attempts, we couldn\'t create an empty entry. Please check your internet connection and try again.',
+    retryCreate: 'Try again',
   },
   settings: {
     title: 'Settings',
