@@ -18,7 +18,7 @@ export function TimeRangeSelector({ selectedPeriod, onPeriodChange }: TimeRangeS
   const { t } = useLanguage();
 
   return (
-    <div className="flex gap-2 font-mono">
+    <div className="flex gap-4 font-mono">
       {PERIOD_KEYS.map(({ value, labelKey }) => (
         <button
           key={value}
