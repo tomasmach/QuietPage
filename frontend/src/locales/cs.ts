@@ -249,6 +249,10 @@ export interface Translations {
   statistics: {
     title: string;
     writingPatterns: string;
+    viewModes: {
+      milestones: string;
+      patterns: string;
+    };
     consistencyRate: {
       title: string;
       description: string;
@@ -652,6 +656,10 @@ export const cs: Translations = {
   statistics: {
     title: 'STATISTIKY',
     writingPatterns: 'PSACÍ VZORY',
+    viewModes: {
+      milestones: 'Milníky a rekordy',
+      patterns: 'Psací vzory',
+    },
     consistencyRate: {
       title: 'KONZISTENCE PSANÍ',
       description: 'Procento dní, kdy jsi psal(a) ze sledovaného období',

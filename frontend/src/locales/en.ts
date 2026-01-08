@@ -259,6 +259,10 @@ export const en: Translations = {
   statistics: {
     title: 'STATISTICS',
     writingPatterns: 'WRITING PATTERNS',
+    viewModes: {
+      milestones: 'Milestones & Records',
+      patterns: 'Writing Patterns',
+    },
     consistencyRate: {
       title: 'WRITING CONSISTENCY',
       description: 'Percentage of days you wrote during the tracked period',

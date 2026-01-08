@@ -72,7 +72,7 @@ function MilestoneBadge({ type, value, achieved, current }: MilestoneBadgeProps)
   return (
     <div
       className={`
-        relative border-2 p-4 font-mono transition-all duration-150
+        relative border-2 font-mono transition-all duration-150 flex items-center gap-4 p-4
         ${achieved
           ? 'bg-accent text-accent-fg border-border shadow-hard'
           : 'bg-bg-panel text-text-muted border-dashed border-border'
@@ -80,56 +80,59 @@ function MilestoneBadge({ type, value, achieved, current }: MilestoneBadgeProps)
         rounded-none
       `}
     >
-      {/* Icon and value */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className={`
-          flex items-center justify-center w-10 h-10 border-2
-          ${achieved ? 'border-accent-fg bg-accent' : 'border-border bg-bg-panel'}
-          rounded-none
-        `}>
-          {getMilestoneIcon(type, achieved)}
-        </div>
-        <div className="flex-1">
-          <p className={`text-xl font-bold ${achieved ? 'text-accent-fg' : 'text-text-main'}`}>
-            {formatValue(value)}
+      {/* Icon */}
+      <div className={`
+        flex items-center justify-center w-12 h-12 border-2 flex-shrink-0
+        ${achieved ? 'border-accent-fg bg-accent' : 'border-border bg-bg-panel'}
+        rounded-none
+      `}>
+        {getMilestoneIcon(type, achieved)}
+      </div>
+
+      {/* Value and label */}
+      <div className="flex-shrink-0">
+        <p className={`text-2xl font-bold leading-none mb-1 ${achieved ? 'text-accent-fg' : 'text-text-main'}`}>
+          {formatValue(value)}
+        </p>
+        <p className={`text-[10px] uppercase tracking-widest leading-none ${achieved ? 'text-accent-fg opacity-80' : 'text-text-muted'}`}>
+          {getTypeLabel()}
+        </p>
+      </div>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Status section */}
+      {achieved ? (
+        /* Achieved indicator */
+        <div className="flex items-center gap-3">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-fg">
+            {t('statistics.milestones.achieved')}
           </p>
-          <p className={`text-[10px] uppercase tracking-widest ${achieved ? 'text-accent-fg opacity-80' : 'text-text-muted'}`}>
-            {getTypeLabel()}
-          </p>
-        </div>
-        {/* Achievement indicator */}
-        {achieved && (
           <div className="flex items-center justify-center w-6 h-6 bg-accent-fg rounded-none">
             <Check size={14} strokeWidth={3} className="text-accent" />
           </div>
-        )}
-      </div>
-
-      {/* Progress bar for unachieved milestones */}
-      {!achieved && (
-        <div className="mt-3">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] uppercase tracking-widest text-text-muted">
-              {formatValue(current)} / {formatValue(value)}
-            </span>
-            <span className="text-[10px] font-bold text-text-muted">
-              {Math.round(progressPercent)}%
-            </span>
-          </div>
-          <div className="h-2 border-2 border-border bg-bg-app rounded-none overflow-hidden">
-            <div
-              className="h-full bg-text-muted transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
+        </div>
+      ) : (
+        /* Progress bar for unachieved milestones */
+        <div className="flex items-center gap-4 min-w-0 flex-1 max-w-md">
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] uppercase tracking-widest text-text-muted">
+                {formatValue(current)} / {formatValue(value)}
+              </span>
+              <span className="text-[10px] font-bold text-text-muted ml-2">
+                {Math.round(progressPercent)}%
+              </span>
+            </div>
+            <div className="h-2 border-2 border-border bg-bg-app rounded-none overflow-hidden">
+              <div
+                className="h-full bg-text-muted transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
           </div>
         </div>
-      )}
-
-      {/* Achieved label */}
-      {achieved && (
-        <p className="mt-2 text-[10px] uppercase tracking-widest font-bold text-accent-fg opacity-80">
-          {t('statistics.milestones.achieved')}
-        </p>
       )}
     </div>
   );
@@ -190,11 +193,11 @@ export function MilestonesGrid({ data }: MilestonesGridProps) {
     };
 
     return (
-      <div key={type} className="mb-6 last:mb-0">
-        <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3 font-mono">
+      <div key={type} className="mb-8 last:mb-0">
+        <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-4 font-mono">
           {getCategoryLabel()}
         </h4>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="space-y-3">
           {milestones.map((milestone, index) => (
             <MilestoneBadge
               key={`${milestone.type}-${milestone.value}-${index}`}
