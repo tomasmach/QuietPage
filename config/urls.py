@@ -34,7 +34,8 @@ urlpatterns = [
     path('journal/', include('apps.journal.urls', namespace='journal')),
     path('api/v1/', include('apps.api.urls', namespace='api')),
     # Catch-all pattern for React SPA - MUST be last
-    re_path(r'^.*$', views.SPAView.as_view(), name='spa'),
+    # Negative lookahead to exclude API routes from SPA catch-all
+    re_path(r'^(?!api/).*$', views.SPAView.as_view(), name='spa'),
 ]
 
 # Django Debug Toolbar URLs (only in development)
