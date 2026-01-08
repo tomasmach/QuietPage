@@ -60,10 +60,10 @@ export function BestDayHighlight({ data }: BestDayHighlightProps) {
   }
 
   return (
-    <div className="border-2 border-accent bg-accent text-accent-fg p-6 rounded-none shadow-hard relative overflow-hidden">
+    <div className="border-2 border-accent-fg bg-accent text-accent-fg p-6 rounded-none shadow-hard relative overflow-hidden">
       {/* Decorative background pattern */}
-      <div className="absolute top-0 right-0 opacity-10">
-        <Trophy size={120} strokeWidth={1} className="translate-x-8 -translate-y-4" />
+      <div className="absolute top-1/2 right-4 -translate-y-2/3 opacity-10 pointer-events-none">
+        <Trophy size={100} strokeWidth={1} />
       </div>
       
       {/* Header with Trophy */}

@@ -56,15 +56,15 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
       className={`
         border-2 p-6 rounded-none shadow-hard relative overflow-hidden
         ${hasActiveStreak
-          ? 'border-accent bg-accent text-accent-fg'
+          ? 'border-accent-fg bg-accent text-accent-fg'
           : 'border-border bg-bg-panel text-text-main'
         }
       `}
     >
       {/* Decorative background flame for active streaks */}
       {hasActiveStreak && (
-        <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
-          <Flame size={140} strokeWidth={1} className="translate-x-8 -translate-y-4" />
+        <div className="absolute top-1/2 right-4 -translate-y-2/3 opacity-10 pointer-events-none">
+          <Flame size={120} strokeWidth={1} />
         </div>
       )}
 
