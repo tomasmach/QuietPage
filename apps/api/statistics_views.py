@@ -31,13 +31,13 @@ logger = logging.getLogger(__name__)
 def custom_cache_key(request):
     """
     Generate cache key for statistics endpoint.
-    
+
     Note: cache_page decorator passes a standard Django HttpRequest,
     not DRF's Request wrapper, so we use request.GET instead of query_params.
-    
+
     Args:
         request: Django HttpRequest object
-        
+
     Returns:
         str: Cache key in format 'statistics_{user_id}_{period}_{last_entry_date}'
     """
@@ -79,7 +79,7 @@ class StatisticsView(APIView):
 
     permission_classes = [IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'statistics'
+    throttle_scope = "statistics"
 
     def _normalize_to_local_day(self, dt, user_tz):
         """
@@ -149,13 +149,13 @@ class StatisticsView(APIView):
             str: Time of day category ('morning', 'afternoon', 'evening', 'night')
         """
         if 5 <= hour <= 11:
-            return 'morning'
+            return "morning"
         elif 12 <= hour <= 17:
-            return 'afternoon'
+            return "afternoon"
         elif 18 <= hour <= 23:
-            return 'evening'
+            return "evening"
         else:
-            return 'night'
+            return "night"
 
     def _calculate_mood_analytics(self, entries, period_start, user_tz):
         """
@@ -287,13 +287,12 @@ class StatisticsView(APIView):
         max_words = 0
 
         for item in daily_data:
-            timeline.append(
-                {
-                    "date": item["day"].isoformat(),
-                    "word_count": item["total_words"],
-                    "entry_count": item["entries"],
-                }
-            )
+            day_data = {
+                "date": item["day"].isoformat(),
+                "word_count": item["total_words"],
+                "entry_count": item["entries"],
+            }
+            timeline.append(day_data)
 
             active_days_count += 1
             if item["total_words"] >= user.daily_word_goal:
@@ -301,11 +300,7 @@ class StatisticsView(APIView):
 
             if item["total_words"] > max_words:
                 max_words = item["total_words"]
-                best_day = {
-                    "date": item["day"].isoformat(),
-                    "word_count": item["total_words"],
-                    "entry_count": item["entries"],
-                }
+                best_day = day_data
 
         average_per_day = (
             total_words / active_days_count if active_days_count > 0 else 0
@@ -384,7 +379,7 @@ class StatisticsView(APIView):
         entries_with_content = entries.filter(word_count__gt=0)
 
         time_of_day = {"morning": 0, "afternoon": 0, "evening": 0, "night": 0}
-        for entry in entries_with_content.only('created_at'):
+        for entry in entries_with_content.only("created_at"):
             local_time = entry.created_at.astimezone(user_tz)
             hour = local_time.hour
             category = self._categorize_time_of_day(hour)
@@ -516,30 +511,36 @@ class StatisticsView(APIView):
 
         # Entry milestones
         for value in entry_milestones:
-            milestones.append({
-                "type": "entries",
-                "value": value,
-                "achieved": total_entries >= value,
-                "current": total_entries,
-            })
+            milestones.append(
+                {
+                    "type": "entries",
+                    "value": value,
+                    "achieved": total_entries >= value,
+                    "current": total_entries,
+                }
+            )
 
         # Word milestones
         for value in word_milestones:
-            milestones.append({
-                "type": "words",
-                "value": value,
-                "achieved": total_words >= value,
-                "current": total_words,
-            })
+            milestones.append(
+                {
+                    "type": "words",
+                    "value": value,
+                    "achieved": total_words >= value,
+                    "current": total_words,
+                }
+            )
 
         # Streak milestones (based on longest_streak from User model)
         for value in streak_milestones:
-            milestones.append({
-                "type": "streak",
-                "value": value,
-                "achieved": longest_streak >= value,
-                "current": longest_streak,
-            })
+            milestones.append(
+                {
+                    "type": "streak",
+                    "value": value,
+                    "achieved": longest_streak >= value,
+                    "current": longest_streak,
+                }
+            )
 
         return {"milestones": milestones}
 
@@ -574,9 +575,7 @@ class StatisticsView(APIView):
         # Longest entry (single entry with most words)
         longest_entry_record = None
         longest_entry = (
-            all_entries.filter(word_count__gt=0)
-            .order_by("-word_count")
-            .first()
+            all_entries.filter(word_count__gt=0).order_by("-word_count").first()
         )
         if longest_entry:
             longest_entry_record = {
@@ -646,11 +645,13 @@ class StatisticsView(APIView):
         )
 
         # Filter to only days meeting the goal
-        goal_days = sorted([
-            item["day"]
-            for item in daily_totals
-            if item["total_words"] >= user.daily_word_goal
-        ])
+        goal_days = sorted(
+            [
+                item["day"]
+                for item in daily_totals
+                if item["total_words"] >= user.daily_word_goal
+            ]
+        )
 
         if not goal_days:
             return {
@@ -661,7 +662,7 @@ class StatisticsView(APIView):
 
         # Calculate current goal streak (working backwards from today/yesterday)
         current_streak = 0
-        
+
         # Check if streak is still active (last goal day is today or yesterday)
         last_goal_day = goal_days[-1]
         if last_goal_day == today or last_goal_day == yesterday:
@@ -717,10 +718,10 @@ class StatisticsView(APIView):
         # Get all tags used in the filtered entries
         # Use django-taggit's prefetch to efficiently get tag data
         tag_stats = {}
-        
+
         # Prefetch tags for efficiency
-        entries_with_tags = entries.prefetch_related('tags')
-        
+        entries_with_tags = entries.prefetch_related("tags")
+
         for entry in entries_with_tags:
             for tag in entry.tags.all():
                 if tag.name not in tag_stats:
@@ -729,7 +730,7 @@ class StatisticsView(APIView):
                         "total_words": 0,
                         "mood_ratings": [],
                     }
-                
+
                 tag_stats[tag.name]["entry_count"] += 1
                 tag_stats[tag.name]["total_words"] += entry.word_count
                 if entry.mood_rating is not None:
@@ -743,20 +744,22 @@ class StatisticsView(APIView):
                 if stats["entry_count"] > 0
                 else 0
             )
-            
+
             average_mood = None
             if stats["mood_ratings"]:
                 average_mood = round(
                     sum(stats["mood_ratings"]) / len(stats["mood_ratings"]), 2
                 )
-            
-            tags_list.append({
-                "name": tag_name,
-                "entry_count": stats["entry_count"],
-                "total_words": stats["total_words"],
-                "average_words": round(average_words, 2),
-                "average_mood": average_mood,
-            })
+
+            tags_list.append(
+                {
+                    "name": tag_name,
+                    "entry_count": stats["entry_count"],
+                    "total_words": stats["total_words"],
+                    "average_words": round(average_words, 2),
+                    "average_mood": average_mood,
+                }
+            )
 
         # Sort by entry count (most used tags first)
         tags_list.sort(key=lambda x: x["entry_count"], reverse=True)
@@ -801,7 +804,7 @@ class StatisticsView(APIView):
         if period not in valid_periods:
             return Response(
                 {
-                    "error": f'Invalid period. Must be one of: {", ".join(valid_periods)}'
+                    "error": f"Invalid period. Must be one of: {', '.join(valid_periods)}"
                 },
                 status=400,
             )
@@ -823,11 +826,15 @@ class StatisticsView(APIView):
         word_count_analytics = self._calculate_word_count_analytics(
             entries, user, start_date, user_tz
         )
-        writing_patterns = self._calculate_writing_patterns(entries, user, start_date, end_date)
+        writing_patterns = self._calculate_writing_patterns(
+            entries, user, start_date, end_date
+        )
         tag_analytics = self._calculate_tag_analytics(entries)
         milestones = self._calculate_milestones(user, all_entries)
         goal_streak = self._calculate_goal_streak(user)
-        personal_records = self._calculate_personal_records(user, all_entries, goal_streak)
+        personal_records = self._calculate_personal_records(
+            user, all_entries, goal_streak
+        )
 
         data = {
             "period": period,

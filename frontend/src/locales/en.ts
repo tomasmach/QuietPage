@@ -269,7 +269,8 @@ export const en: Translations = {
       percentage: '{rate}% consistency',
     },
     frequencyHeatmap: {
-      title: 'WRITING FREQUENCY (90 DAYS)',
+      title: 'WRITING FREQUENCY',
+      days: 'DAYS',
       noWriting: 'No writing',
       words: 'words',
       less: 'LESS',
@@ -293,7 +294,7 @@ export const en: Translations = {
       notEnoughData: 'Not enough data',
       yAxisLabel: 'Days Written',
       mostProductive: 'Most Productive',
-      mostProductiveDay: 'Most Productive Day',
+      topDays: 'Top 3 Most Productive Days',
       daySingular: 'day',
       daysPlural: 'days',
       monday: 'Monday',

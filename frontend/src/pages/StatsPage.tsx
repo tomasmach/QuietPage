@@ -110,12 +110,17 @@ export function StatsPage() {
               </div>
             ) : (
               /* Writing Patterns Grid */
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-8">
+                {/* Full width heatmap */}
                 <FrequencyHeatmap data={data.wordCountAnalytics} />
-                <TimeOfDayChart data={data.writingPatterns} />
-                <DayOfWeekChart data={data.writingPatterns} />
-                <StreakHistoryList data={data.writingPatterns} />
-                <TagAnalyticsChart data={data.tagAnalytics} />
+                
+                {/* Two column grid for all charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <TimeOfDayChart data={data.writingPatterns} />
+                  <DayOfWeekChart data={data.writingPatterns} />
+                  <StreakHistoryList data={data.writingPatterns} />
+                  <TagAnalyticsChart data={data.tagAnalytics} />
+                </div>
               </div>
             )}
           </div>

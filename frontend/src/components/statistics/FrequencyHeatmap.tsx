@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { WordCountAnalytics } from '../../types/statistics';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { api } from '../../lib/api';
 
 interface FrequencyHeatmapProps {
-  data: WordCountAnalytics;
+  data: WordCountAnalytics; // Not used - we fetch year data separately
 }
 
 interface DayData {
@@ -20,8 +21,27 @@ interface IntensityThresholds {
   high: number;   // Threshold for level 3
 }
 
-const DAYS_TO_SHOW = 90;
 const DAYS_IN_WEEK = 7;
+
+/**
+ * Maps period to number of days to show
+ */
+function getPeriodDays(period: PeriodType): number {
+  switch (period) {
+    case '7d':
+      return 7;
+    case '30d':
+      return 30;
+    case '90d':
+      return 90;
+    case '1y':
+      return 365;
+    case 'all':
+      return 365; // Cap at 1 year for performance
+    default:
+      return 90;
+  }
+}
 
 /**
  * Calculates dynamic intensity thresholds based on user's writing patterns.
@@ -73,22 +93,21 @@ function getIntensityLevel(wordCount: number, thresholds: IntensityThresholds): 
 }
 
 /**
- * Gets Tailwind classes for heatmap cell based on intensity
+ * Gets inline styles for heatmap cell based on intensity.
+ * Uses the same gradient as TimeOfDayChart (--color-chart-1 through --color-chart-4)
  */
-function getIntensityClasses(intensity: number): string {
-  const baseClasses = 'border border-border';
-  
+function getIntensityStyles(intensity: number): { backgroundColor: string } {
   switch (intensity) {
     case 0:
-      return cn(baseClasses, 'bg-bg-panel'); // No writing - panel background
+      return { backgroundColor: 'var(--color-bg-panel)' }; // No writing - panel background
     case 1:
-      return cn(baseClasses, 'bg-accent/20'); // Light - 20% opacity
+      return { backgroundColor: 'var(--color-chart-4)' }; // Lightest
     case 2:
-      return cn(baseClasses, 'bg-accent/50'); // Medium - 50% opacity
+      return { backgroundColor: 'var(--color-chart-3)' }; // Medium
     case 3:
-      return cn(baseClasses, 'bg-accent'); // Dark - full accent
+      return { backgroundColor: 'var(--color-chart-1)' }; // Darkest (highest intensity)
     default:
-      return baseClasses;
+      return { backgroundColor: 'var(--color-bg-panel)' };
   }
 }
 
@@ -154,36 +173,34 @@ function parseLocalDate(dateString: string): Date {
 }
 
 /**
- * Generates array of dates for the last 90 days, including padding.
+ * Generates array of dates for the specified period.
+ * GitHub-style: starts from first Sunday before period, ends on actual end date.
  * Uses YYYY-MM-DD strings for date comparisons to avoid timezone issues.
+ * All visible days will show data (including padding days before the period).
  */
-function generateDateArray(endDateStr: string): DayData[] {
+function generateDateArray(endDateStr: string, daysToShow: number): DayData[] {
   const days: DayData[] = [];
   const today = parseLocalDate(endDateStr);
   
-  // Calculate start date (90 days ago)
+  // Calculate start date (N days ago)
   const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - DAYS_TO_SHOW + 1);
-  const startDateKey = toLocalDateString(startDate);
-  const endDateKey = endDateStr;
+  startDate.setDate(startDate.getDate() - daysToShow + 1);
   
-  // Find the Sunday before start date (to align weeks)
+  // Find the Sunday before or on start date (to align weeks)
   const firstDayOfWeek = startDate.getDay();
-  const paddingDays = firstDayOfWeek; // Days to add before start
-  
   const alignedStartDate = new Date(startDate);
-  alignedStartDate.setDate(alignedStartDate.getDate() - paddingDays);
+  alignedStartDate.setDate(alignedStartDate.getDate() - firstDayOfWeek);
   
   // Generate all days from aligned start to today
+  // All days are "in period" for data purposes (no greyed out days)
   const currentDate = new Date(alignedStartDate);
   while (currentDate <= today) {
     const dateKey = toLocalDateString(currentDate);
-    const isInPeriod = dateKey >= startDateKey && dateKey <= endDateKey;
     days.push({
       date: new Date(currentDate),
       dateKey,
       wordCount: 0,
-      isInPeriod,
+      isInPeriod: true, // All visible days show data
     });
     currentDate.setDate(currentDate.getDate() + 1);
   }
@@ -243,30 +260,53 @@ export function FrequencyHeatmap({ data }: FrequencyHeatmapProps) {
   const { t, language } = useLanguage();
   const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [yearData, setYearData] = useState<WordCountAnalytics['timeline']>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Calculate dynamic intensity thresholds based on user's writing patterns
+  // Fixed to show last year (365 days) - always, regardless of selected period
+  const daysToShow = 365;
+  
+  // Fetch year data separately (always 1y period for heatmap)
+  useEffect(() => {
+    const fetchYearData = async () => {
+      setIsLoading(true);
+      try {
+        const response = await api.get<{ word_count_analytics: { timeline: { date: string; word_count: number; entry_count: number }[] } }>('/statistics/', { period: '1y' });
+        setYearData(response.word_count_analytics.timeline.map(day => ({
+          date: day.date,
+          wordCount: day.word_count,
+          entryCount: day.entry_count,
+        })));
+      } catch (error) {
+        console.error('Failed to fetch year data for heatmap:', error);
+        setYearData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchYearData();
+  }, []); // Only fetch once on mount
+  
+  // Calculate dynamic intensity thresholds based on year data
   const intensityThresholds = useMemo(
-    () => calculateIntensityThresholds(data.timeline),
-    [data.timeline]
+    () => calculateIntensityThresholds(yearData),
+    [yearData]
   );
   
-  // Generate date array and merge with timeline data
-  // Use the date string directly from API (YYYY-MM-DD format) to avoid timezone issues
-  const endDateStr = data.timeline.length > 0 
-    ? data.timeline[data.timeline.length - 1].date
-    : toLocalDateString(new Date());
+  // Generate date array for the last 365 days from today
+  // Always use today's date, not the end of the data timeline
+  const endDateStr = toLocalDateString(new Date());
   
   // Get locale code for date formatting
   const localeCode = language === 'cs' ? 'cs-CZ' : 'en-US';
 
-  const days = generateDateArray(endDateStr);
-  const mergedDays = mergeDayData(days, data.timeline);
+  const days = generateDateArray(endDateStr, daysToShow);
+  const mergedDays = mergeDayData(days, yearData);
   const weeks = groupIntoWeeks(mergedDays);
   const monthLabels = getMonthLabels(weeks, localeCode);
   
   const handleMouseEnter = (day: DayData, event: React.MouseEvent<HTMLDivElement>) => {
-    if (!day.isInPeriod) return;
-    
     setHoveredDay(day);
     const rect = event.currentTarget.getBoundingClientRect();
     setTooltipPosition({
@@ -279,22 +319,35 @@ export function FrequencyHeatmap({ data }: FrequencyHeatmapProps) {
     setHoveredDay(null);
   };
   
+  if (isLoading) {
+    return (
+      <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+          {t('statistics.frequencyHeatmap.title')} (LAST YEAR)
+        </h3>
+        <div className="flex items-center justify-center h-32">
+          <span className="text-text-muted font-mono text-sm">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
       <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
-        {t('statistics.frequencyHeatmap.title')}
+        {t('statistics.frequencyHeatmap.title')} (LAST YEAR)
       </h3>
       
       <div className="relative">
         {/* Month labels */}
-        <div className="flex ml-6 mb-2">
-          <div className="grid gap-[2px] sm:gap-1" style={{ gridTemplateColumns: `repeat(${weeks.length}, 12px)` }}>
+        <div className="flex ml-4 mb-1 overflow-hidden">
+          <div className="grid gap-[1px] flex-1" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}>
             {weeks.map((_, weekIndex) => {
               const monthLabel = monthLabels.find(m => m.weekIndex === weekIndex);
               return (
-                <div key={weekIndex} className="h-4 flex items-center justify-start">
+                <div key={weekIndex} className="h-3 flex items-center justify-start overflow-hidden">
                   {monthLabel && (
-                    <span className="text-[8px] sm:text-[10px] font-mono text-text-muted whitespace-nowrap">
+                    <span className="text-[8px] font-mono text-text-muted whitespace-nowrap">
                       {monthLabel.label}
                     </span>
                   )}
@@ -305,52 +358,59 @@ export function FrequencyHeatmap({ data }: FrequencyHeatmapProps) {
         </div>
         
         {/* Heatmap grid */}
-        <div className="flex">
+        <div className="flex overflow-hidden">
           {/* Day of week labels */}
-          <div className="flex flex-col gap-[2px] sm:gap-1 mr-2">
+          <div className="flex flex-col gap-[1px] mr-1">
             {[0, 1, 2, 3, 4, 5, 6].map(dayIndex => (
               <div
                 key={dayIndex}
-                className="w-4 h-[8px] sm:h-3 flex items-center justify-end"
+                className="w-3 flex items-center justify-end"
+                style={{ aspectRatio: '1' }}
               >
-                <span className="text-[8px] sm:text-[10px] font-mono text-text-muted">
+                <span className="text-[8px] font-mono text-text-muted">
                   {getDayOfWeekLabel(dayIndex)}
                 </span>
               </div>
             ))}
           </div>
           
-          {/* Calendar grid */}
-          <div className="grid gap-[2px] sm:gap-1" style={{ gridTemplateColumns: `repeat(${weeks.length}, 8px)`, gridAutoRows: '8px' }}>
-            {weeks.map((week, weekIndex) =>
-              week.map((day, dayIndex) => {
-                const intensity = day.isInPeriod ? getIntensityLevel(day.wordCount, intensityThresholds) : 0;
-                return (
-                  <div
-                    key={`${weekIndex}-${dayIndex}`}
-                    className={cn(
-                      'w-[8px] h-[8px] sm:w-3 sm:h-3 rounded-none transition-all duration-150 cursor-pointer',
-                      getIntensityClasses(intensity),
-                      day.isInPeriod && 'hover:ring-1 hover:ring-accent hover:scale-110'
-                    )}
-                    onMouseEnter={(e) => handleMouseEnter(day, e)}
-                    onMouseLeave={handleMouseLeave}
-                    style={{ opacity: day.isInPeriod ? 1 : 0.3 }}
-                  />
-                );
-              })
-            )}
+          {/* Calendar grid - days go vertically (top to bottom), weeks horizontally (left to right) */}
+          <div className="grid gap-[1px] flex-1 overflow-hidden" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`, gridTemplateRows: 'repeat(7, minmax(0, 1fr))' }}>
+            {mergedDays.map((day, index) => {
+              const weekIndex = Math.floor(index / 7);
+              const dayOfWeek = index % 7;
+              const intensity = getIntensityLevel(day.wordCount, intensityThresholds);
+              const intensityStyles = getIntensityStyles(intensity);
+              return (
+                <div
+                  key={`${day.dateKey}`}
+                  className={cn(
+                    'rounded-none transition-all duration-150 cursor-pointer min-w-0 min-h-0 border border-border',
+                    'hover:ring-1 hover:ring-accent'
+                  )}
+                  onMouseEnter={(e) => handleMouseEnter(day, e)}
+                  onMouseLeave={handleMouseLeave}
+                  style={{ 
+                    aspectRatio: '1',
+                    gridColumn: weekIndex + 1,
+                    gridRow: dayOfWeek + 1,
+                    ...intensityStyles
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
         
         {/* Legend */}
-        <div className="flex items-center justify-end gap-2 mt-4 text-[10px] font-mono text-text-muted">
+        <div className="flex items-center justify-end gap-2 mt-3 text-[9px] font-mono text-text-muted">
           <span>{t('statistics.frequencyHeatmap.less')}</span>
-          <div className="flex gap-1">
+          <div className="flex gap-[2px]">
             {[0, 1, 2, 3].map(level => (
               <div
                 key={level}
-                className={cn('w-3 h-3 border border-border', getIntensityClasses(level))}
+                className="w-2.5 h-2.5 border border-border"
+                style={getIntensityStyles(level)}
               />
             ))}
           </div>

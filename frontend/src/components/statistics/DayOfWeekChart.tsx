@@ -11,7 +11,7 @@ interface ChartDataPoint {
   day: string;
   fullDay: string;
   count: number;
-  isMax: boolean;
+  rank: number | null; // 1, 2, 3 for top 3, null for others
 }
 
 /** Props interface for Recharts custom tooltip component */
@@ -45,15 +45,24 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
   // Check if there's any data to display
   const hasData = Object.values(data.dayOfWeek).some(value => value > 0);
 
-  // Find the maximum count to highlight the most productive day
-  const maxCount = Math.max(...Object.values(data.dayOfWeek));
+  // Sort days by count to find top 3
+  const sortedDays = dayOrder
+    .map(day => ({ day, count: data.dayOfWeek[day] || 0 }))
+    .filter(d => d.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  // Assign ranks to top 3
+  const rankMap = new Map<string, number>();
+  sortedDays.slice(0, 3).forEach((item, index) => {
+    rankMap.set(item.day, index + 1);
+  });
 
   // Prepare data for Recharts
   const chartData: ChartDataPoint[] = dayOrder.map(day => ({
     day: t(`statistics.dayOfWeekChart.${day}Abbr`),
     fullDay: t(`statistics.dayOfWeekChart.${day}`),
     count: data.dayOfWeek[day] || 0,
-    isMax: data.dayOfWeek[day] === maxCount && maxCount > 0,
+    rank: rankMap.get(day) || null,
   }));
 
   // Custom tooltip to show full day name and count
@@ -72,18 +81,18 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
             ? t('statistics.dayOfWeekChart.daySingular') 
             : t('statistics.dayOfWeekChart.daysPlural')}
         </p>
-        {tooltipData.isMax && (
+        {tooltipData.rank && (
           <p className="text-[10px] font-mono text-accent mt-1 font-bold uppercase tracking-wide">
-            {t('statistics.dayOfWeekChart.mostProductive')}
+            #{tooltipData.rank} {t('statistics.dayOfWeekChart.mostProductive')}
           </p>
         )}
       </div>
     );
   };
 
-  // Custom label to display count on top of bar for the max value
+  // Custom label to display count on top of bar for top 3
   const renderLabel = ({ x, y, width, value, payload }: CustomLabelProps) => {
-    if (!payload?.isMax) return null;
+    if (!payload?.rank) return null;
     
     const xNum = typeof x === 'number' ? x : 0;
     const yNum = typeof y === 'number' ? y : 0;
@@ -98,7 +107,7 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
           textAnchor="middle"
           className="font-mono text-xs font-bold"
         >
-          {value}
+          #{payload.rank}
         </text>
       </g>
     );
@@ -168,10 +177,10 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
             {chartData.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`}
-                fill={entry.isMax ? 'var(--color-accent)' : 'var(--color-text-muted)'}
+                fill={entry.rank ? 'var(--color-accent)' : 'var(--color-text-muted)'}
                 stroke="var(--color-border)"
                 strokeWidth={2}
-                opacity={entry.isMax ? 1 : 0.6}
+                opacity={entry.rank ? 1 : 0.6}
               />
             ))}
             <LabelList content={renderLabel} />
@@ -179,17 +188,24 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
         </BarChart>
       </ResponsiveContainer>
 
-      {/* Most productive day annotation */}
-      {maxCount > 0 && (
+      {/* Top 3 productive days annotation */}
+      {sortedDays.length > 0 && (
         <div className="mt-4 pt-4 border-t-2 border-border">
-          <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-            {t('statistics.dayOfWeekChart.mostProductiveDay')}
+          <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">
+            {t('statistics.dayOfWeekChart.topDays')}
           </p>
-          <p className="text-sm font-mono font-bold text-accent mt-1">
-            {chartData.find(d => d.isMax)?.fullDay} ({maxCount} {maxCount === 1 
-              ? t('statistics.dayOfWeekChart.daySingular')
-              : t('statistics.dayOfWeekChart.daysPlural')})
-          </p>
+          <div className="space-y-1">
+            {sortedDays.slice(0, 3).map((item, index) => {
+              const dayData = chartData.find(d => d.fullDay === t(`statistics.dayOfWeekChart.${item.day}`));
+              return (
+                <p key={item.day} className="text-sm font-mono font-bold text-accent">
+                  #{index + 1} {dayData?.fullDay} ({item.count} {item.count === 1 
+                    ? t('statistics.dayOfWeekChart.daySingular')
+                    : t('statistics.dayOfWeekChart.daysPlural')})
+                </p>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

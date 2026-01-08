@@ -260,6 +260,7 @@ export interface Translations {
     };
     frequencyHeatmap: {
       title: string;
+      days: string;
       noWriting: string;
       words: string;
       less: string;
@@ -283,7 +284,7 @@ export interface Translations {
       notEnoughData: string;
       yAxisLabel: string;
       mostProductive: string;
-      mostProductiveDay: string;
+      topDays: string;
       daySingular: string;
       daysPlural: string;
       monday: string;
@@ -666,7 +667,8 @@ export const cs: Translations = {
       percentage: '{rate}% konzistence',
     },
     frequencyHeatmap: {
-      title: 'ČETNOST PSANÍ (90 DNÍ)',
+      title: 'ČETNOST PSANÍ',
+      days: 'DNÍ',
       noWriting: 'Žádné psaní',
       words: 'slov',
       less: 'MÉNĚ',
@@ -690,7 +692,7 @@ export const cs: Translations = {
       notEnoughData: 'Nedostatek dat',
       yAxisLabel: 'Počet dní',
       mostProductive: 'Nejproduktivnější',
-      mostProductiveDay: 'Nejproduktivnější den',
+      topDays: 'Top 3 Nejproduktivnější dny',
       daySingular: 'den',
       daysPlural: 'dní',
       monday: 'Pondělí',
