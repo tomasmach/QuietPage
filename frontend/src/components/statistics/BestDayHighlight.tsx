@@ -24,9 +24,29 @@ export interface BestDayHighlightProps {
 
 /**
  * Formats a date string to localized format (e.g., "Dec 1, 2025")
+ * Parses ISO date string (YYYY-MM-DD) as local date to avoid timezone shifts.
  */
 function formatDate(dateString: string, language: 'cs' | 'en'): string {
-  const date = new Date(dateString);
+  // Parse ISO date string (YYYY-MM-DD) into components
+  const parts = dateString.split(/-/);
+  
+  // Guard against invalid input
+  if (parts.length !== 3) {
+    return dateString; // Return original string if parsing fails
+  }
+  
+  const year = Number(parts[0]);
+  const monthIndex = Number(parts[1]) - 1; // Month is 0-indexed
+  const day = Number(parts[2]);
+  
+  // Validate parsed values
+  if (isNaN(year) || isNaN(monthIndex) || isNaN(day)) {
+    return dateString; // Return original string if parsing fails
+  }
+  
+  // Construct local Date (no timezone shift)
+  const date = new Date(year, monthIndex, day);
+  
   const options: Intl.DateTimeFormatOptions = {
     weekday: 'long',
     month: 'long',
