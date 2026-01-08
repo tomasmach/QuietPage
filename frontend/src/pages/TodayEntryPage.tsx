@@ -33,6 +33,7 @@ export function TodayEntryPage() {
   
   const retryCountRef = useRef(0);
   const retryTimeoutRef = useRef<number | null>(null);
+  const isCreatingEntryRef = useRef(isCreatingEntry);
 
   // Auto-save functionality (bez refresh - není potřeba)
   const onSaveSuccess = useCallback(() => {
@@ -42,12 +43,14 @@ export function TodayEntryPage() {
     
     if (isCreatingEntry) {
       setIsCreatingEntry(false);
+      isCreatingEntryRef.current = false;
     }
   }, [isCreatingEntry]);
 
   const onSaveError = useCallback((err: Error, isCreating: boolean) => {
     // Always reset isCreatingEntry to unblock future attempts
     setIsCreatingEntry(false);
+    isCreatingEntryRef.current = false;
     
     // Only reset isInitialized during creation phase to allow retry
     // For normal auto-save failures, keep isInitialized=true to prevent re-creation
@@ -66,7 +69,7 @@ export function TodayEntryPage() {
 
   const { save: autoSave, isSaving: isAutoSaving, lastSaved } = useTodayAutoSave({
     onSuccess: onSaveSuccess,
-    onError: (err) => onSaveError(err, isCreatingEntry),
+    onError: (err) => onSaveError(err, isCreatingEntryRef.current),
   });
 
   // Auto-create empty entry if it doesn't exist (750words.com style)
@@ -78,6 +81,7 @@ export function TodayEntryPage() {
       
       retryTimeoutRef.current = setTimeout(() => {
         setIsCreatingEntry(true);
+        isCreatingEntryRef.current = true;
         setIsInitialized(true);
         // Create empty entry
         autoSave({
