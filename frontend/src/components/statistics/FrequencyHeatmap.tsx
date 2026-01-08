@@ -305,12 +305,12 @@ export function FrequencyHeatmap() {
   
   if (isLoading) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+        <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
           {t('statistics.frequencyHeatmap.title')} (LAST YEAR)
         </h3>
         <div className="flex items-center justify-center h-32">
-          <span className="text-text-muted font-mono text-sm">Loading...</span>
+          <span className="theme-aware text-text-muted font-mono text-sm">Loading...</span>
         </div>
       </div>
     );
@@ -318,16 +318,16 @@ export function FrequencyHeatmap() {
   
   if (fetchError) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+        <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
           {t('statistics.frequencyHeatmap.title')} (LAST YEAR)
         </h3>
         <div className="flex items-center justify-center h-32">
           <div className="text-center">
-            <p className="text-text-muted font-mono text-sm mb-2">
+            <p className="theme-aware text-text-muted font-mono text-sm mb-2">
               {t('statistics.frequencyHeatmap.loadError')}
             </p>
-            <p className="text-text-muted font-mono text-xs opacity-70">
+            <p className="theme-aware text-text-muted font-mono text-xs opacity-70">
               {fetchError.message}
             </p>
           </div>
@@ -337,8 +337,8 @@ export function FrequencyHeatmap() {
   }
   
   return (
-    <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+    <div className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+      <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
         {t('statistics.frequencyHeatmap.title')} (LAST YEAR)
       </h3>
       
@@ -351,7 +351,7 @@ export function FrequencyHeatmap() {
               return (
                 <div key={weekIndex} className="h-3 flex items-center justify-start overflow-hidden">
                   {monthLabel && (
-                    <span className="text-[8px] font-mono text-text-muted whitespace-nowrap">
+                    <span className="theme-aware text-[8px] font-mono text-text-muted whitespace-nowrap">
                       {monthLabel.label}
                     </span>
                   )}
@@ -371,7 +371,7 @@ export function FrequencyHeatmap() {
                 className="w-3 flex items-center justify-end"
                 style={{ aspectRatio: '1' }}
               >
-                <span className="text-[8px] font-mono text-text-muted">
+                <span className="theme-aware text-[8px] font-mono text-text-muted">
                   {getDayOfWeekLabel(dayIndex)}
                 </span>
               </div>
@@ -389,7 +389,7 @@ export function FrequencyHeatmap() {
                 <div
                   key={`${day.dateKey}`}
                   className={cn(
-                    'rounded-none transition-all duration-150 cursor-pointer min-w-0 min-h-0 border border-border',
+                    'theme-aware rounded-none transition-all duration-150 cursor-pointer min-w-0 min-h-0 border border-border',
                     'hover:ring-1 hover:ring-accent'
                   )}
                   onMouseEnter={(e) => handleMouseEnter(day, e)}
@@ -407,13 +407,13 @@ export function FrequencyHeatmap() {
         </div>
         
         {/* Legend */}
-        <div className="flex items-center justify-end gap-2 mt-3 text-[9px] font-mono text-text-muted">
+        <div className="theme-aware flex items-center justify-end gap-2 mt-3 text-[9px] font-mono text-text-muted">
           <span>{t('statistics.frequencyHeatmap.less')}</span>
           <div className="flex gap-[2px]">
             {[0, 1, 2, 3].map(level => (
               <div
                 key={level}
-                className="w-2.5 h-2.5 border border-border"
+                className="theme-aware w-2.5 h-2.5 border border-border"
                 style={getIntensityStyles(level)}
               />
             ))}
@@ -431,11 +431,11 @@ export function FrequencyHeatmap() {
               transform: 'translate(-50%, -100%)',
             }}
           >
-            <div className="bg-bg-panel border-2 border-border px-3 py-2 shadow-hard">
-              <p className="text-xs font-mono text-text-main whitespace-nowrap">
+            <div className="theme-aware bg-bg-panel border-2 border-border px-3 py-2 shadow-hard">
+              <p className="theme-aware text-xs font-mono text-text-main whitespace-nowrap">
                 {formatDate(hoveredDay.date, localeCode)}
               </p>
-              <p className="text-xs font-mono text-text-muted whitespace-nowrap">
+              <p className="theme-aware text-xs font-mono text-text-muted whitespace-nowrap">
                 {formatWordCount(hoveredDay.wordCount, t)}
               </p>
             </div>

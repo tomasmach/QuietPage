@@ -45,7 +45,7 @@ export const MoodChartMini: React.FC = () => {
         width="100%"
         height={height}
         viewBox={`0 0 ${width} ${height}`}
-        className="overflow-visible"
+        className="theme-aware overflow-visible"
       >
         {/* Grid lines */}
         {[1, 2, 3, 4, 5].map((level) => {
@@ -91,6 +91,7 @@ export const MoodChartMini: React.FC = () => {
             stroke="var(--color-bg-panel)"
             strokeWidth="2"
             opacity="0"
+            className="theme-aware"
             style={{
               animation: `pulse-subtle 2s ease-out ${index * 0.15}s forwards`,
             }}
@@ -110,7 +111,7 @@ export const MoodChartMini: React.FC = () => {
                 animation: `pulse-subtle 0.5s ease-out ${0.3 + index * 0.1}s forwards`,
               }}
             >
-              <MoodIcon size={16} className="text-text-muted" />
+              <MoodIcon size={16} className="theme-aware text-text-muted" />
             </div>
           );
         })}

@@ -28,13 +28,13 @@ export function Logo({ size = 'md', className }: LogoProps) {
   return (
     <div
       className={cn(
-        'inline-flex items-center bg-bg-panel border-2 border-border shadow-hard font-mono font-bold',
+        'inline-flex items-center bg-bg-panel border-2 border-border shadow-hard font-mono font-bold theme-aware',
         sizeStyles[size],
         className
       )}
     >
-      <BookOpen size={iconSizes[size]} className="text-accent" />
-      <span className={cn('text-text-main', textSizes[size])}>QUIETPAGE</span>
+      <BookOpen size={iconSizes[size]} className="text-accent theme-aware" />
+      <span className={cn('text-text-main theme-aware', textSizes[size])}>QUIETPAGE</span>
     </div>
   );
 }

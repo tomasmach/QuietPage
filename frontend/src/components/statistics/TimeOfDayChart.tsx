@@ -92,19 +92,19 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
         {chartData.map((entry) => (
           <div key={entry.name} className="flex items-center gap-3">
             <div
-              className="w-4 h-4 border-2 border-border flex-shrink-0"
+              className="theme-aware w-4 h-4 border-2 border-border flex-shrink-0"
               style={{ backgroundColor: entry.color }}
             />
             <div className="flex-1">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-mono font-bold text-text-main uppercase tracking-wide">
+                <span className="theme-aware text-xs font-mono font-bold text-text-main uppercase tracking-wide">
                   {entry.name}
                 </span>
-                <span className="text-xs font-mono text-text-muted">
+                <span className="theme-aware text-xs font-mono text-text-muted">
                   {entry.value} {t('statistics.timeOfDayChart.entries')}
                 </span>
               </div>
-              <p className="text-[10px] font-mono text-text-muted mt-0.5">
+              <p className="theme-aware text-[10px] font-mono text-text-muted mt-0.5">
                 {entry.description}
               </p>
             </div>
@@ -122,14 +122,14 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
     const percentage = total > 0 ? ((tooltipData.value / total) * 100).toFixed(1) : '0.0';
 
     return (
-      <div className="bg-bg-panel border-2 border-border px-4 py-3 shadow-hard">
-        <p className="text-xs font-mono font-bold text-text-main uppercase tracking-wide mb-1">
+      <div className="theme-aware bg-bg-panel border-2 border-border px-4 py-3 shadow-hard">
+        <p className="theme-aware text-xs font-mono font-bold text-text-main uppercase tracking-wide mb-1">
           {tooltipData.name}
         </p>
-        <p className="text-xs font-mono text-text-muted">
+        <p className="theme-aware text-xs font-mono text-text-muted">
           {tooltipData.value} {t('statistics.timeOfDayChart.entries')} ({percentage}%)
         </p>
-        <p className="text-[10px] font-mono text-text-muted mt-1">
+        <p className="theme-aware text-[10px] font-mono text-text-muted mt-1">
           {tooltipData.description}
         </p>
       </div>
@@ -138,11 +138,11 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
 
   if (!hasData) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
+        <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
           {t('statistics.timeOfDayChart.title')}
         </h3>
-        <p className="text-text-muted font-mono text-sm">
+        <p className="theme-aware text-text-muted font-mono text-sm">
           {t('statistics.timeOfDayChart.notEnoughData')}
         </p>
       </div>
@@ -150,8 +150,8 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
   }
 
   return (
-    <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+    <div className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+      <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
         {t('statistics.timeOfDayChart.title')}
       </h3>
       
@@ -167,6 +167,7 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
             dataKey="value"
             label={renderLabel}
             labelLine={false}
+            className="theme-aware"
           >
             {chartData.map((entry, index) => (
               <Cell 
@@ -174,6 +175,7 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
                 fill={entry.color}
                 stroke="var(--color-border)"
                 strokeWidth={2}
+                className="theme-aware"
               />
             ))}
           </Pie>

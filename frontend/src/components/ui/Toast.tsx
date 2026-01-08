@@ -62,7 +62,7 @@ export function Toast({ toast, onRemove }: ToastProps) {
         border-2 shadow-hard
         p-4 rounded-lg
         flex items-start gap-3
-        transition-all duration-300
+        transition-all duration-300 theme-aware
         ${isExiting ? 'toast-exit' : 'toast-enter'}
       `}
     >

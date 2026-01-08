@@ -24,13 +24,13 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
   const contextPanelRef = useFocusTrap(isContextPanelOpen);
 
   return (
-    <div className="min-h-screen bg-bg-app">
+    <div className="min-h-screen bg-bg-app theme-aware">
       {/* Mobile Header with Hamburger Menu */}
-      <div className="lg:hidden sticky top-0 z-30 bg-bg-app border-b-2 border-border px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden sticky top-0 z-30 bg-bg-app border-b-2 border-border px-4 py-3 flex items-center justify-between theme-aware">
         {sidebar && (
           <button
             onClick={toggleSidebar}
-            className="p-2 hover:bg-border/20 rounded-md transition-colors"
+            className="p-2 hover:bg-border/20 rounded-md transition-colors theme-aware"
             aria-label="Toggle sidebar"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,7 +42,7 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
         {contextPanel && (
           <button
             onClick={toggleContextPanel}
-            className="p-2 hover:bg-border/20 rounded-md transition-colors"
+            className="p-2 hover:bg-border/20 rounded-md transition-colors theme-aware"
             aria-label="Toggle context panel"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,16 +62,16 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
           />
           <aside
             ref={sidebarRef as React.RefObject<HTMLElement>}
-            className="lg:hidden fixed top-0 left-0 bottom-0 w-[280px] bg-bg-app z-50 overflow-y-auto border-r-2 border-border"
+            className="lg:hidden fixed top-0 left-0 bottom-0 w-[280px] bg-bg-app z-50 overflow-y-auto border-r-2 border-border theme-aware"
             role="dialog"
             aria-modal="true"
             aria-label="Menu"
           >
-            <div className="p-4 border-b-2 border-border flex justify-between items-center">
+            <div className="p-4 border-b-2 border-border flex justify-between items-center theme-aware">
               <h2 className="font-semibold">Menu</h2>
               <button
                 onClick={closeSidebar}
-                className="p-2 hover:bg-border/20 rounded-md transition-colors"
+                className="p-2 hover:bg-border/20 rounded-md transition-colors theme-aware"
                 aria-label="Close sidebar"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,16 +94,16 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
           />
           <aside
             ref={contextPanelRef as React.RefObject<HTMLElement>}
-            className="lg:hidden fixed top-0 right-0 bottom-0 w-[320px] bg-bg-app z-50 overflow-y-auto border-l-2 border-border"
+            className="lg:hidden fixed top-0 right-0 bottom-0 w-[320px] bg-bg-app z-50 overflow-y-auto border-l-2 border-border theme-aware"
             role="dialog"
             aria-modal="true"
             aria-label="Info"
           >
-            <div className="p-4 border-b-2 border-border flex justify-between items-center">
+            <div className="p-4 border-b-2 border-border flex justify-between items-center theme-aware">
               <h2 className="font-semibold">Info</h2>
               <button
                 onClick={closeContextPanel}
-                className="p-2 hover:bg-border/20 rounded-md transition-colors"
+                className="p-2 hover:bg-border/20 rounded-md transition-colors theme-aware"
                 aria-label="Close context panel"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,17 +119,17 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
       {/* Responsive Layout */}
       <div className="lg:grid lg:grid-cols-[minmax(240px,280px)_1fr_minmax(280px,320px)] lg:divide-x-2 divide-border min-h-screen">
         {/* Left Sidebar */}
-        <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app">
+        <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app theme-aware">
           {sidebar}
         </aside>
 
         {/* Main Content */}
-        <main className="min-h-screen overflow-y-auto bg-bg-app relative">
+        <main className="min-h-screen overflow-y-auto bg-bg-app relative theme-aware">
           {children}
         </main>
 
         {/* Right Context Panel */}
-        <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app">
+        <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app theme-aware">
           {contextPanel}
         </aside>
       </div>

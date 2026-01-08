@@ -12,8 +12,8 @@ export function MoodTimelineChart({ data }: MoodTimelineChartProps) {
 
   if (!data.timeline || data.timeline.length < 2) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none">
-        <p className="text-text-muted font-mono text-sm">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-8 text-center rounded-none">
+        <p className="theme-aware text-text-muted font-mono text-sm">
           {t('statistics.moodTimeline.notEnoughData')}
         </p>
       </div>
@@ -29,8 +29,8 @@ export function MoodTimelineChart({ data }: MoodTimelineChartProps) {
     }));
 
   return (
-    <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+    <div className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+      <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
         {t('statistics.moodTimeline.title')}
       </h3>
       <ResponsiveContainer width="100%" height={300}>
@@ -39,17 +39,20 @@ export function MoodTimelineChart({ data }: MoodTimelineChartProps) {
             strokeDasharray="0"
             stroke="var(--color-border)"
             strokeWidth={1}
+            className="theme-aware"
           />
           <XAxis
             dataKey="date"
             stroke="var(--color-text-main)"
             style={{ fontFamily: 'IBM Plex Mono', fontSize: '12px' }}
+            className="theme-aware"
           />
           <YAxis
             domain={[1, 5]}
             ticks={[1, 2, 3, 4, 5]}
             stroke="var(--color-text-main)"
             style={{ fontFamily: 'IBM Plex Mono', fontSize: '12px' }}
+            className="theme-aware"
           />
           <Tooltip
             contentStyle={{
@@ -58,6 +61,7 @@ export function MoodTimelineChart({ data }: MoodTimelineChartProps) {
               fontFamily: 'IBM Plex Mono',
               fontSize: '12px',
             }}
+            wrapperClassName="theme-aware"
           />
           <Line
             type="monotone"
@@ -65,6 +69,7 @@ export function MoodTimelineChart({ data }: MoodTimelineChartProps) {
             stroke="var(--color-accent)"
             strokeWidth={2}
             dot={{ r: 4, fill: 'var(--color-accent)' }}
+            className="theme-aware"
           />
         </LineChart>
       </ResponsiveContainer>

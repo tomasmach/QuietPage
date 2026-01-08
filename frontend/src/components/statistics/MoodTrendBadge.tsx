@@ -16,7 +16,7 @@ const trendConfig = {
   },
   stable: {
     icon: ArrowRight,
-    colorClasses: 'text-text-muted bg-bg-panel border-border',
+    colorClasses: 'theme-aware text-text-muted bg-bg-panel border-border',
   },
 } as const;
 

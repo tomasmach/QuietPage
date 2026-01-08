@@ -64,14 +64,10 @@ body {
    THEME TRANSITIONS
    ============================================ */
 
+/* Opt-in theme transition for components using theme colors */
+.theme-aware,
 body,
-[data-theme],
-[style*="--color-bg-app"] {
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Smooth transitions for all elements using theme colors */
-* {
+[data-theme] {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -148,11 +144,11 @@ body,
    ============================================ */
 
 .panel {
-  @apply bg-bg-panel border-2 border-border;
+  @apply bg-bg-panel border-2 border-border theme-aware;
 }
 
 .btn-primary {
-  @apply bg-accent text-accent-fg border-2 border-border px-4 py-2 font-medium;
+  @apply bg-accent text-accent-fg border-2 border-border px-4 py-2 font-medium theme-aware;
   @apply hover:translate-x-[2px] hover:translate-y-[2px];
   @apply transition-transform duration-150;
   box-shadow: 4px 4px 0px 0px var(--color-shadow);
@@ -163,7 +159,7 @@ body,
 }
 
 .btn-secondary {
-  @apply bg-bg-panel text-text-main border-2 border-border px-4 py-2 font-medium;
+  @apply bg-bg-panel text-text-main border-2 border-border px-4 py-2 font-medium theme-aware;
   @apply hover:translate-x-[2px] hover:translate-y-[2px];
   @apply transition-transform duration-150;
   box-shadow: 4px 4px 0px 0px var(--color-shadow);
@@ -174,13 +170,13 @@ body,
 }
 
 .input-field {
-  @apply bg-bg-panel text-text-main border-2 border-border px-3 py-2;
+  @apply bg-bg-panel text-text-main border-2 border-border px-3 py-2 theme-aware;
   @apply focus:outline-none focus:border-accent;
   @apply transition-colors duration-150;
 }
 
 .link-primary {
-  @apply text-accent underline;
+  @apply text-accent underline theme-aware;
   @apply hover:text-text-main;
   @apply transition-colors duration-150;
 }

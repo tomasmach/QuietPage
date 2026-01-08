@@ -39,18 +39,18 @@ export function StatsSummaryCards({ data }: StatsSummaryCardsProps) {
       {cards.map((card, index) => (
         <div
           key={index}
-          className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none"
+          className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none"
         >
-          <p className="text-xs font-bold uppercase tracking-widest text-text-muted font-mono mb-2">
+          <p className="theme-aware text-xs font-bold uppercase tracking-widest text-text-muted font-mono mb-2">
             {card.label}
           </p>
           <div className="flex items-center gap-3">
-            <p className="text-3xl font-bold text-text-main font-mono">
+            <p className="theme-aware text-3xl font-bold text-text-main font-mono">
               {card.value}
             </p>
             {'badge' in card && card.badge}
           </div>
-          <p className="text-xs text-text-muted font-mono mt-1">
+          <p className="theme-aware text-xs text-text-muted font-mono mt-1">
             {card.subtitle}
           </p>
         </div>

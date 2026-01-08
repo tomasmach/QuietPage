@@ -18,8 +18,8 @@ export function WordCountTimelineChart({ data }: WordCountTimelineChartProps) {
 
   if (!data.timeline || data.timeline.length === 0) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none">
-        <p className="text-text-muted font-mono text-sm">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-8 text-center rounded-none">
+        <p className="theme-aware text-text-muted font-mono text-sm">
           {t('statistics.wordCountTimeline.noData')}
         </p>
       </div>
@@ -32,8 +32,8 @@ export function WordCountTimelineChart({ data }: WordCountTimelineChartProps) {
   }));
 
   return (
-    <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+    <div className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+      <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
         {t('statistics.wordCountTimeline.title')}
       </h3>
       <ResponsiveContainer width="100%" height={300}>
@@ -42,15 +42,18 @@ export function WordCountTimelineChart({ data }: WordCountTimelineChartProps) {
             strokeDasharray="0"
             stroke="var(--color-border)"
             strokeWidth={1}
+            className="theme-aware"
           />
           <XAxis
             dataKey="date"
             stroke="var(--color-text-main)"
             style={{ fontFamily: 'IBM Plex Mono', fontSize: '12px' }}
+            className="theme-aware"
           />
           <YAxis
             stroke="var(--color-text-main)"
             style={{ fontFamily: 'IBM Plex Mono', fontSize: '12px' }}
+            className="theme-aware"
           />
           <Tooltip
             contentStyle={{
@@ -60,6 +63,7 @@ export function WordCountTimelineChart({ data }: WordCountTimelineChartProps) {
               fontSize: '12px',
             }}
             formatter={(value: number | undefined) => [value ?? 0, t('statistics.wordCountTimeline.wordsLabel')]}
+            wrapperClassName="theme-aware"
           />
           <Area
             type="monotone"
@@ -69,6 +73,7 @@ export function WordCountTimelineChart({ data }: WordCountTimelineChartProps) {
             strokeWidth={2}
             fill="var(--color-accent)"
             fillOpacity={0.15}
+            className="theme-aware"
           />
         </AreaChart>
       </ResponsiveContainer>

@@ -4,6 +4,7 @@ import type { RecentEntry } from '../../hooks/useDashboard';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { cn } from '../../lib/utils';
 
 interface RecentEntriesProps {
   entries: RecentEntry[];
@@ -27,7 +28,7 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
   if (entries.length === 0) {
     return (
       <Card className="text-center py-12">
-        <p className="text-text-muted mb-4">{t('dashboard.noEntries')}</p>
+        <p className={cn("text-text-muted mb-4 theme-aware")}>{t('dashboard.noEntries')}</p>
         <Button onClick={onNewEntry}>{t('dashboard.newEntry')}</Button>
       </Card>
     );
@@ -36,7 +37,7 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-accent">{t('dashboard.recentEntries')}</h2>
+        <h2 className={cn("text-2xl font-bold text-accent theme-aware")}>{t('dashboard.recentEntries')}</h2>
         <Button onClick={onNewEntry} size="sm">
           {t('dashboard.newEntry')}
         </Button>
@@ -64,29 +65,29 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-xs font-bold text-accent">
+                      <span className={cn("text-xs font-bold text-accent theme-aware")}>
                         {formattedDate}
                       </span>
-                      <span className="text-xs text-text-muted">{formattedTime}</span>
+                      <span className={cn("text-xs text-text-muted theme-aware")}>{formattedTime}</span>
                     </div>
 
                     {entry.title && (
-                      <h3 className="font-bold text-text group-hover:text-accent line-clamp-1 mb-1">
+                      <h3 className={cn("font-bold text-text group-hover:text-accent line-clamp-1 mb-1 theme-aware")}>
                         {entry.title}
                       </h3>
                     )}
 
-                    <p className="text-sm text-text-muted line-clamp-2">
+                    <p className={cn("text-sm text-text-muted line-clamp-2 theme-aware")}>
                       {entry.content_preview}
                     </p>
 
-                    <div className="text-xs text-text-muted mt-2">{entry.word_count} slov</div>
+                    <div className={cn("text-xs text-text-muted mt-2 theme-aware")}>{entry.word_count} slov</div>
                   </div>
 
                   {/* Mood indicator */}
                   {MoodIcon && (
                     <div className="flex-shrink-0">
-                      <MoodIcon className="h-5 w-5 text-text-muted" />
+                      <MoodIcon className={cn("h-5 w-5 text-text-muted theme-aware")} />
                     </div>
                   )}
                 </div>
@@ -99,7 +100,7 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
       <div className="text-center pt-2">
         <Link
           to="/archive"
-          className="text-sm text-accent hover:underline font-medium"
+          className={cn("text-sm text-accent hover:underline font-medium theme-aware")}
         >
           {t('dashboard.viewAll')} →
         </Link>

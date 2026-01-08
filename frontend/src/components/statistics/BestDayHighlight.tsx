@@ -63,16 +63,16 @@ export function BestDayHighlight({ data }: BestDayHighlightProps) {
   // Empty state - no best day data yet
   if (!data) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-6 rounded-none shadow-hard">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-6 rounded-none shadow-hard">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 border-2 border-border bg-bg-app">
-            <Pencil size={20} strokeWidth={2} className="text-text-muted" />
+          <div className="theme-aware p-2 border-2 border-border bg-bg-app">
+            <Pencil size={20} strokeWidth={2} className="theme-aware text-text-muted" />
           </div>
-          <h3 className="text-xs font-bold uppercase tracking-widest text-text-main font-mono">
+          <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main font-mono">
             {t('statistics.bestDay.title')}
           </h3>
         </div>
-        <p className="text-sm font-mono text-text-muted">
+        <p className="theme-aware text-sm font-mono text-text-muted">
           {t('statistics.bestDay.noData')}
         </p>
       </div>
@@ -80,7 +80,7 @@ export function BestDayHighlight({ data }: BestDayHighlightProps) {
   }
 
   return (
-    <div className="border-2 border-accent-fg bg-accent text-accent-fg p-6 rounded-none shadow-hard relative overflow-hidden">
+    <div className="theme-aware border-2 border-accent-fg bg-accent text-accent-fg p-6 rounded-none shadow-hard relative overflow-hidden">
       {/* Decorative background pattern */}
       <div className="absolute top-1/2 right-4 -translate-y-2/3 opacity-10 pointer-events-none">
         <Trophy size={100} strokeWidth={1} />
@@ -88,7 +88,7 @@ export function BestDayHighlight({ data }: BestDayHighlightProps) {
       
       {/* Header with Trophy */}
       <div className="flex items-center gap-3 mb-4 relative">
-        <div className="p-2 border-2 border-current bg-accent-fg/10">
+        <div className="theme-aware p-2 border-2 border-current bg-accent-fg/10">
           <Trophy size={20} strokeWidth={2} />
         </div>
         <h3 className="text-xs font-bold uppercase tracking-widest font-mono">

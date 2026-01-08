@@ -17,7 +17,7 @@ interface MilestoneBadgeProps {
  * Returns the appropriate icon component for each milestone type.
  */
 function getMilestoneIcon(type: MilestoneType, achieved: boolean) {
-  const iconClass = achieved ? 'text-accent-fg' : 'text-text-muted';
+  const iconClass = achieved ? 'theme-aware text-accent-fg' : 'theme-aware text-text-muted';
   const size = 20;
   const strokeWidth = 2;
 
@@ -72,7 +72,7 @@ function MilestoneBadge({ type, value, achieved, current }: MilestoneBadgeProps)
   return (
     <div
       className={`
-        relative border-2 font-mono transition-all duration-150 flex items-center gap-4 p-4
+        theme-aware relative border-2 font-mono transition-all duration-150 flex items-center gap-4 p-4
         ${achieved
           ? 'bg-accent text-accent-fg border-border shadow-hard'
           : 'bg-bg-panel text-text-muted border-dashed border-border'
@@ -82,7 +82,7 @@ function MilestoneBadge({ type, value, achieved, current }: MilestoneBadgeProps)
     >
       {/* Icon */}
       <div className={`
-        flex items-center justify-center w-12 h-12 border-2 flex-shrink-0
+        theme-aware flex items-center justify-center w-12 h-12 border-2 flex-shrink-0
         ${achieved ? 'border-accent-fg bg-accent' : 'border-border bg-bg-panel'}
         rounded-none
       `}>
@@ -91,10 +91,10 @@ function MilestoneBadge({ type, value, achieved, current }: MilestoneBadgeProps)
 
       {/* Value and label */}
       <div className="flex-shrink-0">
-        <p className={`text-2xl font-bold leading-none mb-1 ${achieved ? 'text-accent-fg' : 'text-text-main'}`}>
+        <p className={`theme-aware text-2xl font-bold leading-none mb-1 ${achieved ? 'text-accent-fg' : 'text-text-main'}`}>
           {formatValue(value)}
         </p>
-        <p className={`text-[10px] uppercase tracking-widest leading-none ${achieved ? 'text-accent-fg opacity-80' : 'text-text-muted'}`}>
+        <p className={`theme-aware text-[10px] uppercase tracking-widest leading-none ${achieved ? 'text-accent-fg opacity-80' : 'text-text-muted'}`}>
           {getTypeLabel()}
         </p>
       </div>
@@ -106,11 +106,11 @@ function MilestoneBadge({ type, value, achieved, current }: MilestoneBadgeProps)
       {achieved ? (
         /* Achieved indicator */
         <div className="flex items-center gap-3">
-          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-fg">
+          <p className="theme-aware text-[10px] uppercase tracking-widest font-bold text-accent-fg">
             {t('statistics.milestones.achieved')}
           </p>
-          <div className="flex items-center justify-center w-6 h-6 bg-accent-fg rounded-none">
-            <Check size={14} strokeWidth={3} className="text-accent" />
+          <div className="theme-aware flex items-center justify-center w-6 h-6 bg-accent-fg rounded-none">
+            <Check size={14} strokeWidth={3} className="theme-aware text-accent" />
           </div>
         </div>
       ) : (
@@ -118,16 +118,16 @@ function MilestoneBadge({ type, value, achieved, current }: MilestoneBadgeProps)
         <div className="flex items-center gap-4 min-w-0 flex-1 max-w-md">
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] uppercase tracking-widest text-text-muted">
+              <span className="theme-aware text-[10px] uppercase tracking-widest text-text-muted">
                 {formatValue(current)} / {formatValue(value)}
               </span>
-              <span className="text-[10px] font-bold text-text-muted ml-2">
+              <span className="theme-aware text-[10px] font-bold text-text-muted ml-2">
                 {Math.round(progressPercent)}%
               </span>
             </div>
-            <div className="h-2 border-2 border-border bg-bg-app rounded-none overflow-hidden">
+            <div className="theme-aware h-2 border-2 border-border bg-bg-app rounded-none overflow-hidden">
               <div
-                className="h-full bg-text-muted transition-all duration-300"
+                className="theme-aware h-full bg-text-muted transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -164,12 +164,12 @@ export function MilestonesGrid({ data }: MilestonesGridProps) {
 
   if (!hasMilestones) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
-        <Trophy size={32} strokeWidth={2} className="text-text-muted mx-auto mb-4" />
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-2 font-mono">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
+        <Trophy size={32} strokeWidth={2} className="theme-aware text-text-muted mx-auto mb-4" />
+        <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-2 font-mono">
           {t('statistics.milestones.title')}
         </h3>
-        <p className="text-text-muted font-mono text-sm">
+        <p className="theme-aware text-text-muted font-mono text-sm">
           {t('statistics.milestones.noData')}
         </p>
       </div>
@@ -194,7 +194,7 @@ export function MilestonesGrid({ data }: MilestonesGridProps) {
 
     return (
       <div key={type} className="mb-8 last:mb-0">
-        <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-4 font-mono">
+        <h4 className="theme-aware text-[10px] font-bold uppercase tracking-widest text-text-muted mb-4 font-mono">
           {getCategoryLabel()}
         </h4>
         <div className="space-y-3">
@@ -213,8 +213,8 @@ export function MilestonesGrid({ data }: MilestonesGridProps) {
   };
 
   return (
-    <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-6 font-mono flex items-center gap-2">
+    <div className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+      <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-6 font-mono flex items-center gap-2">
         <Trophy size={16} strokeWidth={2} />
         {t('statistics.milestones.title')}
       </h3>

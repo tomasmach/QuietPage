@@ -25,11 +25,11 @@ export function MoodDistributionChart({ data }: MoodDistributionChartProps) {
 
   if (!hasData) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
+        <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
           {t('statistics.moodDistribution.title')}
         </h3>
-        <p className="text-text-muted font-mono text-sm">
+        <p className="theme-aware text-text-muted font-mono text-sm">
           {t('statistics.moodDistribution.noData')}
         </p>
       </div>
@@ -46,8 +46,8 @@ export function MoodDistributionChart({ data }: MoodDistributionChartProps) {
   const maxCount = Math.max(...ratings.map(r => r.count));
 
   return (
-    <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+    <div className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+      <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
         {t('statistics.moodDistribution.title')}
       </h3>
 
@@ -59,11 +59,11 @@ export function MoodDistributionChart({ data }: MoodDistributionChartProps) {
           return (
             <div
               key={rating}
-              className="relative border-2 border-border bg-bg-main p-3"
+              className="theme-aware relative border-2 border-border bg-bg-main p-3"
             >
               {/* Background bar showing relative count */}
               <div
-                className="absolute inset-0 bg-accent transition-all duration-300"
+                className="theme-aware absolute inset-0 bg-accent transition-all duration-300"
                 style={{
                   width: `${barWidth}%`,
                   opacity: isMostCommon ? 0.2 : 0.1,
@@ -75,7 +75,7 @@ export function MoodDistributionChart({ data }: MoodDistributionChartProps) {
                 {/* Rating label */}
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`font-mono text-sm font-bold ${
+                    className={`theme-aware font-mono text-sm font-bold ${
                       isMostCommon ? 'text-accent' : 'text-text-main'
                     }`}
                   >
@@ -86,13 +86,13 @@ export function MoodDistributionChart({ data }: MoodDistributionChartProps) {
                 {/* Count */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span
-                    className={`text-xs font-mono font-bold ${
+                    className={`theme-aware text-xs font-mono font-bold ${
                       isMostCommon ? 'text-accent' : 'text-text-main'
                     }`}
                   >
                     {count}
                   </span>
-                  <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+                  <span className="theme-aware text-[10px] font-mono text-text-muted uppercase tracking-widest">
                     {t('statistics.moodDistribution.entries')}
                   </span>
                 </div>

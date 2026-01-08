@@ -30,9 +30,9 @@ export function Sidebar() {
       {/* Logo */}
       <div className="mb-8">
         <Link to="/dashboard" className="block">
-          <div className="border-2 border-border p-5 flex w-full items-center gap-4 bg-bg-panel shadow-hard">
-            <div className="w-4 h-4 bg-accent"></div>
-            <span className="font-bold text-2xl uppercase tracking-widest leading-none text-text-main">QuietPage</span>
+          <div className="theme-aware border-2 border-border p-5 flex w-full items-center gap-4 bg-bg-panel shadow-hard">
+            <div className="theme-aware w-4 h-4 bg-accent"></div>
+            <span className="theme-aware font-bold text-2xl uppercase tracking-widest leading-none text-text-main">QuietPage</span>
           </div>
         </Link>
       </div>
@@ -48,7 +48,7 @@ export function Sidebar() {
               key={item.path}
               to={item.path}
               className={`
-                w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all bg-bg-panel shadow-hard
+                theme-aware w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all bg-bg-panel shadow-hard
                 ${active
                   ? 'bg-text-main text-bg-panel'
                   : 'text-text-main hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
@@ -70,7 +70,7 @@ export function Sidebar() {
         {/* Theme Switcher */}
         <button
           onClick={toggleTheme}
-          className="w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all text-text-main bg-bg-panel shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+          className="theme-aware w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all text-text-main bg-bg-panel shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
           aria-label="Toggle theme"
         >
           <span className="flex items-center gap-3">
@@ -95,7 +95,7 @@ export function Sidebar() {
             }
           }}
           disabled={isLoggingOut}
-          className={`w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all text-text-main bg-bg-panel shadow-hard ${
+          className={`theme-aware w-full text-left py-4 px-3 border-2 border-border font-bold text-sm uppercase flex justify-between items-center group transition-all text-text-main bg-bg-panel shadow-hard ${
             isLoggingOut
               ? 'opacity-50 cursor-not-allowed'
               : 'hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
@@ -110,7 +110,7 @@ export function Sidebar() {
         </button>
 
         {/* Version */}
-        <div className="text-[10px] uppercase font-bold text-text-muted">
+        <div className="theme-aware text-[10px] uppercase font-bold text-text-muted">
           {t('meta.version')}
         </div>
       </div>

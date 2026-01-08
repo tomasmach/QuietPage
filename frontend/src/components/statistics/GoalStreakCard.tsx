@@ -24,16 +24,16 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
   // Empty state - no data yet
   if (!data) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-6 rounded-none shadow-hard">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-6 rounded-none shadow-hard">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 border-2 border-border bg-bg-app">
-            <Target size={20} strokeWidth={2} className="text-text-muted" />
+          <div className="theme-aware p-2 border-2 border-border bg-bg-app">
+            <Target size={20} strokeWidth={2} className="theme-aware text-text-muted" />
           </div>
-          <h3 className="text-xs font-bold uppercase tracking-widest text-text-main font-mono">
+          <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main font-mono">
             {t('statistics.goalStreak.title')}
           </h3>
         </div>
-        <p className="text-sm font-mono text-text-muted">
+        <p className="theme-aware text-sm font-mono text-text-muted">
           {t('statistics.goalStreak.inactive')}
         </p>
       </div>
@@ -54,7 +54,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
   return (
     <div
       className={`
-        border-2 p-6 rounded-none shadow-hard relative overflow-hidden
+        theme-aware border-2 p-6 rounded-none shadow-hard relative overflow-hidden
         ${hasActiveStreak
           ? 'border-accent-fg bg-accent text-accent-fg'
           : 'border-border bg-bg-panel text-text-main'
@@ -72,7 +72,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
       <div className="flex items-center gap-3 mb-4 relative">
         <div
           className={`
-            p-2 border-2
+            theme-aware p-2 border-2
             ${hasActiveStreak
               ? 'border-current bg-accent-fg/10'
               : 'border-border bg-bg-app'
@@ -82,7 +82,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
           <Flame
             size={20}
             strokeWidth={2}
-            className={hasActiveStreak ? '' : 'text-text-muted'}
+            className={hasActiveStreak ? '' : 'theme-aware text-text-muted'}
           />
         </div>
         <h3 className="text-xs font-bold uppercase tracking-widest font-mono">
@@ -93,7 +93,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
       {/* Goal value */}
       <p
         className={`
-          text-sm font-mono mb-4 relative
+          theme-aware text-sm font-mono mb-4 relative
           ${hasActiveStreak ? 'opacity-80' : 'text-text-muted'}
         `}
       >
@@ -109,7 +109,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
           </p>
           <p
             className={`
-              text-xs font-mono uppercase tracking-wider
+              theme-aware text-xs font-mono uppercase tracking-wider
               ${hasActiveStreak ? 'opacity-80' : 'text-text-muted'}
             `}
           >
@@ -120,7 +120,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
         {/* Longest Streak */}
         <div
           className={`
-            border-l-2 pl-6
+            theme-aware border-l-2 pl-6
             ${hasActiveStreak ? 'border-current opacity-80' : 'border-border'}
           `}
         >
@@ -129,7 +129,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
           </p>
           <p
             className={`
-              text-xs font-mono uppercase tracking-wider
+              theme-aware text-xs font-mono uppercase tracking-wider
               ${hasActiveStreak ? 'opacity-80' : 'text-text-muted'}
             `}
           >
@@ -141,7 +141,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
       {/* Motivational message */}
       <div
         className={`
-          pt-3 border-t-2 relative
+          theme-aware pt-3 border-t-2 relative
           ${hasActiveStreak ? 'border-current' : 'border-border'}
         `}
       >

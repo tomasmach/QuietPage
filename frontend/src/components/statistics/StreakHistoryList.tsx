@@ -87,11 +87,11 @@ export function StreakHistoryList({ data }: StreakHistoryListProps) {
   // No data state
   if (streakItems.length === 0) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
+        <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
           {t('statistics.streakHistory.title')}
         </h3>
-        <p className="text-text-muted font-mono text-sm">
+        <p className="theme-aware text-text-muted font-mono text-sm">
           {t('statistics.streakHistory.noData')}
         </p>
       </div>
@@ -102,21 +102,21 @@ export function StreakHistoryList({ data }: StreakHistoryListProps) {
   const currentStreak = user?.current_streak || 0;
   
   return (
-    <div className="border-2 border-border bg-bg-panel rounded-none shadow-hard">
+    <div className="theme-aware border-2 border-border bg-bg-panel rounded-none shadow-hard">
       {/* Header */}
-      <div className="border-b-2 border-border p-6">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main font-mono">
+      <div className="theme-aware border-b-2 border-border p-6">
+        <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main font-mono">
           {t('statistics.streakHistory.title')}
         </h3>
       </div>
       
       {/* Streak List */}
-      <div className="divide-y-2 divide-border">
+      <div className="theme-aware divide-y-2 divide-border">
         {streakItems.map((streak, index) => (
           <div
             key={`${streak.startDate}-${streak.endDate}`}
             className={`
-              p-6 transition-all duration-150
+              theme-aware p-6 transition-all duration-150
               ${streak.isLongest 
                 ? 'bg-accent text-accent-fg hover:translate-x-[2px] hover:translate-y-[2px]' 
                 : 'bg-bg-panel hover:bg-bg-app'
@@ -129,7 +129,7 @@ export function StreakHistoryList({ data }: StreakHistoryListProps) {
                 <div className="flex items-center gap-2 mb-2">
                   {/* Rank number */}
                   <span className={`
-                    text-xs font-bold font-mono
+                    theme-aware text-xs font-bold font-mono
                     ${streak.isLongest ? 'text-accent-fg' : 'text-text-muted'}
                   `}>
                     #{index + 1}
@@ -148,12 +148,12 @@ export function StreakHistoryList({ data }: StreakHistoryListProps) {
                   {/* Current streak badge */}
                   {streak.isCurrent && (
                     <div className={`
-                      flex items-center gap-1 px-2 py-1 border-2 rounded-none
+                      theme-aware flex items-center gap-1 px-2 py-1 border-2 rounded-none
                       ${streak.isLongest ? 'border-accent-fg' : 'border-accent'}
                     `}>
                       <TrendingUp size={12} strokeWidth={2} />
                       <span className={`
-                        text-xs font-bold uppercase tracking-wider font-mono
+                        theme-aware text-xs font-bold uppercase tracking-wider font-mono
                         ${streak.isLongest ? 'text-accent-fg' : 'text-accent'}
                       `}>
                         {t('statistics.streakHistory.current')}
@@ -164,7 +164,7 @@ export function StreakHistoryList({ data }: StreakHistoryListProps) {
                 
                 {/* Date range */}
                 <p className={`
-                  text-sm font-mono mb-1
+                  theme-aware text-sm font-mono mb-1
                   ${streak.isLongest ? 'text-accent-fg' : 'text-text-main'}
                 `}>
                   {formatDate(streak.startDate, language)} – {formatDate(streak.endDate, language)}
@@ -174,13 +174,13 @@ export function StreakHistoryList({ data }: StreakHistoryListProps) {
               {/* Streak length */}
               <div className="text-right">
                 <p className={`
-                  text-2xl font-bold font-mono
+                  theme-aware text-2xl font-bold font-mono
                   ${streak.isLongest ? 'text-accent-fg' : 'text-text-main'}
                 `}>
                   {streak.length}
                 </p>
                 <p className={`
-                  text-xs font-mono
+                  theme-aware text-xs font-mono
                   ${streak.isLongest ? 'text-accent-fg opacity-80' : 'text-text-muted'}
                 `}>
                   {streak.length === 1 
@@ -195,8 +195,8 @@ export function StreakHistoryList({ data }: StreakHistoryListProps) {
       
       {/* Gamification Footer */}
       {longestStreak && (
-        <div className="border-t-2 border-border p-6 bg-bg-app">
-          <p className="text-sm font-mono text-text-main">
+        <div className="theme-aware border-t-2 border-border p-6 bg-bg-app">
+          <p className="theme-aware text-sm font-mono text-text-main">
             {currentStreak > longestStreak.length ? (
               // Current streak is breaking the record!
               t('statistics.streakHistory.newRecord', { days: currentStreak })

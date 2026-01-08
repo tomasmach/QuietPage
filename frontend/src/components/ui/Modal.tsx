@@ -26,7 +26,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
       <div
         ref={modalRef as React.RefObject<HTMLDivElement>}
         className={cn(
-          'bg-bg-panel border-2 border-border shadow-hard max-w-lg w-full mx-4',
+          'bg-bg-panel border-2 border-border shadow-hard max-w-lg w-full mx-4 theme-aware',
           className
         )}
         onClick={(e) => e.stopPropagation()}
@@ -35,16 +35,16 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
         aria-labelledby={title ? 'modal-title' : undefined}
       >
         {title && (
-          <div className="flex items-center justify-between border-b-2 border-border pb-4 mb-4 px-6 pt-6">
+          <div className="flex items-center justify-between border-b-2 border-border pb-4 mb-4 px-6 pt-6 theme-aware">
             <h2
               id="modal-title"
-              className="text-lg font-bold uppercase tracking-wider font-mono text-text-main"
+              className="text-lg font-bold uppercase tracking-wider font-mono text-text-main theme-aware"
             >
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="text-text-muted hover:text-text-main transition-colors"
+              className="text-text-muted hover:text-text-main transition-colors theme-aware"
               aria-label="Close modal"
             >
               <X className="h-5 w-5" />
@@ -54,7 +54,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
         {!title && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-text-muted hover:text-text-main transition-colors"
+            className="absolute top-4 right-4 text-text-muted hover:text-text-main transition-colors theme-aware"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />

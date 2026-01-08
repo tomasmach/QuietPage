@@ -21,11 +21,11 @@ export function TagAnalyticsChart({ data }: TagAnalyticsChartProps) {
   // Handle empty or undefined data
   if (!data || data.tags.length === 0) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
+        <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
           {t('statistics.tagAnalytics.title')}
         </h3>
-        <p className="text-text-muted font-mono text-sm">
+        <p className="theme-aware text-text-muted font-mono text-sm">
           {t('statistics.tagAnalytics.noTags')}
         </p>
       </div>
@@ -41,8 +41,8 @@ export function TagAnalyticsChart({ data }: TagAnalyticsChartProps) {
   const maxEntryCount = topTags[0]?.entryCount || 1;
 
   return (
-    <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+    <div className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+      <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
         {t('statistics.tagAnalytics.title')}
       </h3>
 
@@ -54,11 +54,11 @@ export function TagAnalyticsChart({ data }: TagAnalyticsChartProps) {
           return (
             <div
               key={tag.name}
-              className="relative border-2 border-border bg-bg-main p-3"
+              className="theme-aware relative border-2 border-border bg-bg-main p-3"
             >
               {/* Background bar showing relative entry count */}
               <div
-                className="absolute inset-0 bg-accent transition-all duration-300"
+                className="theme-aware absolute inset-0 bg-accent transition-all duration-300"
                 style={{
                   width: `${barWidth}%`,
                   opacity: isTop ? 0.2 : 0.1,
@@ -70,13 +70,13 @@ export function TagAnalyticsChart({ data }: TagAnalyticsChartProps) {
                 {/* Tag name and entry count */}
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`font-mono text-sm font-bold truncate ${
+                    className={`theme-aware font-mono text-sm font-bold truncate ${
                       isTop ? 'text-accent' : 'text-text-main'
                     }`}
                   >
                     #{tag.name}
                   </span>
-                  <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap">
+                  <span className="theme-aware text-[10px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap">
                     {tag.entryCount} {t('statistics.tagAnalytics.entries')}
                   </span>
                 </div>
@@ -85,21 +85,21 @@ export function TagAnalyticsChart({ data }: TagAnalyticsChartProps) {
                 <div className="flex items-center gap-4 flex-shrink-0">
                   {/* Average words */}
                   <div className="text-right">
-                    <span className="text-xs font-mono font-bold text-text-main">
+                    <span className="theme-aware text-xs font-mono font-bold text-text-main">
                       {Math.round(tag.averageWords)}
                     </span>
-                    <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest ml-1">
+                    <span className="theme-aware text-[10px] font-mono text-text-muted uppercase tracking-widest ml-1">
                       {t('statistics.tagAnalytics.avgWords')}
                     </span>
                   </div>
 
                   {/* Average mood (only if available) */}
                   {tag.averageMood !== null && (
-                    <div className="text-right border-l-2 border-border pl-4">
-                      <span className="text-xs font-mono font-bold text-text-main">
+                    <div className="theme-aware text-right border-l-2 border-border pl-4">
+                      <span className="theme-aware text-xs font-mono font-bold text-text-main">
                         {tag.averageMood.toFixed(1)}
                       </span>
-                      <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest ml-1">
+                      <span className="theme-aware text-[10px] font-mono text-text-muted uppercase tracking-widest ml-1">
                         {t('statistics.tagAnalytics.avgMood')}
                       </span>
                     </div>
@@ -113,8 +113,8 @@ export function TagAnalyticsChart({ data }: TagAnalyticsChartProps) {
 
       {/* Total tags footer */}
       {data.totalTags > 10 && (
-        <div className="mt-4 pt-4 border-t-2 border-border">
-          <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest text-center">
+        <div className="theme-aware mt-4 pt-4 border-t-2 border-border">
+          <p className="theme-aware text-[10px] font-mono text-text-muted uppercase tracking-widest text-center">
             {t('statistics.tagAnalytics.title')}: {data.totalTags}
           </p>
         </div>

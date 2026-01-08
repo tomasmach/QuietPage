@@ -28,6 +28,7 @@ export function MoodSelector({ value, onChange, disabled = false }: MoodSelector
               onClick={() => onChange(moodValue)}
               disabled={disabled}
               className={cn(
+                'theme-aware',
                 'flex-1 aspect-square border-2 border-border flex items-center justify-center',
                 'transition-colors duration-150',
                 'disabled:opacity-50 disabled:cursor-not-allowed',

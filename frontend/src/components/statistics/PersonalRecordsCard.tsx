@@ -53,19 +53,19 @@ interface RecordRowProps {
  */
 function RecordRow({ icon, label, value, subtitle }: RecordRowProps) {
   return (
-    <div className="flex items-start gap-4 py-4 border-b-2 border-dashed border-border last:border-b-0">
-      <div className="p-3 border-2 border-border bg-bg-app shrink-0">
+    <div className="theme-aware flex items-start gap-4 py-4 border-b-2 border-dashed border-border last:border-b-0">
+      <div className="theme-aware p-3 border-2 border-border bg-bg-app shrink-0">
         {icon}
       </div>
       <div className="flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted font-mono mb-1">
+        <p className="theme-aware text-[10px] font-bold uppercase tracking-widest text-text-muted font-mono mb-1">
           {label}
         </p>
-        <p className="text-xl font-bold text-text-main font-mono leading-tight mb-1">
+        <p className="theme-aware text-xl font-bold text-text-main font-mono leading-tight mb-1">
           {value}
         </p>
         {subtitle && (
-          <p className="text-xs text-text-muted font-mono leading-relaxed">
+          <p className="theme-aware text-xs text-text-muted font-mono leading-relaxed">
             {subtitle}
           </p>
         )}
@@ -85,16 +85,16 @@ export function PersonalRecordsCard({ data }: PersonalRecordsCardProps) {
   // Empty state - no records yet
   if (!hasData) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-6 rounded-none shadow-hard h-fit">
-        <div className="flex items-center gap-3 mb-4 pb-4 border-b-2 border-border">
-          <div className="p-3 border-2 border-border bg-bg-app">
-            <Trophy size={20} strokeWidth={2} className="text-text-muted" />
+      <div className="theme-aware border-2 border-border bg-bg-panel p-6 rounded-none shadow-hard h-fit">
+        <div className="theme-aware flex items-center gap-3 mb-4 pb-4 border-b-2 border-border">
+          <div className="theme-aware p-3 border-2 border-border bg-bg-app">
+            <Trophy size={20} strokeWidth={2} className="theme-aware text-text-muted" />
           </div>
-          <h3 className="text-xs font-bold uppercase tracking-widest text-text-main font-mono">
+          <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main font-mono">
             {t('statistics.records.title')}
           </h3>
         </div>
-        <p className="text-sm font-mono text-text-muted">
+        <p className="theme-aware text-sm font-mono text-text-muted">
           {t('statistics.records.noRecords')}
         </p>
       </div>
@@ -105,13 +105,13 @@ export function PersonalRecordsCard({ data }: PersonalRecordsCardProps) {
   const iconStroke = 2;
 
   return (
-    <div className="border-2 border-border bg-bg-panel p-6 rounded-none shadow-hard h-fit">
+    <div className="theme-aware border-2 border-border bg-bg-panel p-6 rounded-none shadow-hard h-fit">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-border">
-        <div className="p-3 border-2 border-border bg-bg-app">
+      <div className="theme-aware flex items-center gap-3 mb-6 pb-4 border-b-2 border-border">
+        <div className="theme-aware p-3 border-2 border-border bg-bg-app">
           <Trophy size={iconSize} strokeWidth={iconStroke} className="text-accent" />
         </div>
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main font-mono">
+        <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main font-mono">
           {t('statistics.records.title')}
         </h3>
       </div>

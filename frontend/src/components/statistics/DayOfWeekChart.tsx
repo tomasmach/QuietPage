@@ -72,11 +72,11 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
     const tooltipData = payload[0].payload;
 
     return (
-      <div className="bg-bg-panel border-2 border-border px-4 py-3 shadow-hard">
-        <p className="text-xs font-mono font-bold text-text-main uppercase tracking-wide mb-1">
+      <div className="theme-aware bg-bg-panel border-2 border-border px-4 py-3 shadow-hard">
+        <p className="theme-aware text-xs font-mono font-bold text-text-main uppercase tracking-wide mb-1">
           {tooltipData.fullDay}
         </p>
-        <p className="text-xs font-mono text-text-muted">
+        <p className="theme-aware text-xs font-mono text-text-muted">
           {tooltipData.count} {tooltipData.count === 1 
             ? t('statistics.dayOfWeekChart.daySingular') 
             : t('statistics.dayOfWeekChart.daysPlural')}
@@ -115,11 +115,11 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
 
   if (!hasData) {
     return (
-      <div className="border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+      <div className="theme-aware border-2 border-border bg-bg-panel p-8 text-center rounded-none shadow-hard">
+        <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
           {t('statistics.dayOfWeekChart.title')}
         </h3>
-        <p className="text-text-muted font-mono text-sm">
+        <p className="theme-aware text-text-muted font-mono text-sm">
           {t('statistics.dayOfWeekChart.notEnoughData')}
         </p>
       </div>
@@ -127,8 +127,8 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
   }
 
   return (
-    <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
+    <div className="theme-aware border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
+      <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main mb-4 font-mono">
         {t('statistics.dayOfWeekChart.title')}
       </h3>
       
@@ -143,6 +143,7 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
             strokeWidth={1}
             strokeOpacity={0.3}
             vertical={false}
+            className="theme-aware"
           />
           <XAxis
             dataKey="day"
@@ -150,6 +151,7 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
             style={{ fontFamily: 'IBM Plex Mono', fontSize: '12px' }}
             tickLine={false}
             axisLine={{ stroke: 'var(--color-border)', strokeWidth: 2 }}
+            className="theme-aware"
           />
           <YAxis
             stroke="var(--color-text-main)"
@@ -168,11 +170,13 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
                 letterSpacing: '0.1em',
               }
             }}
+            className="theme-aware"
           />
           <Tooltip content={renderTooltip} cursor={{ fill: 'transparent' }} />
           <Bar 
             dataKey="count" 
             radius={[0, 0, 0, 0]}
+            className="theme-aware"
           >
             {chartData.map((entry, index) => (
               <Cell 
@@ -181,6 +185,7 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
                 stroke="var(--color-border)"
                 strokeWidth={2}
                 opacity={entry.rank ? 1 : 0.6}
+                className="theme-aware"
               />
             ))}
             <LabelList content={renderLabel} />
@@ -190,8 +195,8 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
 
       {/* Top 3 productive days annotation */}
       {sortedDays.length > 0 && (
-        <div className="mt-4 pt-4 border-t-2 border-border">
-          <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">
+        <div className="theme-aware mt-4 pt-4 border-t-2 border-border">
+          <p className="theme-aware text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">
             {t('statistics.dayOfWeekChart.topDays')}
           </p>
           <div className="space-y-1">

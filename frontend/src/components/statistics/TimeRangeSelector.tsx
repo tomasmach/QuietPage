@@ -24,7 +24,7 @@ export function TimeRangeSelector({ selectedPeriod, onPeriodChange }: TimeRangeS
           key={value}
           onClick={() => onPeriodChange(value)}
           className={`
-            px-4 py-2 border-2 border-border rounded-none
+            theme-aware px-4 py-2 border-2 border-border rounded-none
             text-xs font-bold uppercase tracking-widest
             transition-all duration-150
             ${selectedPeriod === value
