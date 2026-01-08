@@ -20,11 +20,13 @@ export function MoodTimelineChart({ data }: MoodTimelineChartProps) {
     );
   }
 
-  // Format data for Recharts
-  const chartData = data.timeline.map(day => ({
-    date: new Date(day.date).toLocaleDateString(localeCode, { month: 'short', day: 'numeric' }),
-    mood: day.average,
-  }));
+  // Format data for Recharts, filtering out null averages
+  const chartData = data.timeline
+    .filter(day => day.average !== null && day.average !== undefined)
+    .map(day => ({
+      date: new Date(day.date).toLocaleDateString(localeCode, { month: 'short', day: 'numeric' }),
+      mood: day.average as number,
+    }));
 
   return (
     <div className="border-2 border-border bg-bg-panel p-6 shadow-hard rounded-none">
