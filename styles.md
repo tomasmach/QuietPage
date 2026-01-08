@@ -157,20 +157,14 @@ The application uses a strict 3-column layout. Borders are explicit.
 
 ---
 
-## 7. SEMANTIC EXCEPTIONS
+## 7. SEMANTIC COLORS
 
-The brutalist philosophy (no gradients, no soft effects) has **limited exceptions** when color carries direct semantic meaning tied to the data being displayed.
+The brutalist philosophy (no gradients, no soft effects) applies consistently across the entire application.
 
-### Acceptable Exceptions:
-- **Fire/Streak theming:** Amber-to-orange gradient (`from-amber-500 to-orange-600`) for active goal streaks. The gradient represents "fire" — the heat of a maintained streak. See `GoalStreakCard.tsx`.
-- **Time-of-day colors:** Morning/afternoon/evening indicators may use contextual warm/cool tones if they directly represent temporal data.
-- **Status indicators:** Success/warning/error states may use semantic colors (green/amber/red) beyond the standard palette.
-
-### Rules for Exceptions:
-1. The color/effect must have **direct semantic meaning** (not decorative)
-2. Keep it **contained** to the specific component — don't bleed into surrounding UI
-3. Maintain **hard borders** and **sharp corners** even when using gradients
-4. Document the exception in the component's docstring
+### Status & Semantic Colors:
+- **Success/warning/error:** Use semantic colors (green/amber/red) when needed for status indicators
+- **Time-of-day indicators:** Morning/afternoon/evening may use contextual warm/cool tones if they represent temporal data
+- **Always maintain:** Hard borders, sharp corners, solid colors (no gradients), no blur effects
 
 ---
 

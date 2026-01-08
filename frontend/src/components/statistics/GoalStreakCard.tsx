@@ -7,7 +7,7 @@
  * - Clear visual distinction from regular entry streaks
  * - Goal value display (e.g., "750 words/day")
  * - Motivational messaging based on streak status
- * - Amber/gold accent for "fire" theme (semantic exception per styles.md)
+ * - Brutalist design with solid colors and hard borders
  */
 
 import { Flame, Target } from 'lucide-react';
@@ -56,14 +56,14 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
       className={`
         border-2 p-6 rounded-none shadow-hard relative overflow-hidden
         ${hasActiveStreak
-          ? 'border-amber-500 bg-gradient-to-br from-amber-500 to-orange-600 text-white'
+          ? 'border-accent bg-accent text-accent-fg'
           : 'border-border bg-bg-panel text-text-main'
         }
       `}
     >
       {/* Decorative background flame for active streaks */}
       {hasActiveStreak && (
-        <div className="absolute top-0 right-0 opacity-20">
+        <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
           <Flame size={140} strokeWidth={1} className="translate-x-8 -translate-y-4" />
         </div>
       )}
@@ -74,7 +74,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
           className={`
             p-2 border-2
             ${hasActiveStreak
-              ? 'border-white/30 bg-white/10'
+              ? 'border-current bg-accent-fg/10'
               : 'border-border bg-bg-app'
             }
           `}
@@ -82,15 +82,10 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
           <Flame
             size={20}
             strokeWidth={2}
-            className={hasActiveStreak ? 'text-white' : 'text-amber-500'}
+            className={hasActiveStreak ? '' : 'text-text-muted'}
           />
         </div>
-        <h3
-          className={`
-            text-xs font-bold uppercase tracking-widest font-mono
-            ${hasActiveStreak ? 'text-white' : 'text-text-main'}
-          `}
-        >
+        <h3 className="text-xs font-bold uppercase tracking-widest font-mono">
           {t('statistics.goalStreak.title')}
         </h3>
       </div>
@@ -99,7 +94,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
       <p
         className={`
           text-sm font-mono mb-4 relative
-          ${hasActiveStreak ? 'text-white/80' : 'text-text-muted'}
+          ${hasActiveStreak ? 'opacity-80' : 'text-text-muted'}
         `}
       >
         {formatNumber(data.goal)} {t('statistics.goalStreak.perDay')}
@@ -115,7 +110,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
           <p
             className={`
               text-xs font-mono uppercase tracking-wider
-              ${hasActiveStreak ? 'text-white/80' : 'text-text-muted'}
+              ${hasActiveStreak ? 'opacity-80' : 'text-text-muted'}
             `}
           >
             {t('statistics.goalStreak.current')} {daysLabel}
@@ -126,21 +121,16 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
         <div
           className={`
             border-l-2 pl-6
-            ${hasActiveStreak ? 'border-white/30' : 'border-border'}
+            ${hasActiveStreak ? 'border-current opacity-80' : 'border-border'}
           `}
         >
-          <p
-            className={`
-              text-4xl font-bold font-mono
-              ${hasActiveStreak ? 'text-white/70' : 'text-text-muted'}
-            `}
-          >
+          <p className="text-4xl font-bold font-mono">
             {formatNumber(data.longest)}
           </p>
           <p
             className={`
               text-xs font-mono uppercase tracking-wider
-              ${hasActiveStreak ? 'text-white/60' : 'text-text-muted'}
+              ${hasActiveStreak ? 'opacity-80' : 'text-text-muted'}
             `}
           >
             {t('statistics.goalStreak.longest')} {daysLabel}
@@ -152,22 +142,17 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
       <div
         className={`
           pt-3 border-t-2 relative
-          ${hasActiveStreak ? 'border-white/20' : 'border-border'}
+          ${hasActiveStreak ? 'border-current' : 'border-border'}
         `}
       >
-        <p
-          className={`
-            text-sm font-mono font-bold
-            ${hasActiveStreak ? 'text-white' : 'text-text-muted'}
-          `}
-        >
+        <p className="text-sm font-mono font-bold">
           {hasActiveStreak
             ? t('statistics.goalStreak.active')
             : t('statistics.goalStreak.inactive')
           }
         </p>
         {isNewRecord && hasActiveStreak && (
-          <p className="text-xs font-mono text-white/70 mt-1 uppercase tracking-wider">
+          <p className="text-xs font-mono opacity-80 mt-1 uppercase tracking-wider">
             {t('statistics.streakHistory.newRecord', { days: data.current })}
           </p>
         )}
