@@ -34,8 +34,16 @@ export function TodayEntryPage() {
     }
   }, [isCreatingEntry]);
 
+  const onSaveError = useCallback(() => {
+    // Reset isCreatingEntry to unblock future auto-save attempts
+    setIsCreatingEntry(false);
+    // Optionally reset isInitialized to allow re-initialization
+    setIsInitialized(false);
+  }, []);
+
   const { save: autoSave, isSaving: isAutoSaving, lastSaved } = useTodayAutoSave({
     onSuccess: onSaveSuccess,
+    onError: onSaveError,
   });
 
   // Auto-create empty entry if it doesn't exist (750words.com style)
