@@ -217,7 +217,7 @@ class TestEntryMilestones:
         data = response.json()
         milestones = data["milestones"]["milestones"]
 
-        entry_milestones = [m for m in entry_milestones if m["type"] == "entries"] if False else [m for m in data["milestones"]["milestones"] if m["type"] == "entries"]
+        entry_milestones = [m for m in milestones if m["type"] == "entries"]
         ten_entry_milestone = next(m for m in entry_milestones if m["value"] == 10)
 
         assert ten_entry_milestone["achieved"] is True
@@ -260,7 +260,7 @@ class TestEntryMilestones:
         milestones = data["milestones"]["milestones"]
 
         entry_milestones = [m for m in milestones if m["type"] == "entries"]
-        
+
         for milestone in entry_milestones:
             assert milestone["current"] == 127
 
@@ -310,7 +310,9 @@ class TestWordMilestones:
         # Create entries with known word counts
         entry1 = EntryFactory(user=user, content="word " * 500, created_at=base_date)
         entry1.refresh_from_db()
-        entry2 = EntryFactory(user=user, content="word " * 600, created_at=base_date - timedelta(days=1))
+        entry2 = EntryFactory(
+            user=user, content="word " * 600, created_at=base_date - timedelta(days=1)
+        )
         entry2.refresh_from_db()
 
         expected_total = entry1.word_count + entry2.word_count
@@ -322,7 +324,7 @@ class TestWordMilestones:
         milestones = data["milestones"]["milestones"]
 
         word_milestones = [m for m in milestones if m["type"] == "words"]
-        
+
         for milestone in word_milestones:
             assert milestone["current"] == expected_total
 
@@ -374,7 +376,11 @@ class TestWordMilestones:
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
         # Create 100 entries with 1000 words each = 100,000 words
         for i in range(100):
-            EntryFactory(user=user, content="word " * 1000, created_at=base_date - timedelta(days=i))
+            EntryFactory(
+                user=user,
+                content="word " * 1000,
+                created_at=base_date - timedelta(days=i),
+            )
 
         response = client.get(reverse("api:statistics"), {"period": "all"})
 
@@ -383,11 +389,11 @@ class TestWordMilestones:
         milestones = data["milestones"]["milestones"]
 
         word_milestones = [m for m in milestones if m["type"] == "words"]
-        
+
         # Should have achieved 1000, 10000, 50000, 100000 milestones
         achieved_milestones = [m for m in word_milestones if m["achieved"]]
         achieved_values = [m["value"] for m in achieved_milestones]
-        
+
         assert 1000 in achieved_values
         assert 10000 in achieved_values
         assert 50000 in achieved_values
@@ -436,7 +442,7 @@ class TestStreakMilestones:
         milestones = data["milestones"]["milestones"]
 
         streak_milestones = [m for m in milestones if m["type"] == "streak"]
-        
+
         for milestone in streak_milestones:
             assert milestone["current"] == 15
 
@@ -537,7 +543,7 @@ class TestStreakMilestones:
         milestones = data["milestones"]["milestones"]
 
         streak_milestones = [m for m in milestones if m["type"] == "streak"]
-        
+
         # 7 and 30 should be achieved
         seven_day = next(m for m in streak_milestones if m["value"] == 7)
         thirty_day = next(m for m in streak_milestones if m["value"] == 30)
@@ -565,7 +571,7 @@ class TestStreakMilestones:
         milestones = data["milestones"]["milestones"]
 
         streak_milestones = [m for m in milestones if m["type"] == "streak"]
-        
+
         for milestone in streak_milestones:
             assert milestone["achieved"] is False
             assert milestone["current"] == 0
@@ -582,11 +588,11 @@ class TestMilestonesPeriodIndependence:
         client.force_login(user)
 
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
-        
+
         # Create 5 entries in last 7 days
         for i in range(5):
             EntryFactory(user=user, created_at=base_date - timedelta(days=i))
-        
+
         # Create 10 entries outside 7-day period (20+ days ago)
         for i in range(10):
             EntryFactory(user=user, created_at=base_date - timedelta(days=20 + i))
@@ -612,10 +618,14 @@ class TestMilestonesPeriodIndependence:
         client.force_login(user)
 
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
-        
+
         # Create entries across different time ranges
         for i in range(20):
-            EntryFactory(user=user, content="word " * 100, created_at=base_date - timedelta(days=i * 10))
+            EntryFactory(
+                user=user,
+                content="word " * 100,
+                created_at=base_date - timedelta(days=i * 10),
+            )
 
         response_7d = client.get(reverse("api:statistics"), {"period": "7d"})
         response_30d = client.get(reverse("api:statistics"), {"period": "30d"})
@@ -642,13 +652,17 @@ class TestMilestonesPeriodIndependence:
         client.force_login(user)
 
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
-        
+
         # Create entry with 500 words in last 7 days
-        entry_recent = EntryFactory(user=user, content="word " * 500, created_at=base_date)
+        entry_recent = EntryFactory(
+            user=user, content="word " * 500, created_at=base_date
+        )
         entry_recent.refresh_from_db()
-        
+
         # Create entry with 600 words outside 7-day period
-        entry_old = EntryFactory(user=user, content="word " * 600, created_at=base_date - timedelta(days=30))
+        entry_old = EntryFactory(
+            user=user, content="word " * 600, created_at=base_date - timedelta(days=30)
+        )
         entry_old.refresh_from_db()
 
         expected_total = entry_recent.word_count + entry_old.word_count
@@ -674,6 +688,7 @@ class TestMilestonesUserIsolation:
     def test_milestones_only_include_current_user_entries(self, client):
         """Milestones only count current user's entries."""
         from django.core.cache import cache
+
         cache.clear()
 
         user1 = UserFactory(timezone="Europe/Prague")
@@ -715,6 +730,7 @@ class TestMilestonesUserIsolation:
     def test_streak_milestones_use_current_user_streak(self, client):
         """Streak milestones use current user's longest_streak."""
         from django.core.cache import cache
+
         cache.clear()
 
         user1 = UserFactory(timezone="Europe/Prague", longest_streak=10)
@@ -762,6 +778,7 @@ class TestMilestonesIntegration:
         """User with significant activity has multiple milestones achieved."""
         from django.core.cache import cache
         from django.contrib.auth import get_user_model
+
         User = get_user_model()
         cache.clear()
 
@@ -769,11 +786,15 @@ class TestMilestonesIntegration:
         client.force_login(user)
 
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
-        
+
         # Create 55 CONSECUTIVE entries with 200 words each = 11,000 words total
         # This will create a 55-day streak starting from today backwards
         for i in range(55):
-            EntryFactory(user=user, content="word " * 200, created_at=base_date - timedelta(days=i))
+            EntryFactory(
+                user=user,
+                content="word " * 200,
+                created_at=base_date - timedelta(days=i),
+            )
 
         # Manually set longest_streak AFTER entries are created (signals have run)
         # to simulate a user who had a longer streak in the past
@@ -823,7 +844,7 @@ class TestMilestonesIntegration:
         response = client.get(reverse("api:statistics"), {"period": "7d"})
 
         assert response.status_code == 200
-        
+
         # Should not raise any exception
         parsed = json.loads(response.content)
         assert "milestones" in parsed
