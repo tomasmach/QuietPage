@@ -17,7 +17,7 @@ export interface GoalsSettings {
   preferred_writing_time: 'morning' | 'afternoon' | 'evening';
   reminder_enabled: boolean;
   reminder_time: string;
-  onboarding_completed?: boolean; // Optional, not sent in updates
+  onboarding_completed?: boolean; // Sent by updateGoals, accepted by GoalsSettingsSerializer
 }
 
 export interface PrivacySettings {
