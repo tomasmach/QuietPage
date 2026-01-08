@@ -112,7 +112,7 @@ export function StatsPage() {
               /* Writing Patterns Grid */
               <div className="space-y-8">
                 {/* Full width heatmap */}
-                <FrequencyHeatmap data={data.wordCountAnalytics} />
+                <FrequencyHeatmap />
                 
                 {/* Two column grid for all charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

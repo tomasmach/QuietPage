@@ -1,12 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
-import type { WordCountAnalytics } from '../../types/statistics';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { api } from '../../lib/api';
-
-interface FrequencyHeatmapProps {
-  data: WordCountAnalytics; // Not used - we fetch year data separately
-}
 
 interface DayData {
   date: Date;
@@ -21,39 +16,25 @@ interface IntensityThresholds {
   high: number;   // Threshold for level 3
 }
 
-const DAYS_IN_WEEK = 7;
+type TimelineData = Array<{
+  date: string;
+  wordCount: number;
+  entryCount: number;
+}>;
 
-/**
- * Maps period to number of days to show
- */
-function getPeriodDays(period: PeriodType): number {
-  switch (period) {
-    case '7d':
-      return 7;
-    case '30d':
-      return 30;
-    case '90d':
-      return 90;
-    case '1y':
-      return 365;
-    case 'all':
-      return 365; // Cap at 1 year for performance
-    default:
-      return 90;
-  }
-}
+const DAYS_IN_WEEK = 7;
 
 /**
  * Calculates dynamic intensity thresholds based on user's writing patterns.
  * Uses percentiles (33rd, 66th, 90th) of non-zero word counts.
  * Falls back to 750words.com standard if insufficient data.
  */
-function calculateIntensityThresholds(timeline: WordCountAnalytics['timeline']): IntensityThresholds {
+function calculateIntensityThresholds(timeline: TimelineData): IntensityThresholds {
   // Get all non-zero word counts from the timeline
   const nonZeroCounts = timeline
-    .map(day => day.wordCount)
-    .filter(count => count > 0)
-    .sort((a, b) => a - b);
+    .map((day: { wordCount: number }) => day.wordCount)
+    .filter((count: number) => count > 0)
+    .sort((a: number, b: number) => a - b);
   
   // If we have less than 10 days of data, use fixed 750words.com thresholds
   if (nonZeroCounts.length < 10) {
@@ -212,12 +193,12 @@ function generateDateArray(endDateStr: string, daysToShow: number): DayData[] {
  * Merges timeline data with date array.
  * Uses dateKey (YYYY-MM-DD string) for comparisons to avoid timezone issues.
  */
-function mergeDayData(days: DayData[], timeline: WordCountAnalytics['timeline']): DayData[] {
+function mergeDayData(days: DayData[], timeline: TimelineData): DayData[] {
   const timelineMap = new Map<string, number>();
   
   // Build map of date -> total word count
   // API returns dates as YYYY-MM-DD strings, use directly
-  timeline.forEach(({ date, wordCount }) => {
+  timeline.forEach(({ date, wordCount }: { date: string; wordCount: number }) => {
     timelineMap.set(date, (timelineMap.get(date) || 0) + wordCount);
   });
   
@@ -256,11 +237,11 @@ function getMonthLabels(weeks: DayData[][], localeCode: string): { weekIndex: nu
   return labels;
 }
 
-export function FrequencyHeatmap({ data }: FrequencyHeatmapProps) {
+export function FrequencyHeatmap() {
   const { t, language } = useLanguage();
   const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [yearData, setYearData] = useState<WordCountAnalytics['timeline']>([]);
+  const [yearData, setYearData] = useState<TimelineData>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Fixed to show last year (365 days) - always, regardless of selected period

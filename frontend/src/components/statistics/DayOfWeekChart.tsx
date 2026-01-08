@@ -91,7 +91,7 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
   };
 
   // Custom label to display count on top of bar for top 3
-  const renderLabel = ({ x, y, width, value, payload }: CustomLabelProps) => {
+  const renderLabel = ({ x, y, width, payload }: CustomLabelProps) => {
     if (!payload?.rank) return null;
     
     const xNum = typeof x === 'number' ? x : 0;
