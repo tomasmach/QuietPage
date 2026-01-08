@@ -18,6 +18,12 @@
   --color-accent: #F5F5F5;
   --color-accent-fg: #1A1A1A;
   --color-shadow: #F5F5F5;
+  
+  /* Chart colors - gradient from dark to light */
+  --color-chart-1: #F5F5F5;
+  --color-chart-2: #CCCCCC;
+  --color-chart-3: #999999;
+  --color-chart-4: #666666;
 }
 
 [data-theme='paper'] {
@@ -30,6 +36,12 @@
   --color-accent: #000000;
   --color-accent-fg: #FFFFFF;
   --color-shadow: rgba(0, 0, 0, 1);
+  
+  /* Chart colors - gradient from dark to light (reversed for light mode) */
+  --color-chart-1: #000000;
+  --color-chart-2: #333333;
+  --color-chart-3: #666666;
+  --color-chart-4: #999999;
 }
 
 /* ============================================

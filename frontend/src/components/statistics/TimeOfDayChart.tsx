@@ -35,15 +35,14 @@ interface CustomTooltipProps {
 export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
   const { t } = useLanguage();
 
-  // Define colors for each time period following the brutalist design system
-  // NOTE: These are semantic colors representing actual time periods (warm morning → cool night)
-  // This is an exception to the monochrome design system due to the semantic nature of the data
-  // For non-semantic charts, use var(--color-accent) and var(--color-text-muted) per styles.md
+  // Define colors for each time period using monochrome gradient
+  // Following the brutalist design system: uses CSS variables for theme-aware colors
+  // Creates a gradient from darkest to lightest with proper contrast in both themes
   const TIME_COLORS = {
-    morning: '#F59E0B',   // Warm amber - sunrise/morning light
-    afternoon: '#FB923C', // Bright orange - midday sun
-    evening: '#8B5CF6',   // Deep purple - twilight
-    night: '#3B82F6',     // Blue - night sky
+    morning: 'var(--color-chart-1)',    // Darkest - highest contrast
+    afternoon: 'var(--color-chart-2)',  // Dark-medium
+    evening: 'var(--color-chart-3)',    // Medium-light
+    night: 'var(--color-chart-4)',      // Lightest
   };
 
   // Check if there's any data to display
@@ -156,7 +155,7 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
         {t('statistics.timeOfDayChart.title')}
       </h3>
       
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={450}>
         <PieChart>
           <Pie
             data={chartData}
@@ -164,7 +163,7 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
             cy="50%"
             innerRadius={60}
             outerRadius={100}
-            paddingAngle={2}
+            paddingAngle={0}
             dataKey="value"
             label={renderLabel}
             labelLine={false}
