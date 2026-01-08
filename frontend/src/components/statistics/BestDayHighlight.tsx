@@ -116,7 +116,7 @@ export function BestDayHighlight({ data }: BestDayHighlightProps) {
         {/* Entry Count */}
         <div className="border-l-2 border-current pl-6 opacity-80">
           <p className="text-3xl font-bold font-mono">
-            {data.entryCount}
+            {data.entryCount.toLocaleString(language === 'cs' ? 'cs-CZ' : 'en-US')}
           </p>
           <p className="text-xs font-mono opacity-80 uppercase tracking-wider">
             {t('statistics.bestDay.entries')}
