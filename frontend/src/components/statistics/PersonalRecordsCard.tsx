@@ -22,7 +22,8 @@ export interface PersonalRecordsCardProps {
  * Formats a date string to localized format (e.g., "Dec 1, 2025")
  */
 function formatDate(dateString: string, language: 'cs' | 'en'): string {
-  const date = new Date(dateString);
+  const [year, month, day] = dateString.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   const options: Intl.DateTimeFormatOptions = {
     month: 'short',
     day: 'numeric',
