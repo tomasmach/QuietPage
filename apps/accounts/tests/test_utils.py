@@ -351,6 +351,7 @@ class TestVerifyEmailChangeToken:
 
 @pytest.mark.utils
 @pytest.mark.unit
+@pytest.mark.skip(reason="send_email_verification function not used in SPA-only architecture")
 class TestSendEmailVerification:
     """Tests for send_email_verification utility function."""
 

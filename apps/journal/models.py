@@ -113,11 +113,7 @@ class Entry(models.Model):
             self.word_count = 0
 
         super().save(*args, **kwargs)
-    
-    def get_absolute_url(self):
-        from django.urls import reverse
-        return reverse('journal:entry-detail', kwargs={'pk': self.pk})
-    
+
     def __str__(self):
         date_str = self.created_at.strftime('%Y-%m-%d') if self.created_at else "Unsaved"
         title_preview = self.title[:30] if self.title else "Untitled"
