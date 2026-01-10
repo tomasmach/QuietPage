@@ -40,12 +40,12 @@ export function TodayEntryPage() {
     // Reset retry count on successful save
     retryCountRef.current = 0;
     setCreateError(null);
-    
-    if (isCreatingEntry) {
+
+    if (isCreatingEntryRef.current) {
       setIsCreatingEntry(false);
       isCreatingEntryRef.current = false;
     }
-  }, [isCreatingEntry]);
+  }, []);
 
   const onSaveError = useCallback((err: Error, isCreating: boolean) => {
     // Always reset isCreatingEntry to unblock future attempts
@@ -75,10 +75,10 @@ export function TodayEntryPage() {
   // Auto-create empty entry if it doesn't exist (750words.com style)
   // with exponential backoff on retry
   useEffect(() => {
-    if (!isLoading && !exists && !error && !isCreatingEntry && !isInitialized && !createError) {
+    if (!isLoading && !exists && !error && !isCreatingEntryRef.current && !isInitialized && !createError) {
       const retryCount = retryCountRef.current;
       const delayMs = retryCount > 0 ? INITIAL_RETRY_DELAY_MS * Math.pow(2, retryCount - 1) : 0;
-      
+
       retryTimeoutRef.current = setTimeout(() => {
         setIsCreatingEntry(true);
         isCreatingEntryRef.current = true;
