@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from apps.accounts.middleware import log_security_event
 from apps.api.settings_serializers import (
     ProfileSettingsSerializer,
     GoalsSettingsSerializer,
@@ -194,6 +195,9 @@ class ChangePasswordView(APIView):
         # Update session hash so user doesn't get logged out
         update_session_auth_hash(request, user)
 
+        # Log security event
+        log_security_event('PASSWORD_CHANGE', user, request)
+
         return Response(
             {'message': 'Heslo bylo uspesne zmeneno.'},
             status=status.HTTP_200_OK
@@ -227,7 +231,16 @@ class ChangeEmailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        old_email = request.user.email
         serializer.save()
+
+        # Log security event
+        log_security_event(
+            'EMAIL_CHANGE',
+            request.user,
+            request,
+            details={'old_email': old_email, 'new_email': request.user.email}
+        )
 
         return Response(
             {'message': 'Email byl uspesne zmenen.'},
@@ -262,6 +275,9 @@ class DeleteAccountView(APIView):
                 {'errors': serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # Log security event before deletion
+        log_security_event('ACCOUNT_DELETION', request.user, request)
 
         # Delete the account
         serializer.save()
