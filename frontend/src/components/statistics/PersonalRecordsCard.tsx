@@ -23,11 +23,12 @@ export interface PersonalRecordsCardProps {
  */
 function formatDate(dateString: string, language: 'cs' | 'en'): string {
   const [year, month, day] = dateString.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
   const options: Intl.DateTimeFormatOptions = {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    timeZone: 'UTC',
   };
 
   return date.toLocaleDateString(language === 'cs' ? 'cs-CZ' : 'en-US', options);
