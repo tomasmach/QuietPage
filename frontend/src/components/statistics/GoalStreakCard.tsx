@@ -12,6 +12,7 @@
 
 import { Flame, Target } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { formatLocalizedNumber } from '../../lib/utils';
 import type { GoalStreak } from '../../types/statistics';
 
 export interface GoalStreakCardProps {
@@ -42,13 +43,6 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
 
   const hasActiveStreak = data.current > 0;
   const isNewRecord = data.current > 0 && data.current >= data.longest;
-
-  // Format numbers according to locale
-  const formatNumber = (num: number) => {
-    return num.toLocaleString(language === 'cs' ? 'cs-CZ' : 'en-US');
-  };
-
-  // Get days label
   const daysLabel = t('statistics.goalStreak.days');
 
   return (
@@ -97,7 +91,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
           ${hasActiveStreak ? 'opacity-80' : 'text-text-muted'}
         `}
       >
-        {formatNumber(data.goal)} {t('statistics.goalStreak.perDay')}
+        {formatLocalizedNumber(data.goal, language)} {t('statistics.goalStreak.perDay')}
       </p>
 
       {/* Streak stats */}
@@ -105,7 +99,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
         {/* Current Streak */}
         <div>
           <p className="text-4xl font-bold font-mono">
-            {formatNumber(data.current)}
+            {formatLocalizedNumber(data.current, language)}
           </p>
           <p
             className={`
@@ -125,7 +119,7 @@ export function GoalStreakCard({ data }: GoalStreakCardProps) {
           `}
         >
           <p className="text-4xl font-bold font-mono">
-            {formatNumber(data.longest)}
+            {formatLocalizedNumber(data.longest, language)}
           </p>
           <p
             className={`

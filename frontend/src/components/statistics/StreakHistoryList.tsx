@@ -1,6 +1,6 @@
 /**
  * StreakHistoryList component displays top 5 historical streaks.
- * 
+ *
  * Features:
  * - Shows start date, end date, and length of each streak
  * - Highlights the longest streak with special styling
@@ -14,6 +14,7 @@ import { TrendingUp, Award } from 'lucide-react';
 import type { WritingPatterns } from '../../types/statistics';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { formatLocalizedDate, parseLocalDate } from '../../lib/utils';
 
 interface StreakHistoryListProps {
   data: WritingPatterns;
@@ -28,43 +29,18 @@ interface StreakItem {
 }
 
 /**
- * Formats a date string to localized format (e.g., "Dec 1, 2025")
- */
-function formatDate(dateString: string, language: 'cs' | 'en'): string {
-  // Parse ISO date string (YYYY-MM-DD) in local timezone
-  const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  const date = match
-    ? new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]))
-    : new Date(dateString);
-
-  const options: Intl.DateTimeFormatOptions = {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  };
-
-  return date.toLocaleDateString(language === 'cs' ? 'cs-CZ' : 'en-US', options);
-}
-
-/**
- * Checks if a streak is currently active by comparing end date with today
+ * Checks if a streak is currently active by comparing end date with today.
+ * A streak is current if it ended today or yesterday (grace period).
  */
 function isStreakCurrent(endDateString: string): boolean {
-  // Parse ISO date string (YYYY-MM-DD) in local timezone
-  const match = endDateString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  const endDate = match
-    ? new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]))
-    : new Date(endDateString);
-
+  const endDate = parseLocalDate(endDateString);
   const today = new Date();
 
   // Normalize to date only (ignore time)
   endDate.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
 
-  // A streak is current if it ended today or yesterday (grace period)
   const daysDiff = Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
-
   return daysDiff <= 1;
 }
 
@@ -177,7 +153,7 @@ export function StreakHistoryList({ data }: StreakHistoryListProps) {
                   theme-aware text-sm font-mono mb-1
                   ${streak.isLongest ? 'text-accent-fg' : 'text-text-main'}
                 `}>
-                  {formatDate(streak.startDate, language)} – {formatDate(streak.endDate, language)}
+                  {formatLocalizedDate(streak.startDate, language)} – {formatLocalizedDate(streak.endDate, language)}
                 </p>
               </div>
               
