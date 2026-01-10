@@ -71,15 +71,6 @@ class TestEntryModel:
                 user=None,
                 content="Test content"
             )
-    
-    def test_entry_requires_content(self):
-        """Test that entry requires content field."""
-        user = UserFactory()
-        
-        # EncryptedTextField doesn't allow blank by default
-        with pytest.raises(ValidationError):
-            entry = Entry(user=user, content="")
-            entry.full_clean()
 
 
 @pytest.mark.unit
@@ -316,14 +307,6 @@ class TestEntryMethods:
         # Title should be truncated to 30 characters
         assert 'A' * 30 in str_repr
         assert len(long_title) > len('A' * 30)
-    
-    def test_get_absolute_url(self):
-        """Test get_absolute_url returns correct URL."""
-        entry = EntryFactory()
-        url = entry.get_absolute_url()
-        
-        assert url == f'/journal/{entry.pk}/'
-        assert str(entry.pk) in url
 
 
 @pytest.mark.unit

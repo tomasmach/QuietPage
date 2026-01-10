@@ -34,14 +34,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',  # Required by allauth
 
     # Third-party
     'rest_framework',
     'corsheaders',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
     'taggit',
     'axes',  # Brute force protection
 
@@ -50,9 +46,6 @@ INSTALLED_APPS = [
     'apps.journal',
     'apps.api',
 ]
-
-# Sites framework (required by allauth)
-SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -66,7 +59,6 @@ MIDDLEWARE = [
     'axes.middleware.AxesMiddleware',  # MUST be after AuthenticationMiddleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',  # Required by django-allauth
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -210,29 +202,11 @@ except Exception as e:
 TAGGIT_CASE_INSENSITIVE = True
 TAGGIT_STRIP_UNICODE_WHEN_SLUGIFYING = False  # Support Czech characters
 
-# Django AllAuth Configuration
+# Authentication Configuration
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',  # MUST be first for rate limiting
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
 ]
-
-# Dual login: username OR email (modern django-allauth syntax)
-ACCOUNT_LOGIN_METHODS = {'username', 'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_EMAIL_VERIFICATION = 'optional'  # MVP: optional, later: mandatory
-
-# Custom forms for allauth
-ACCOUNT_FORMS = {
-    'signup': 'apps.accounts.forms.CustomSignupForm',
-    'login': 'apps.accounts.forms.CustomLoginForm',
-}
-
-# Login/Logout URLs
-LOGIN_REDIRECT_URL = '/journal/'  # Dashboard je na /journal/ (ne /journal/dashboard/)
-ACCOUNT_LOGOUT_REDIRECT_URL = '/'
-LOGIN_URL = '/accounts/login/'
 
 # Session security - zkrácený timeout s automatickou prolongací při aktivitě
 # Bezpečnostní důvody:
