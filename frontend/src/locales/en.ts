@@ -390,7 +390,7 @@ export const en: Translations = {
       noData: 'No milestones yet',
     },
     goalStreak: {
-      title: '750 GOAL STREAK',
+      title: 'DAILY GOAL STREAK',
       current: 'Current',
       longest: 'Longest',
       days: 'days',
