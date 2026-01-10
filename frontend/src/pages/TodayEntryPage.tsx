@@ -91,14 +91,14 @@ export function TodayEntryPage() {
         });
       }, delayMs) as unknown as number;
     }
-    
+
     return () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
         retryTimeoutRef.current = null;
       }
     };
-  }, [isLoading, exists, error, isCreatingEntry, isInitialized, createError, autoSave]);
+  }, [isLoading, exists, error, isInitialized, createError, autoSave]);
 
   // Initialize form from entry data POUZE JEDNOU
   useEffect(() => {
