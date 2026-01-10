@@ -43,7 +43,7 @@ export function EntryCard({ entry }: EntryCardProps) {
           <div className="flex items-center justify-between">
             <div>
               <div className={cn("text-sm font-bold text-text-main uppercase theme-aware")}>{formattedDate}</div>
-              <div className={cn("text-xs text-text-text-muted theme-aware")}>{formattedTime}</div>
+              <div className={cn("text-xs text-text-muted theme-aware")}>{formattedTime}</div>
             </div>
             {MoodIcon && (
               <div className="flex-shrink-0">
