@@ -50,16 +50,21 @@ function formatDate(dateString: string, language: 'cs' | 'en'): string {
  * Checks if a streak is currently active by comparing end date with today
  */
 function isStreakCurrent(endDateString: string): boolean {
-  const endDate = new Date(endDateString);
+  // Parse ISO date string (YYYY-MM-DD) in local timezone
+  const match = endDateString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const endDate = match
+    ? new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]))
+    : new Date(endDateString);
+
   const today = new Date();
-  
+
   // Normalize to date only (ignore time)
   endDate.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
-  
+
   // A streak is current if it ended today or yesterday (grace period)
   const daysDiff = Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
-  
+
   return daysDiff <= 1;
 }
 
