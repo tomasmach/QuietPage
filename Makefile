@@ -1,7 +1,7 @@
 # QuietPage - Makefile
 # Shortcuts for common Django management commands
 
-.PHONY: help setup run migrate makemigrations shell test collectstatic messages compilemessages cache superuser
+.PHONY: help setup run migrate makemigrations shell test collectstatic messages compilemessages cache superuser celery-worker celery-beat celery-status
 
 help:
 	@echo "QuietPage - Available commands:"
@@ -16,6 +16,11 @@ help:
 	@echo "  make collectstatic    - Collect static files"
 	@echo "  make messages         - Generate translation files (.po)"
 	@echo "  make compilemessages  - Compile translation files (.mo)"
+	@echo ""
+	@echo "Celery commands:"
+	@echo "  make celery-worker    - Start Celery worker"
+	@echo "  make celery-beat      - Start Celery beat scheduler"
+	@echo "  make celery-status    - Show active Celery tasks"
 
 # Run development server
 run:
@@ -69,3 +74,13 @@ messages:
 
 compilemessages:
 	python manage.py compilemessages --ignore=venv
+
+# Celery commands
+celery-worker:
+	celery -A config worker --loglevel=info
+
+celery-beat:
+	celery -A config beat --loglevel=info
+
+celery-status:
+	celery -A config inspect active

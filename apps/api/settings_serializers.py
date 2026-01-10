@@ -290,11 +290,42 @@ class ChangeEmailSerializer(serializers.Serializer):
         return value
 
     def save(self):
-        """Update user email directly (MVP approach)."""
+        """
+        Initiate email change with verification flow.
+
+        Creates EmailChangeRequest and queues verification email via Celery.
+        User email is updated only after verification link is clicked.
+
+        Returns:
+            EmailChangeRequest: The created email change request
+        """
+        from apps.accounts.models import EmailChangeRequest
+        from apps.accounts.tasks import send_verification_email_async
+        from apps.accounts.utils import generate_email_verification_token
+        from django.urls import reverse
+        from django.utils import timezone
+        from datetime import timedelta
+
         user = self.context['request'].user
-        user.email = self.validated_data['new_email']
-        user.save()
-        return user
+        new_email = self.validated_data['new_email']
+        request = self.context['request']
+
+        # Create EmailChangeRequest
+        email_request = EmailChangeRequest.objects.create(
+            user=user,
+            new_email=new_email,
+            expires_at=timezone.now() + timedelta(hours=24)
+        )
+
+        # Generate token and URL
+        token = generate_email_verification_token(user.id, new_email)
+        verification_path = reverse('accounts:email-verify', kwargs={'token': token})
+        verification_url = request.build_absolute_uri(verification_path)
+
+        # Queue email task
+        send_verification_email_async.delay(user.id, new_email, verification_url)
+
+        return email_request
 
 
 class DeleteAccountSerializer(serializers.Serializer):

@@ -1,0 +1,19 @@
+QuietPage - Email Verification
+===============================
+
+Hello {{ user.first_name|default:user.username }},
+
+We received a request to change your account email address to:
+{{ new_email }}
+
+To complete the change, please visit this link:
+{{ verification_url }}
+
+IMPORTANT:
+- This link will expire in {{ expiry_hours }} hours
+- If you didn't request this change, please ignore this email
+- Your email will remain unchanged unless you confirm via the link
+
+---
+QuietPage - Your safe space for writing
+This email was sent from an automated system.

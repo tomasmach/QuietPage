@@ -233,48 +233,30 @@ def verify_email_change_token(token, max_age=86400):
 
 def send_email_verification(user, new_email, request):
     """
-    Send email verification link to the new email address.
-    
+    Send email verification link asynchronously via Celery task.
+
     Args:
         user: User instance requesting the change
         new_email: The new email address to verify
         request: HTTP request object (needed for building absolute URL)
-        
+
     Returns:
-        bool: True if email was sent successfully, False otherwise
+        bool: True if task queued successfully
     """
+    from apps.accounts.tasks import send_verification_email_async
+
     # Generate verification token
     token = generate_email_verification_token(user.id, new_email)
-    
+
     # Build verification URL
     verification_path = reverse('accounts:email-verify', kwargs={'token': token})
     verification_url = request.build_absolute_uri(verification_path)
-    
-    # Prepare email context
-    context = {
-        'user': user,
-        'new_email': new_email,
-        'verification_url': verification_url,
-        'expiry_hours': 24,
-    }
-    
-    # Render email templates
-    html_message = render_to_string('accounts/emails/email_verification.html', context)
-    plain_message = render_to_string('accounts/emails/email_verification.txt', context)
-    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@quietpage.com')
-    
-    # Send email
+
+    # Queue async task
     try:
-        send_mail(
-            'QuietPage - Potvrzení změny e-mailu',
-            plain_message,
-            from_email=from_email,
-            recipient_list=[new_email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-    except Exception as e:
-        logger.error(f"Failed to send verification email to {new_email}: {e}", exc_info=True)
-        return False
-    else:
+        send_verification_email_async.delay(user.id, new_email, verification_url)
+        logger.info(f"Verification email queued for {new_email}")
         return True
+    except Exception as e:
+        logger.error(f"Failed to queue verification email for {new_email}: {e}", exc_info=True)
+        return False
