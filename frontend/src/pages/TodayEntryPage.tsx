@@ -114,7 +114,7 @@ export function TodayEntryPage() {
   useEffect(() => {
     // Autosave JEN když už máme entry a je initialized
     // Debounce v useTodayAutoSave zajistí, že se volá až po 1s klidu
-    if (isInitialized && !isCreatingEntry) {
+    if (isInitialized && !isCreatingEntryRef.current) {
       autoSave({
         content,
         mood_rating: moodRating,
