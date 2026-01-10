@@ -31,13 +31,18 @@ interface StreakItem {
  * Formats a date string to localized format (e.g., "Dec 1, 2025")
  */
 function formatDate(dateString: string, language: 'cs' | 'en'): string {
-  const date = new Date(dateString);
+  // Parse ISO date string (YYYY-MM-DD) in local timezone
+  const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const date = match
+    ? new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]))
+    : new Date(dateString);
+
   const options: Intl.DateTimeFormatOptions = {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   };
-  
+
   return date.toLocaleDateString(language === 'cs' ? 'cs-CZ' : 'en-US', options);
 }
 
