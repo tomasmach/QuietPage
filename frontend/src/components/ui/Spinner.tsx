@@ -15,7 +15,7 @@ export function Spinner({ size = 'md', className, ...props }: SpinnerProps) {
   return (
     <div
       className={cn(
-        'inline-block bg-text-main animate-pulse',
+        'inline-block bg-text-main animate-pulse theme-aware',
         sizeStyles[size],
         className
       )}

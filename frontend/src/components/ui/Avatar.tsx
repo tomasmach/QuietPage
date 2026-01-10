@@ -23,13 +23,13 @@ export function Avatar({ src, alt, size = 'md', fallback, className, ...props }:
   return (
     <div
       className={cn(
-        'border-2 border-border bg-bg-panel flex items-center justify-center overflow-hidden',
+        'border-2 border-border bg-bg-panel flex items-center justify-center overflow-hidden theme-aware',
         sizeStyles[size],
         className
       )}
     >
       {showFallback ? (
-        <span className="font-mono font-bold text-text-main" aria-label={alt}>
+        <span className="font-mono font-bold text-text-main theme-aware" aria-label={alt}>
           {fallbackInitial}
         </span>
       ) : (

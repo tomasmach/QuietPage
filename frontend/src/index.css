@@ -18,6 +18,12 @@
   --color-accent: #F5F5F5;
   --color-accent-fg: #1A1A1A;
   --color-shadow: #F5F5F5;
+  
+  /* Chart colors - gradient from dark to light */
+  --color-chart-1: #F5F5F5;
+  --color-chart-2: #CCCCCC;
+  --color-chart-3: #999999;
+  --color-chart-4: #666666;
 }
 
 [data-theme='paper'] {
@@ -30,6 +36,12 @@
   --color-accent: #000000;
   --color-accent-fg: #FFFFFF;
   --color-shadow: rgba(0, 0, 0, 1);
+  
+  /* Chart colors - gradient from dark to light (reversed for light mode) */
+  --color-chart-1: #000000;
+  --color-chart-2: #333333;
+  --color-chart-3: #666666;
+  --color-chart-4: #999999;
 }
 
 /* ============================================
@@ -52,9 +64,11 @@ body {
    THEME TRANSITIONS
    ============================================ */
 
+/* Opt-in theme transition for components using theme colors */
+.theme-aware,
 body,
 [data-theme] {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 /* ============================================
@@ -130,11 +144,11 @@ body,
    ============================================ */
 
 .panel {
-  @apply bg-bg-panel border-2 border-border;
+  @apply bg-bg-panel border-2 border-border theme-aware;
 }
 
 .btn-primary {
-  @apply bg-accent text-accent-fg border-2 border-border px-4 py-2 font-medium;
+  @apply bg-accent text-accent-fg border-2 border-border px-4 py-2 font-medium theme-aware;
   @apply hover:translate-x-[2px] hover:translate-y-[2px];
   @apply transition-transform duration-150;
   box-shadow: 4px 4px 0px 0px var(--color-shadow);
@@ -145,7 +159,7 @@ body,
 }
 
 .btn-secondary {
-  @apply bg-bg-panel text-text-main border-2 border-border px-4 py-2 font-medium;
+  @apply bg-bg-panel text-text-main border-2 border-border px-4 py-2 font-medium theme-aware;
   @apply hover:translate-x-[2px] hover:translate-y-[2px];
   @apply transition-transform duration-150;
   box-shadow: 4px 4px 0px 0px var(--color-shadow);
@@ -156,13 +170,13 @@ body,
 }
 
 .input-field {
-  @apply bg-bg-panel text-text-main border-2 border-border px-3 py-2;
+  @apply bg-bg-panel text-text-main border-2 border-border px-3 py-2 theme-aware;
   @apply focus:outline-none focus:border-accent;
   @apply transition-colors duration-150;
 }
 
 .link-primary {
-  @apply text-accent underline;
+  @apply text-accent underline theme-aware;
   @apply hover:text-text-main;
   @apply transition-colors duration-150;
 }

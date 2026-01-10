@@ -1,0 +1,156 @@
+/**
+ * GoalStreakCard displays the prestigious 750-word goal streak.
+ *
+ * Features:
+ * - Prominent display of current goal streak with flame icon
+ * - Longest (all-time) goal streak record
+ * - Clear visual distinction from regular entry streaks
+ * - Goal value display (e.g., "750 words/day")
+ * - Motivational messaging based on streak status
+ * - Brutalist design with solid colors and hard borders
+ */
+
+import { Flame, Target } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { formatLocalizedNumber } from '../../lib/utils';
+import type { GoalStreak } from '../../types/statistics';
+
+export interface GoalStreakCardProps {
+  data: GoalStreak | undefined;
+}
+
+export function GoalStreakCard({ data }: GoalStreakCardProps) {
+  const { t, language } = useLanguage();
+
+  // Empty state - no data yet
+  if (!data) {
+    return (
+      <div className="theme-aware border-2 border-border bg-bg-panel p-6 rounded-none shadow-hard">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="theme-aware p-2 border-2 border-border bg-bg-app">
+            <Target size={20} strokeWidth={2} className="theme-aware text-text-muted" />
+          </div>
+          <h3 className="theme-aware text-xs font-bold uppercase tracking-widest text-text-main font-mono">
+            {t('statistics.goalStreak.title')}
+          </h3>
+        </div>
+        <p className="theme-aware text-sm font-mono text-text-muted">
+          {t('statistics.goalStreak.inactive')}
+        </p>
+      </div>
+    );
+  }
+
+  const hasActiveStreak = data.current > 0;
+  const isNewRecord = data.current > 0 && data.current >= data.longest;
+  const daysLabel = t('statistics.goalStreak.days');
+
+  return (
+    <div
+      className={`
+        theme-aware border-2 p-6 rounded-none shadow-hard relative overflow-hidden
+        ${hasActiveStreak
+          ? 'border-accent-fg bg-accent text-accent-fg'
+          : 'border-border bg-bg-panel text-text-main'
+        }
+      `}
+    >
+      {/* Decorative background flame for active streaks */}
+      {hasActiveStreak && (
+        <div className="absolute top-1/2 right-4 -translate-y-2/3 opacity-10 pointer-events-none">
+          <Flame size={120} strokeWidth={1} />
+        </div>
+      )}
+
+      {/* Header with Flame icon */}
+      <div className="flex items-center gap-3 mb-4 relative">
+        <div
+          className={`
+            theme-aware p-2 border-2
+            ${hasActiveStreak
+              ? 'border-current bg-accent-fg/10'
+              : 'border-border bg-bg-app'
+            }
+          `}
+        >
+          <Flame
+            size={20}
+            strokeWidth={2}
+            className={hasActiveStreak ? '' : 'theme-aware text-text-muted'}
+          />
+        </div>
+        <h3 className="text-xs font-bold uppercase tracking-widest font-mono">
+          {t('statistics.goalStreak.title')}
+        </h3>
+      </div>
+
+      {/* Goal value */}
+      <p
+        className={`
+          theme-aware text-sm font-mono mb-4 relative
+          ${hasActiveStreak ? 'opacity-80' : 'text-text-muted'}
+        `}
+      >
+        {formatLocalizedNumber(data.goal, language)} {t('statistics.goalStreak.perDay')}
+      </p>
+
+      {/* Streak stats */}
+      <div className="flex gap-6 relative mb-4">
+        {/* Current Streak */}
+        <div>
+          <p className="text-4xl font-bold font-mono">
+            {formatLocalizedNumber(data.current, language)}
+          </p>
+          <p
+            className={`
+              theme-aware text-xs font-mono uppercase tracking-wider
+              ${hasActiveStreak ? 'opacity-80' : 'text-text-muted'}
+            `}
+          >
+            {t('statistics.goalStreak.current')} {daysLabel}
+          </p>
+        </div>
+
+        {/* Longest Streak */}
+        <div
+          className={`
+            theme-aware border-l-2 pl-6
+            ${hasActiveStreak ? 'border-current opacity-80' : 'border-border'}
+          `}
+        >
+          <p className="text-4xl font-bold font-mono">
+            {formatLocalizedNumber(data.longest, language)}
+          </p>
+          <p
+            className={`
+              theme-aware text-xs font-mono uppercase tracking-wider
+              ${hasActiveStreak ? 'opacity-80' : 'text-text-muted'}
+            `}
+          >
+            {t('statistics.goalStreak.longest')} {daysLabel}
+          </p>
+        </div>
+      </div>
+
+      {/* Motivational message */}
+      <div
+        className={`
+          theme-aware pt-3 border-t-2 relative
+          ${hasActiveStreak ? 'border-current' : 'border-border'}
+        `}
+      >
+        <p className="text-sm font-mono font-bold">
+          {hasActiveStreak
+            ? t('statistics.goalStreak.active')
+            : t('statistics.goalStreak.inactive')
+          }
+        </p>
+        {isNewRecord && hasActiveStreak && (
+          <p className="text-xs font-mono opacity-80 mt-1 uppercase tracking-wider">
+            {t('statistics.streakHistory.newRecord', { days: data.current })}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -50,6 +50,7 @@ class Entry(models.Model):
         help_text="Optional title for your entry"
     )
     content = EncryptedTextField(
+        blank=True,
         help_text="Your private journal entry (encrypted)"
     )
     
@@ -88,9 +89,8 @@ class Entry(models.Model):
         """
         super().clean()
 
-        # Empty content check
-        if not self.content or not self.content.strip():
-            raise ValidationError({'content': 'Obsah nemůže být prázdný.'})
+        # Allow empty content for 750words.com style daily notes
+        # Streak will only update when word_count > 0 (handled in signals)
 
         # Mood rating bounds (double-check validators)
         if self.mood_rating is not None:

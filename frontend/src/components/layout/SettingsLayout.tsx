@@ -45,7 +45,7 @@ export function SettingsLayout() {
   return (
     <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
       <div className="p-8">
-        <h1 className="text-4xl font-bold text-text-main mb-8">{translations.title}</h1>
+        <h1 className="theme-aware text-4xl font-bold text-text-main mb-8">{translations.title}</h1>
 
         <div className="flex gap-8">
           {/* Settings Navigation */}
@@ -59,6 +59,7 @@ export function SettingsLayout() {
                   key={item.path}
                   to={item.path}
                   className={`
+                    theme-aware
                     flex items-center gap-3 px-4 py-3
                     border-2 transition-all font-mono text-sm uppercase tracking-wider
                     ${active

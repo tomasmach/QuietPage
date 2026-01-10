@@ -114,7 +114,9 @@ def recalculate_user_streak(user):
     """
     from .models import Entry
     
-    entries = Entry.objects.filter(user=user).order_by('created_at')
+    # Only include entries with actual content (word_count > 0)
+    # This matches the signal logic for streak updates
+    entries = Entry.objects.filter(user=user, word_count__gt=0).order_by('created_at')
     
     if not entries.exists():
         return {'current_streak': 0, 'longest_streak': 0}

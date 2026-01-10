@@ -1,15 +1,16 @@
 # Project-specific files
 todo.md
-CLAUDE.md
-styles.md
 howtorun.md
 current_tasks.md
 architect_page.html
+.claude/
+REVIEW_STATISTICS.md
 
 # Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/coverage/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -21,17 +22,17 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+/build/
 develop-eggs/
-dist/
+/dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
 parts/
 sdist/
-var/
+/var/
 wheels/
 share/python-wheels/
 *.egg-info/

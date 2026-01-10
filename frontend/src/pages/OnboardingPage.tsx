@@ -125,7 +125,7 @@ export function OnboardingPage({ onSkip }: OnboardingPageProps) {
   const isStep2Valid = formData.daily_word_goal > 0;
 
   return (
-    <div className="min-h-screen bg-bg-main flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--color-bg-app)' }}>
       <div className="w-full max-w-2xl">
         {/* Progress Indicator */}
         <div className="mb-8">

@@ -11,7 +11,7 @@ export function Card({ children, className, hoverable = false, onClick, ...props
   return (
     <div
       className={cn(
-        'bg-bg-panel border-2 border-border shadow-hard p-6',
+        'bg-bg-panel border-2 border-border shadow-hard p-6 theme-aware',
         hoverable &&
           'cursor-pointer hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all duration-150',
         onClick && 'cursor-pointer',

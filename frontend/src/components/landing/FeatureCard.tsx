@@ -31,28 +31,28 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
   }[iconAnimation];
 
   return (
-    <div className="bg-bg-panel border-2 border-border p-6 transition-all duration-150 hover:translate-x-[2px] hover:translate-y-[2px] shadow-hard hover:shadow-[2px_2px_0px_0px_var(--color-shadow)]">
+    <div className="theme-aware bg-bg-panel border-2 border-border p-6 transition-all duration-150 hover:translate-x-[2px] hover:translate-y-[2px] shadow-hard hover:shadow-[2px_2px_0px_0px_var(--color-shadow)]">
       {/* Icon */}
       <div
         className={`mb-4 ${animationClass}`}
         style={animationStyle}
       >
-        <Icon size={40} className="text-accent" />
+        <Icon size={40} className="theme-aware text-accent" />
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-bold uppercase tracking-wider mb-3 text-text-main">
+      <h3 className="theme-aware text-lg font-bold uppercase tracking-wider mb-3 text-text-main">
         {title}
       </h3>
 
       {/* Description */}
-      <p className="text-sm text-text-muted mb-4 leading-relaxed">
+      <p className="theme-aware text-sm text-text-muted mb-4 leading-relaxed">
         {description}
       </p>
 
       {/* Optional Visual Element */}
       {visual && (
-        <div className="mt-4 pt-4 border-t-2 border-dashed border-border">
+        <div className="theme-aware mt-4 pt-4 border-t-2 border-dashed border-border">
           {visual}
         </div>
       )}

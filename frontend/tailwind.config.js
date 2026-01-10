@@ -28,6 +28,7 @@ export default {
       },
       boxShadow: {
         'hard': '4px 4px 0px 0px var(--color-shadow)',
+        'hard-accent': '4px 4px 0px 0px var(--color-accent)',
       },
     },
   },

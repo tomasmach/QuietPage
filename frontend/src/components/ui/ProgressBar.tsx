@@ -23,13 +23,13 @@ export function ProgressBar({
   return (
     <div className={cn('w-full', className)} {...props}>
       {showLabel && (
-        <div className="flex justify-between text-sm font-bold uppercase mb-1 text-text-main">
+        <div className="flex justify-between text-sm font-bold uppercase mb-1 text-text-main theme-aware">
           <span>{t('meta.progress')}</span>
           <span>{value} / {max} {t('meta.wordsSuffix')}</span>
         </div>
       )}
       <div
-        className="h-4 w-full border-2 border-border bg-bg-panel relative"
+        className="h-4 w-full border-2 border-border bg-bg-panel relative theme-aware"
         role="progressbar"
         aria-valuenow={value}
         aria-valuemin={0}
@@ -38,13 +38,13 @@ export function ProgressBar({
       >
         <div
           className={cn(
-            'h-full transition-all duration-500 bg-accent',
+            'h-full transition-all duration-500 bg-accent theme-aware',
             animated && percentage < 100 && 'progress-striped'
           )}
           style={{ width: `${percentage}%` }}
         />
         {percentage >= 100 && (
-          <div className="absolute inset-0 flex items-center justify-center text-xs font-bold uppercase tracking-widest text-accent-fg">
+          <div className="absolute inset-0 flex items-center justify-center text-xs font-bold uppercase tracking-widest text-accent-fg theme-aware">
             {t('meta.goalMet')}
           </div>
         )}

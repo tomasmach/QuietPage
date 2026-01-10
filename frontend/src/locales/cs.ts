@@ -125,6 +125,9 @@ export interface Translations {
     editEntry: string;
     tags: string;
     loadError: string;
+    createError: string;
+    createErrorDetails: string;
+    retryCreate: string;
   };
   settings: {
     title: string;
@@ -245,6 +248,157 @@ export interface Translations {
     entrySaved: string;
     entryDeleted: string;
     accountDeleted: string;
+  };
+  statistics: {
+    title: string;
+    writingPatterns: string;
+    viewModes: {
+      milestones: string;
+      patterns: string;
+    };
+    consistencyRate: {
+      title: string;
+      description: string;
+      percentage: string;
+    };
+    frequencyHeatmap: {
+      title: string;
+      days: string;
+      noWriting: string;
+      words: string;
+      less: string;
+      more: string;
+      loadError: string;
+    };
+    timeOfDayChart: {
+      title: string;
+      notEnoughData: string;
+      morning: string;
+      afternoon: string;
+      evening: string;
+      night: string;
+      morningDesc: string;
+      afternoonDesc: string;
+      eveningDesc: string;
+      nightDesc: string;
+      entries: string;
+    };
+    dayOfWeekChart: {
+      title: string;
+      notEnoughData: string;
+      yAxisLabel: string;
+      mostProductive: string;
+      topDays: string;
+      daySingular: string;
+      daysPlural: string;
+      monday: string;
+      mondayAbbr: string;
+      tuesday: string;
+      tuesdayAbbr: string;
+      wednesday: string;
+      wednesdayAbbr: string;
+      thursday: string;
+      thursdayAbbr: string;
+      friday: string;
+      fridayAbbr: string;
+      saturday: string;
+      saturdayAbbr: string;
+      sunday: string;
+      sundayAbbr: string;
+    };
+    streakHistory: {
+      title: string;
+      noData: string;
+      longest: string;
+      current: string;
+      daySingular: string;
+      daysPlural: string;
+      encouragement: string;
+      newRecord: string;
+      matchingRecord: string;
+    };
+    summaryCards: {
+      avgMood: string;
+      totalWords: string;
+      avgPerDay: string;
+      goalRate: string;
+      ratedEntries: string;
+      entries: string;
+      words: string;
+      daysMetGoal: string;
+    };
+    moodTimeline: {
+      title: string;
+      notEnoughData: string;
+    };
+    wordCountTimeline: {
+      title: string;
+      noData: string;
+      wordsLabel: string;
+    };
+    error: {
+      unableToLoad: string;
+      retry: string;
+    };
+    timeRange: {
+      last7Days: string;
+      last30Days: string;
+      last90Days: string;
+      lastYear: string;
+      allTime: string;
+    };
+    tagAnalytics: {
+      title: string;
+      entries: string;
+      avgWords: string;
+      avgMood: string;
+      noTags: string;
+    };
+    moodDistribution: {
+      title: string;
+      rating: string;
+      entries: string;
+      noData: string;
+    };
+    moodTrend: {
+      improving: string;
+      declining: string;
+      stable: string;
+    };
+    bestDay: {
+      title: string;
+      words: string;
+      entries: string;
+      noData: string;
+    };
+    milestones: {
+      title: string;
+      entries: string;
+      words: string;
+      streaks: string;
+      achieved: string;
+      noData: string;
+    };
+    goalStreak: {
+      title: string;
+      current: string;
+      longest: string;
+      days: string;
+      perDay: string;
+      active: string;
+      inactive: string;
+    };
+    records: {
+      title: string;
+      longestEntry: string;
+      mostProductiveDay: string;
+      longestStreak: string;
+      longestGoalStreak: string;
+      words: string;
+      days: string;
+      entries: string;
+      noRecords: string;
+    };
   };
 }
 
@@ -375,6 +529,9 @@ export const cs: Translations = {
     editEntry: 'Upravit záznam',
     tags: 'Štítky',
     loadError: 'Chyba při načítání záznamu. Zkuste obnovit stránku.',
+    createError: 'Nepodařilo se vytvořit dnešní záznam',
+    createErrorDetails: 'Po {count} pokusech se nepodařilo vytvořit prázdný záznam. Zkontrolujte připojení k internetu a zkuste to znovu.',
+    retryCreate: 'Zkusit znovu',
   },
   settings: {
     title: 'Nastavení',
@@ -503,5 +660,156 @@ export const cs: Translations = {
     entryDeleted: 'Záznam byl smazán',
     // Účet
     accountDeleted: 'Účet byl smazán',
+  },
+  statistics: {
+    title: 'STATISTIKY',
+    writingPatterns: 'PSACÍ VZORY',
+    viewModes: {
+      milestones: 'Milníky a rekordy',
+      patterns: 'Psací vzory',
+    },
+    consistencyRate: {
+      title: 'KONZISTENCE PSANÍ',
+      description: 'Procento dní, kdy jsi psal(a) ze sledovaného období',
+      percentage: '{rate}% konzistence',
+    },
+    frequencyHeatmap: {
+      title: 'ČETNOST PSANÍ',
+      days: 'DNÍ',
+      noWriting: 'Žádné psaní',
+      words: 'slov',
+      less: 'MÉNĚ',
+      more: 'VÍCE',
+      loadError: 'Nepodařilo se načíst data heatmapy',
+    },
+    timeOfDayChart: {
+      title: 'DENNÍ DOBA PSANÍ',
+      notEnoughData: 'Nedostatek dat',
+      morning: 'Ráno',
+      afternoon: 'Odpoledne',
+      evening: 'Večer',
+      night: 'Noc',
+      morningDesc: 'Ráno: 5:00 – 11:59',
+      afternoonDesc: 'Odpoledne: 12:00 – 17:59',
+      eveningDesc: 'Večer: 18:00 – 23:59',
+      nightDesc: 'Noc: 0:00 – 4:59',
+      entries: 'záznamů',
+    },
+    dayOfWeekChart: {
+      title: 'AKTIVITA V TÝDNU',
+      notEnoughData: 'Nedostatek dat',
+      yAxisLabel: 'Počet dní',
+      mostProductive: 'Nejproduktivnější',
+      topDays: 'Top 3 Nejproduktivnější dny',
+      daySingular: 'den',
+      daysPlural: 'dní',
+      monday: 'Pondělí',
+      mondayAbbr: 'Po',
+      tuesday: 'Úterý',
+      tuesdayAbbr: 'Út',
+      wednesday: 'Středa',
+      wednesdayAbbr: 'St',
+      thursday: 'Čtvrtek',
+      thursdayAbbr: 'Čt',
+      friday: 'Pátek',
+      fridayAbbr: 'Pá',
+      saturday: 'Sobota',
+      saturdayAbbr: 'So',
+      sunday: 'Neděle',
+      sundayAbbr: 'Ne',
+    },
+    streakHistory: {
+      title: 'HISTORIE STREAKU',
+      noData: 'Zatím žádná data o streaku',
+      longest: 'Nejdelší',
+      current: 'Aktuální',
+      daySingular: 'den',
+      daysPlural: 'dní',
+      encouragement: 'Tvůj nejdelší streak byl {days} dní – můžeš ho překonat!',
+      newRecord: 'Gratulujeme! Tvůj aktuální streak ({days} dní) je nový rekord!',
+      matchingRecord: 'Skvělé! Vyrovnal jsi svůj rekord {days} dní!',
+    },
+    summaryCards: {
+      avgMood: 'PRŮMĚRNÁ NÁLADA',
+      totalWords: 'CELKEM SLOV',
+      avgPerDay: 'PRŮMĚR ZA DEN',
+      goalRate: 'ÚSPĚŠNOST CÍLE',
+      ratedEntries: 'hodnocených záznamů',
+      entries: 'záznamů',
+      words: 'slov',
+      daysMetGoal: 'dní splněn cíl',
+    },
+    moodTimeline: {
+      title: 'VÝVOJ NÁLADY',
+      notEnoughData: 'NEDOSTATEK DAT PRO ZOBRAZENÍ TRENDŮ NÁLADY',
+    },
+    wordCountTimeline: {
+      title: 'VÝVOJ POČTU SLOV',
+      noData: 'ŽÁDNÁ DATA O PSANÍ',
+      wordsLabel: 'Slov',
+    },
+    error: {
+      unableToLoad: 'NELZE NAČÍST STATISTIKY',
+      retry: 'ZKUSIT ZNOVU',
+    },
+    timeRange: {
+      last7Days: 'POSLEDNÍCH 7 DNÍ',
+      last30Days: 'POSLEDNÍCH 30 DNÍ',
+      last90Days: 'POSLEDNÍCH 90 DNÍ',
+      lastYear: 'POSLEDNÍ ROK',
+      allTime: 'CELÉ OBDOBÍ',
+    },
+    tagAnalytics: {
+      title: 'ANALÝZA ŠTÍTKŮ',
+      entries: 'zápisů',
+      avgWords: 'prům. slov',
+      avgMood: 'prům. nálada',
+      noTags: 'Zatím žádné štítky',
+    },
+    moodDistribution: {
+      title: 'ROZLOŽENÍ NÁLAD',
+      rating: 'Hodnocení',
+      entries: 'zápisů',
+      noData: 'Zatím žádná data o náladě',
+    },
+    moodTrend: {
+      improving: 'Zlepšuje se',
+      declining: 'Zhoršuje se',
+      stable: 'Stabilní',
+    },
+    bestDay: {
+      title: 'NEJLEPŠÍ DEN PSANÍ',
+      words: 'slov',
+      entries: 'zápisů',
+      noData: 'Piš dál a vytvoř si rekord!',
+    },
+    milestones: {
+      title: 'MILNÍKY',
+      entries: 'Zápisů',
+      words: 'Slov',
+      streaks: 'Dní v sérii',
+      achieved: 'Dosaženo!',
+      noData: 'Zatím žádné milníky',
+    },
+    goalStreak: {
+      title: 'SÉRIE DENNÍHO CÍLE',
+      current: 'Aktuální',
+      longest: 'Nejdelší',
+      days: 'dní',
+      perDay: 'slov/den cíl',
+      active: 'Jsi v plamenech!',
+      inactive: 'Začni novou sérii dnes!',
+    },
+    records: {
+      title: 'OSOBNÍ REKORDY',
+      longestEntry: 'Nejdelší zápis',
+      mostProductiveDay: 'Nejproduktivnější den',
+      longestStreak: 'Nejdelší série',
+      longestGoalStreak: 'Nejdelší série 750',
+      words: 'slov',
+      days: 'dní',
+      entries: 'zápisů',
+      noRecords: 'Začni psát a vytvoř si rekordy!',
+    },
   },
 };

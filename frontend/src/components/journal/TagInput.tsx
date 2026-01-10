@@ -47,10 +47,10 @@ export function TagInput({
 
   return (
     <div className={cn('w-full', className)}>
-      <label className="block mb-2 text-sm font-bold uppercase tracking-wider text-text-muted font-mono">
+      <label className="theme-aware block mb-2 text-sm font-bold uppercase tracking-wider text-text-muted font-mono">
         Tags
       </label>
-      <div className="w-full bg-bg-panel border-2 border-border p-2 min-h-[42px]">
+      <div className="theme-aware w-full bg-bg-panel border-2 border-border p-2 min-h-[42px]">
         <div className="flex flex-wrap gap-2">
           {value.map((tag) => (
             <Badge key={tag} variant="default" className="flex items-center gap-1">
@@ -59,7 +59,7 @@ export function TagInput({
                 type="button"
                 onClick={() => removeTag(tag)}
                 disabled={disabled}
-                className="ml-1 hover:text-accent transition-colors disabled:cursor-not-allowed"
+                className="theme-aware ml-1 hover:text-accent transition-colors disabled:cursor-not-allowed"
                 aria-label={`Remove tag ${tag}`}
               >
                 <X className="h-3 w-3" />
@@ -74,6 +74,7 @@ export function TagInput({
             placeholder={value.length === 0 ? placeholder : ''}
             disabled={disabled}
             className={cn(
+              'theme-aware',
               'flex-1 min-w-[120px] bg-transparent border-none outline-none',
               'text-text-main font-mono text-sm',
               'placeholder:text-text-muted',
@@ -82,7 +83,7 @@ export function TagInput({
           />
         </div>
       </div>
-      <p className="mt-1 text-sm text-text-muted font-mono">
+      <p className="theme-aware mt-1 text-sm text-text-muted font-mono">
         Press Enter or comma to add tag
       </p>
     </div>

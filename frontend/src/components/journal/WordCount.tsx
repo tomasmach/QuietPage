@@ -24,12 +24,12 @@ export function WordCount({ current, goal, showProgress = false, className }: Wo
   return (
     <div className={cn('w-full', className)}>
       <div className="flex items-baseline justify-between">
-        <span className="text-sm font-mono text-text-main">
+        <span className="theme-aware text-sm font-mono text-text-main">
           {goal ? (
             <>
               <span className={current >= goal ? 'text-green-500 font-bold' : ''}>{current}</span>
               {' / '}
-              <span className="text-text-muted">{goal}</span>
+              <span className="theme-aware text-text-muted">{goal}</span>
               {' '}
               {wordLabel}
             </>
@@ -40,7 +40,7 @@ export function WordCount({ current, goal, showProgress = false, className }: Wo
           )}
         </span>
         {goal && (
-          <span className="text-xs font-mono text-text-muted">
+          <span className="theme-aware text-xs font-mono text-text-muted">
             {Math.round((current / goal) * 100)}%
           </span>
         )}

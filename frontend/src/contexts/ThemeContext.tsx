@@ -48,10 +48,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setThemeState(newTheme);
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
 
-    // Save to API (fire and forget - don't block UI)
-    api.patch('/settings/profile/', { preferred_theme: newTheme }).catch(() => {
-      // Silently ignore errors - user may not be authenticated
-    });
+    // Save to API only if user is authenticated
+    if (api.isAuthenticated) {
+      api.patch('/settings/profile/', { preferred_theme: newTheme }).catch(() => {
+        // Silently ignore errors
+      });
+    }
   }, []);
 
   const toggleTheme = useCallback(() => {
@@ -59,10 +61,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       const newTheme = prev === 'midnight' ? 'paper' : 'midnight';
       localStorage.setItem(THEME_STORAGE_KEY, newTheme);
 
-      // Save to API (fire and forget)
-      api.patch('/settings/profile/', { preferred_theme: newTheme }).catch(() => {
-        // Silently ignore errors
-      });
+      // Save to API only if user is authenticated
+      if (api.isAuthenticated) {
+        api.patch('/settings/profile/', { preferred_theme: newTheme }).catch(() => {
+          // Silently ignore errors
+        });
+      }
 
       return newTheme;
     });
