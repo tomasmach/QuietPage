@@ -1,6 +1,6 @@
 /**
  * BestDayHighlight component celebrates the user's best writing day.
- * 
+ *
  * Features:
  * - Highlighted card showing the best writing day achievement
  * - Displays formatted date, word count, and entry count
@@ -11,6 +11,7 @@
 
 import { Trophy, Pencil } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { formatLocalizedDate, formatLocalizedNumber } from '../../lib/utils';
 
 export interface BestDayData {
   date: string;
@@ -20,41 +21,6 @@ export interface BestDayData {
 
 export interface BestDayHighlightProps {
   data: BestDayData | undefined;
-}
-
-/**
- * Formats a date string to localized format (e.g., "Dec 1, 2025")
- * Parses ISO date string (YYYY-MM-DD) as local date to avoid timezone shifts.
- */
-function formatDate(dateString: string, language: 'cs' | 'en'): string {
-  // Parse ISO date string (YYYY-MM-DD) into components
-  const parts = dateString.split(/-/);
-  
-  // Guard against invalid input
-  if (parts.length !== 3) {
-    return dateString; // Return original string if parsing fails
-  }
-  
-  const year = Number(parts[0]);
-  const monthIndex = Number(parts[1]) - 1; // Month is 0-indexed
-  const day = Number(parts[2]);
-  
-  // Validate parsed values
-  if (isNaN(year) || isNaN(monthIndex) || isNaN(day)) {
-    return dateString; // Return original string if parsing fails
-  }
-  
-  // Construct local Date (no timezone shift)
-  const date = new Date(year, monthIndex, day);
-  
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  };
-  
-  return date.toLocaleDateString(language === 'cs' ? 'cs-CZ' : 'en-US', options);
 }
 
 export function BestDayHighlight({ data }: BestDayHighlightProps) {
@@ -98,25 +64,30 @@ export function BestDayHighlight({ data }: BestDayHighlightProps) {
       
       {/* Date */}
       <p className="text-lg font-bold font-mono mb-4 relative capitalize">
-        {formatDate(data.date, language)}
+        {formatLocalizedDate(data.date, language, {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })}
       </p>
-      
+
       {/* Stats */}
       <div className="flex gap-6 relative">
         {/* Word Count */}
         <div>
           <p className="text-3xl font-bold font-mono">
-            {data.wordCount.toLocaleString(language === 'cs' ? 'cs-CZ' : 'en-US')}
+            {formatLocalizedNumber(data.wordCount, language)}
           </p>
           <p className="text-xs font-mono opacity-80 uppercase tracking-wider">
             {t('statistics.bestDay.words')}
           </p>
         </div>
-        
+
         {/* Entry Count */}
         <div className="border-l-2 border-current pl-6 opacity-80">
           <p className="text-3xl font-bold font-mono">
-            {data.entryCount.toLocaleString(language === 'cs' ? 'cs-CZ' : 'en-US')}
+            {formatLocalizedNumber(data.entryCount, language)}
           </p>
           <p className="text-xs font-mono opacity-80 uppercase tracking-wider">
             {t('statistics.bestDay.entries')}

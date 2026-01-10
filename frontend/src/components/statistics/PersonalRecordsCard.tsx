@@ -13,25 +13,10 @@
 import { Trophy, Medal, Award, Flame, Calendar } from 'lucide-react';
 import type { PersonalRecords } from '../../types/statistics';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { formatLocalizedDate, formatLocalizedNumber } from '../../lib/utils';
 
 export interface PersonalRecordsCardProps {
   data: PersonalRecords | undefined;
-}
-
-/**
- * Formats a date string to localized format (e.g., "Dec 1, 2025")
- */
-function formatDate(dateString: string, language: 'cs' | 'en'): string {
-  const [year, month, day] = dateString.split('-');
-  const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
-  const options: Intl.DateTimeFormatOptions = {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  };
-
-  return date.toLocaleDateString(language === 'cs' ? 'cs-CZ' : 'en-US', options);
 }
 
 /**
@@ -125,8 +110,8 @@ export function PersonalRecordsCard({ data }: PersonalRecordsCardProps) {
           <RecordRow
             icon={<Award size={iconSize} strokeWidth={iconStroke} className="text-accent" />}
             label={t('statistics.records.longestEntry')}
-            value={`${data.longestEntry.wordCount.toLocaleString(language === 'cs' ? 'cs-CZ' : 'en-US')} ${t('statistics.records.words')}`}
-            subtitle={`${formatDate(data.longestEntry.date, language)}${data.longestEntry.title ? ` – ${truncateTitle(data.longestEntry.title)}` : ''}`}
+            value={`${formatLocalizedNumber(data.longestEntry.wordCount, language)} ${t('statistics.records.words')}`}
+            subtitle={`${formatLocalizedDate(data.longestEntry.date, language)}${data.longestEntry.title ? ` – ${truncateTitle(data.longestEntry.title)}` : ''}`}
           />
         )}
 
@@ -135,8 +120,8 @@ export function PersonalRecordsCard({ data }: PersonalRecordsCardProps) {
           <RecordRow
             icon={<Medal size={iconSize} strokeWidth={iconStroke} className="text-accent" />}
             label={t('statistics.records.mostProductiveDay')}
-            value={`${data.mostWordsInDay.wordCount.toLocaleString(language === 'cs' ? 'cs-CZ' : 'en-US')} ${t('statistics.records.words')}`}
-            subtitle={`${formatDate(data.mostWordsInDay.date, language)} – ${data.mostWordsInDay.entryCount} ${t('statistics.records.entries')}`}
+            value={`${formatLocalizedNumber(data.mostWordsInDay.wordCount, language)} ${t('statistics.records.words')}`}
+            subtitle={`${formatLocalizedDate(data.mostWordsInDay.date, language)} – ${data.mostWordsInDay.entryCount} ${t('statistics.records.entries')}`}
           />
         )}
 
