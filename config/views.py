@@ -6,15 +6,6 @@ from django.conf import settings
 from django.views.generic import TemplateView
 
 
-class HomeView(TemplateView):
-    """
-    Homepage view - Landing page for QuietPage.
-
-    Shows welcome message and CTA buttons for new/returning users.
-    """
-    template_name = 'home.html'
-
-
 class SPAView(TemplateView):
     """
     Single Page Application view for React frontend.

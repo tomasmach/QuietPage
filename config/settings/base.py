@@ -134,7 +134,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # For collectstatic
 
 # Custom static files directories
-_staticfiles_dirs = [BASE_DIR / 'static']
+_staticfiles_dirs = []
 
 # Add Vite build output directory if it exists (for production)
 _vite_dist = BASE_DIR / 'frontend' / 'dist'

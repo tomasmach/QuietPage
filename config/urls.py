@@ -28,14 +28,9 @@ ADMIN_URL = os.getenv('ADMIN_URL', 'admin/')
 
 urlpatterns = [
     path(ADMIN_URL, admin.site.urls),
-    path('', views.HomeView.as_view(), name='home'),
-    path('accounts/', include('allauth.urls')),
-    path('accounts/', include('apps.accounts.urls', namespace='accounts')),
-    path('journal/', include('apps.journal.urls', namespace='journal')),
     path('api/v1/', include('apps.api.urls', namespace='api')),
-    # Catch-all pattern for React SPA - MUST be last
-    # Negative lookahead to exclude API routes from SPA catch-all
-    re_path(r'^(?!api/).*$', views.SPAView.as_view(), name='spa'),
+    # Catch-all pattern for React SPA - serves React app on root and all other non-API routes
+    re_path(r'^(?!api/|admin).*$', views.SPAView.as_view(), name='spa'),
 ]
 
 # Django Debug Toolbar URLs (only in development)
