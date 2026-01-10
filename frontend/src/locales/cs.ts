@@ -792,7 +792,7 @@ export const cs: Translations = {
       noData: 'Zatím žádné milníky',
     },
     goalStreak: {
-      title: 'SÉRIE 750 SLOV',
+      title: 'SÉRIE DENNÍHO CÍLE',
       current: 'Aktuální',
       longest: 'Nejdelší',
       days: 'dní',
