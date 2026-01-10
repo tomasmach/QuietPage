@@ -21,11 +21,25 @@ import { PersonalRecordsCard } from '../components/statistics/PersonalRecordsCar
 import { StatisticsLoading } from '../components/statistics/StatisticsLoading';
 import { StatisticsError } from '../components/statistics/StatisticsError';
 import { useLanguage } from '../contexts/LanguageContext';
+import { cn } from '../lib/utils';
 import type { PeriodType } from '../types/statistics';
 
 type ViewMode = 'milestones' | 'patterns';
 
-export function StatsPage() {
+const VIEW_MODE_BASE_CLASSES =
+  'px-6 py-3 font-mono text-sm font-bold uppercase tracking-widest border-2 border-border transition-all duration-150 rounded-none';
+
+function getViewModeClasses(isActive: boolean): string {
+  if (isActive) {
+    return cn(VIEW_MODE_BASE_CLASSES, 'bg-accent text-accent-fg shadow-hard');
+  }
+  return cn(
+    VIEW_MODE_BASE_CLASSES,
+    'bg-bg-panel text-text-main hover:shadow-hard hover:translate-x-[2px] hover:translate-y-[2px]'
+  );
+}
+
+export function StatsPage(): JSX.Element {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('30d');
   const [viewMode, setViewMode] = useState<ViewMode>('milestones');
   const { data, isLoading, error, refetch } = useStatistics(selectedPeriod);
@@ -51,27 +65,13 @@ export function StatsPage() {
         <div className="flex gap-3">
           <button
             onClick={() => setViewMode('milestones')}
-            className={`
-              px-6 py-3 font-mono text-sm font-bold uppercase tracking-widest border-2 border-border
-              transition-all duration-150 rounded-none
-              ${viewMode === 'milestones'
-                ? 'bg-accent text-accent-fg shadow-hard'
-                : 'bg-bg-panel text-text-main hover:shadow-hard hover:translate-x-[2px] hover:translate-y-[2px]'
-              }
-            `}
+            className={getViewModeClasses(viewMode === 'milestones')}
           >
             {t('statistics.viewModes.milestones')}
           </button>
           <button
             onClick={() => setViewMode('patterns')}
-            className={`
-              px-6 py-3 font-mono text-sm font-bold uppercase tracking-widest border-2 border-border
-              transition-all duration-150 rounded-none
-              ${viewMode === 'patterns'
-                ? 'bg-accent text-accent-fg shadow-hard'
-                : 'bg-bg-panel text-text-main hover:shadow-hard hover:translate-x-[2px] hover:translate-y-[2px]'
-              }
-            `}
+            className={getViewModeClasses(viewMode === 'patterns')}
           >
             {t('statistics.viewModes.patterns')}
           </button>
