@@ -26,16 +26,17 @@ from . import views  # type: ignore
 # Example: ADMIN_URL=secret-dashboard-xyz/ in production environment
 ADMIN_URL = os.getenv('ADMIN_URL', 'admin/')
 
-# Prepare admin URL for regex pattern (strip trailing slash and escape special chars)
+# Prepare admin URL pattern for catch-all exclusion (escape special regex chars)
 import re
-admin_pattern = re.escape(ADMIN_URL.rstrip('/'))
+admin_pattern = re.escape(ADMIN_URL)
 
 urlpatterns = [
     path(ADMIN_URL, admin.site.urls),
     path('api/v1/', include('apps.api.urls', namespace='api')),
     # Catch-all pattern for React SPA - MUST be last
-    # Serves React app on root and all other non-API/admin routes
-    re_path(rf'^(?!api/|{admin_pattern}).*$', views.SPAView.as_view(), name='spa'),
+    # Excludes: API routes, admin panel, and debug toolbar
+    # Serves React app on root and all other routes
+    re_path(rf'^(?!api/|{admin_pattern}|__debug__/).*$', views.SPAView.as_view(), name='spa'),
 ]
 
 # Django Debug Toolbar URLs (only in development)
