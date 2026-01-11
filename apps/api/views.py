@@ -436,3 +436,65 @@ class AutosaveView(APIView):
                 'status': 'error',
                 'message': 'Chyba při ukládání.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class HealthCheckView(APIView):
+    """
+    Health check endpoint - returns 200 if healthy, 503 if unhealthy.
+
+    This endpoint is unauthenticated and used by:
+    - Docker health checks
+    - Load balancers
+    - Uptime monitoring services (UptimeRobot, etc.)
+    """
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        """Check application health."""
+        components = {}
+        is_healthy = True
+
+        # Check 1: Database connectivity
+        try:
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+            components['database'] = 'healthy'
+        except Exception as e:
+            components['database'] = f'unhealthy: {str(e)}'
+            is_healthy = False
+
+        # Check 2: Redis cache connectivity
+        try:
+            cache.set('health_check', 'ok', timeout=10)
+            if cache.get('health_check') == 'ok':
+                components['redis'] = 'healthy'
+            else:
+                components['redis'] = 'unhealthy: cache read failed'
+                is_healthy = False
+        except Exception as e:
+            components['redis'] = f'unhealthy: {str(e)}'
+            is_healthy = False
+
+        # Check 3: Celery worker availability (basic check)
+        try:
+            from config.celery import app as celery_app
+            inspect = celery_app.control.inspect()
+            active_workers = inspect.active()
+
+            if active_workers and len(active_workers) > 0:
+                components['celery'] = 'healthy'
+            else:
+                components['celery'] = 'unhealthy: no active workers'
+        except Exception as e:
+            components['celery'] = f'degraded: {str(e)}'
+
+        response_data = {
+            'status': 'healthy' if is_healthy else 'unhealthy',
+            'timestamp': timezone.now().isoformat(),
+            'components': components,
+        }
+
+        response_status = status.HTTP_200_OK if is_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+        return Response(response_data, status=response_status)
