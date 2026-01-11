@@ -455,6 +455,7 @@ class TestExportDownloadAPIView:
     def create_export_file(self):
         """Fixture to create a test export file in storage with UUID-based filename."""
         import uuid
+        created_paths = []
 
         def _create_file(user_id, use_uuid=True):
             if use_uuid:
@@ -476,19 +477,18 @@ class TestExportDownloadAPIView:
 
             # Save to storage
             default_storage.save(storage_path, ContentFile(test_data.encode('utf-8')))
+            created_paths.append(storage_path)
 
             return filename, storage_path
 
         yield _create_file
 
-        # Cleanup: remove all test export files
-        try:
-            directories, files = default_storage.listdir('exports')
-            for file in files:
-                if file.startswith('user_') and file.endswith('.json'):
-                    default_storage.delete(f'exports/{file}')
-        except Exception:
-            pass
+        # Cleanup: remove only files created by this fixture
+        for storage_path in created_paths:
+            try:
+                default_storage.delete(storage_path)
+            except Exception:
+                pass
 
     def test_download_export_success(self, client, create_export_file):
         """User can download their own export with valid signed token."""
