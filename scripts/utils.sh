@@ -302,10 +302,10 @@ print_separator() {
 }
 
 # Export functions for use in other scripts
-export -f log_info log_success log_warning log_error
+export -f _log log_info log_success log_warning log_error
 export -f check_docker check_docker_compose get_docker_compose_cmd
 export -f check_env_file validate_env_vars
-export -f wait_for_health wait_for_service
+export -f _retry_until wait_for_health wait_for_service
 export -f check_disk_space cleanup_docker
 export -f get_git_hash get_git_branch get_checksum
 export -f format_size get_backup_timestamp
