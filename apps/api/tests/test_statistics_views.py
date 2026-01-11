@@ -5,16 +5,20 @@ Tests all statistics API endpoints in apps/api/statistics_views.py with 80%+ cov
 Focuses on mood analytics calculations with timezone awareness and edge cases.
 """
 
+import contextlib
+import copy
 import json
 import pytest
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from django.urls import reverse, clear_url_caches
 from django.contrib.auth import get_user_model
+from django.test import override_settings
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from unittest.mock import patch
 from rest_framework.settings import api_settings
+from rest_framework.throttling import SimpleRateThrottle
 from importlib import reload
 import rest_framework.settings
 import rest_framework.throttling
@@ -2881,65 +2885,36 @@ class TestWritingPatternsIntegration:
 @pytest.mark.unit
 @pytest.mark.rate_limiting
 class TestStatisticsViewRateLimiting:
-    """Test rate limiting on StatisticsView to prevent abuse of expensive queries.
+    """Test rate limiting on StatisticsView to prevent abuse of expensive queries."""
 
-    IMPORTANT - TEST ISOLATION ISSUE:
-    ===================================
-    These tests pass when run in isolation but may fail when run with all tests
-    in this file due to Django REST Framework settings caching.
+    @pytest.fixture
+    def with_statistics_rate_limit(self, settings):
+        """Apply a specific rate limit for the statistics endpoint within a test.
 
-    Root Cause:
-    -----------
-    DRF caches api_settings at module load time. When tests modify
-    settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'], DRF's cached settings
-    don't automatically update. Despite reloading modules and clearing caches,
-    pytest-django's deep integration creates persistent references that prevent
-    proper isolation when 171 tests run together.
+        Uses override_settings with a deep-copied REST_FRAMEWORK dict and patches
+        SimpleRateThrottle.THROTTLE_RATES to ensure DRF sees the per-test config.
+        """
 
-    The Implementation Code is Correct:
-    ------------------------------------
-    The StatisticsView in apps/api/statistics_views.py is properly configured:
-    - Uses ScopedRateThrottle correctly
-    - Has throttle_scope = "statistics"
-    - Settings define 'statistics': '100/hour' rate limit
-    - Rate limiting works correctly in production
+        @contextlib.contextmanager
+        def _apply_rate_limit(rate):
+            # Deep copy current REST_FRAMEWORK settings
+            rf_settings = copy.deepcopy(settings.REST_FRAMEWORK)
+            rf_settings.setdefault("DEFAULT_THROTTLE_RATES", {})
+            rf_settings["DEFAULT_THROTTLE_RATES"]["statistics"] = rate
 
-    How to Run These Tests:
-    -----------------------
-    Run rate limiting tests separately for reliable results:
+            # Apply settings override and patch throttle rates so DRF sees the change
+            with override_settings(REST_FRAMEWORK=rf_settings):
+                with patch.object(
+                    SimpleRateThrottle,
+                    "THROTTLE_RATES",
+                    rf_settings["DEFAULT_THROTTLE_RATES"],
+                ):
+                    cache.clear()
+                    yield
 
-        uv run pytest apps/api/tests/test_statistics_views.py::TestStatisticsViewRateLimiting -v
+        return _apply_rate_limit
 
-    Or run with the rate_limiting marker:
-
-        uv run pytest -m rate_limiting -v
-
-    Expected Results:
-    -----------------
-    When run in isolation: All 6 tests PASS ✓
-    When run with all tests: 5 tests may fail (false negatives due to caching)
-
-    This is a test isolation challenge, NOT a production bug.
-    """
-
-    @pytest.fixture(autouse=True)
-    def setup_rate_limiting_test(self):
-        """Ensure each rate limiting test starts with fresh DRF settings, views, and clear caches."""
-        # Clear cache, reload DRF modules, and clear URL caches before each test
-        cache.clear()
-        reload(rest_framework.settings)
-        reload(rest_framework.throttling)
-        reload(apps.api.statistics_views)
-        clear_url_caches()
-        yield
-        # Clear cache, reload DRF modules, and clear URL caches after each test to clean up
-        cache.clear()
-        reload(rest_framework.settings)
-        reload(rest_framework.throttling)
-        reload(apps.api.statistics_views)
-        clear_url_caches()
-
-    def test_rate_limit_headers_present(self, client, settings):
+    def test_rate_limit_headers_present(self, client):
         """Rate limit headers are present in response."""
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
