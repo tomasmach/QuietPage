@@ -44,7 +44,7 @@ services:
       - DJANGO_SETTINGS_MODULE=config.settings.production
       - DJANGO_ENV=production
       - DEBUG=${DEBUG:-False}
-      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
       - SECRET_KEY=${SECRET_KEY}
       - FERNET_KEY_PRIMARY=${FERNET_KEY_PRIMARY}
       - ALLOWED_HOSTS=localhost,127.0.0.1
@@ -88,7 +88,7 @@ services:
       - DJANGO_SETTINGS_MODULE=config.settings.production
       - DJANGO_ENV=production
       - DEBUG=${DEBUG:-False}
-      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
       - SECRET_KEY=${SECRET_KEY}
       - FERNET_KEY_PRIMARY=${FERNET_KEY_PRIMARY}
       - ALLOWED_HOSTS=localhost,127.0.0.1
@@ -111,6 +111,12 @@ services:
         condition: service_healthy
       web:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping | grep -q 'pong'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - quietpage_network
 
@@ -125,7 +131,7 @@ services:
       - DJANGO_SETTINGS_MODULE=config.settings.production
       - DJANGO_ENV=production
       - DEBUG=${DEBUG:-False}
-      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
       - SECRET_KEY=${SECRET_KEY}
       - FERNET_KEY_PRIMARY=${FERNET_KEY_PRIMARY}
       - ALLOWED_HOSTS=localhost,127.0.0.1
@@ -144,6 +150,12 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /app/celerybeat-schedule/celerybeat-schedule.db || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - quietpage_network
 

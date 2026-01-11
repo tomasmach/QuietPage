@@ -74,9 +74,8 @@ ENV PYTHONUNBUFFERED=1 \
 # Expose port
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request; r = urllib.request.urlopen('http://localhost:8000/api/health/', timeout=5); r.close()" || exit 1
+# Note: Health checks are defined in docker-compose.yml per-service
+# Web service checks /api/health/, celery services check broker connectivity
 
 # Set entrypoint and default command
 ENTRYPOINT ["/docker-entrypoint.sh"]
