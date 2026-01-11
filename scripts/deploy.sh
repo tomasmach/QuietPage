@@ -40,6 +40,15 @@ PREVIOUS_COMMIT=""
 BACKUP_CREATED=false
 DEPLOYMENT_FAILED=false
 
+# Helper to get health endpoint URL based on running services
+get_health_url() {
+    if docker ps --format '{{.Names}}' | grep -q "nginx"; then
+        echo "http://localhost/api/health/"
+    else
+        echo "http://localhost:8000/api/health/"
+    fi
+}
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -336,30 +345,18 @@ verify_deployment() {
         return 0
     fi
 
-    # Wait for services to warm up
     log_info "Waiting 10 seconds for services to warm up..."
     sleep 10
 
-    # Determine the correct health URL
-    local health_url
-    if docker ps --format '{{.Names}}' | grep -q "nginx"; then
-        health_url="http://localhost/api/health/"
-    else
-        health_url="http://localhost:8000/api/health/"
-    fi
-
-    # Check health endpoint
-    if ! wait_for_health "$health_url" 5 5; then
+    if ! wait_for_health "$(get_health_url)" 5 5; then
         log_error "Health check failed"
         return 4
     fi
 
     # Check Docker logs for errors
     log_info "Checking recent logs for errors..."
-    local dc_cmd
+    local dc_cmd error_count
     dc_cmd=$(get_docker_compose_cmd)
-
-    local error_count
     error_count=$($dc_cmd -f "$COMPOSE_FILE" logs --tail=50 web 2>&1 | grep -ci "error" || true)
 
     if [ "$error_count" -gt 5 ]; then
@@ -385,13 +382,11 @@ rollback() {
 
     log_warning "Rolling back to commit: $PREVIOUS_COMMIT"
 
-    # Reset git to previous commit
     if ! git reset --hard "$PREVIOUS_COMMIT"; then
         log_error "Git rollback failed"
         return 1
     fi
 
-    # Rebuild and restart
     local dc_cmd
     dc_cmd=$(get_docker_compose_cmd)
 
@@ -407,16 +402,8 @@ rollback() {
         return 1
     fi
 
-    # Verify rollback
     sleep 10
-    local health_url
-    if docker ps --format '{{.Names}}' | grep -q "nginx"; then
-        health_url="http://localhost/api/health/"
-    else
-        health_url="http://localhost:8000/api/health/"
-    fi
-
-    if wait_for_health "$health_url" 5 5; then
+    if wait_for_health "$(get_health_url)" 5 5; then
         log_success "Rollback completed successfully"
         return 0
     else

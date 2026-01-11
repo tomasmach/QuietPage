@@ -360,7 +360,6 @@ EOF
 
     log_success "Media backup created: $(basename "$backup_file") ($(format_size "$file_size"), $file_count files)"
     log_info "Checksum: $checksum"
-
     return 0
 }
 
