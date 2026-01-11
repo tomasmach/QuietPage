@@ -453,11 +453,19 @@ class TestExportDownloadAPIView:
 
     @pytest.fixture
     def create_export_file(self):
-        """Fixture to create a test export file in storage."""
-        def _create_file(user_id, timestamp=None):
-            if timestamp is None:
+        """Fixture to create a test export file in storage with UUID-based filename."""
+        import uuid
+
+        def _create_file(user_id, use_uuid=True):
+            if use_uuid:
+                # New UUID-based format for security
+                unique_id = uuid.uuid4()
+                filename = f'user_{user_id}_{unique_id}.json'
+            else:
+                # Old timestamp format (for testing backward compatibility/rejection)
                 timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
-            filename = f'user_{user_id}_export_{timestamp}.json'
+                filename = f'user_{user_id}_export_{timestamp}.json'
+
             storage_path = f'exports/{filename}'
 
             # Create test export data
@@ -607,11 +615,13 @@ class TestExportDownloadAPIView:
 
     def test_download_export_file_not_found(self, client):
         """Download fails when export file doesn't exist in storage."""
+        import uuid
         user = UserFactory()
         client.force_login(user)
 
-        # Create token for non-existent file
-        filename = f'user_{user.id}_export_20240101_120000.json'
+        # Create token for non-existent file (valid UUID format)
+        fake_uuid = uuid.uuid4()
+        filename = f'user_{user.id}_{fake_uuid}.json'
         signer = TimestampSigner()
         signed_token = signer.sign(filename)
 
