@@ -9,16 +9,63 @@ import json
 import pytest
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from django.urls import reverse
+from django.urls import reverse, clear_url_caches
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from unittest.mock import patch
+from rest_framework.settings import api_settings
+from importlib import reload
+import rest_framework.settings
+import rest_framework.throttling
+from django.core.cache import cache
+import apps.api.statistics_views
 
 from apps.accounts.tests.factories import UserFactory
 from apps.journal.tests.factories import EntryFactory
 
 User = get_user_model()
+
+
+@pytest.fixture
+def reload_drf_settings():
+    """
+    Fixture to reload Django REST Framework settings after modification.
+
+    DRF caches api_settings at module load time, and throttle classes cache
+    references to the api_settings. When tests modify settings.REST_FRAMEWORK,
+    we need to reload settings, throttling, views, and clear URL caches.
+
+    This fixture yields a callable that tests can use after modifying settings,
+    and ensures cleanup by reloading at both the start and end of each test.
+    """
+    # Reload at the start to clear any cached settings from previous tests
+    cache.clear()
+    reload(rest_framework.settings)
+    reload(rest_framework.throttling)
+    reload(apps.api.statistics_views)
+    clear_url_caches()
+
+    def _reload():
+        # Clear cache and reload all necessary modules
+        cache.clear()
+        reload(rest_framework.settings)
+        reload(rest_framework.throttling)
+        reload(apps.api.statistics_views)
+        clear_url_caches()
+        # Return the new api_settings object for convenience
+        from rest_framework.settings import api_settings as new_api_settings
+        return new_api_settings
+
+    # Yield the reload function
+    yield _reload
+
+    # After the test, reload again to clean up
+    cache.clear()
+    reload(rest_framework.settings)
+    reload(rest_framework.throttling)
+    reload(apps.api.statistics_views)
+    clear_url_caches()
 
 
 @pytest.mark.statistics
@@ -1746,7 +1793,12 @@ class TestWritingPatternsDayOfWeek:
         user_tz = ZoneInfo("Europe/Prague")
         now = timezone.now().astimezone(user_tz)
 
-        sunday_1 = now - timedelta(days=(now.weekday() + 1) % 7)
+        # Calculate last Sunday (ensure it's in the past, not today)
+        days_since_last_sunday = (now.weekday() + 1) % 7
+        if days_since_last_sunday == 0:
+            # Today is Sunday, use last week's Sunday
+            days_since_last_sunday = 7
+        sunday_1 = now - timedelta(days=days_since_last_sunday)
         monday_1 = sunday_1 + timedelta(days=1)
 
         EntryFactory.create_batch(10, user=user, created_at=sunday_1.replace(hour=12))
