@@ -252,46 +252,40 @@ def upload_export_to_secure_storage(user_id, user_data):
 
 def send_export_link_email(user_email, username, storage_path):
     """
-    Send email with download link for user data export.
+    Send email with time-limited, signed download link for user data export.
 
-    Queues an async Celery task to send an email containing a secure
-    download link for the user's exported data.
+    Generates a cryptographically signed token that expires after 48 hours
+    and queues an async Celery task to send the download link via email.
 
     Args:
         user_email (str): User's email address
         username (str): User's username (for personalization)
-        storage_path (str): Storage path to the export file
+        storage_path (str): Storage path to the export file (used to derive filename)
 
     Returns:
         bool: True if email task was queued successfully
 
-    Note:
-        The actual download link generation should be implemented in your
-        API views. The storage_path should be used to generate a signed
-        URL with expiration (e.g., using Django's signing framework).
-
-        In production, consider using pre-signed URLs from cloud storage
-        (S3, GCS, etc.) instead of serving through Django.
+    Security:
+        - Uses Django's TimestampSigner for cryptographic signatures
+        - Tokens expire after 48 hours
+        - Download endpoint validates signature and user ownership
     """
     from django.conf import settings
-    from django.core.mail import send_mail
-    from django.template.loader import render_to_string
+    from django.core.signing import TimestampSigner
     from apps.accounts.tasks import send_email_async
 
-    # Generate download URL
-    # In production, this should be a signed URL with expiration
-    download_url = f"{settings.SITE_URL}/api/exports/download/{storage_path.split('/')[-1]}"
+    # Extract filename from storage path
+    filename = storage_path.split('/')[-1]
 
-    # Prepare email context
-    context = {
-        'username': username,
-        'download_url': download_url,
-        'expiry_hours': 48,
-        'site_url': settings.SITE_URL,
-    }
+    # Create signed token with 48-hour expiration
+    # Token format: "filename:signature:timestamp"
+    signer = TimestampSigner()
+    signed_token = signer.sign(filename)
 
-    # Render email message
-    # Note: You should create this template at templates/journal/emails/export_ready.txt
+    # Generate secure download URL with signed token
+    download_url = f"{settings.SITE_URL}/api/exports/download/?token={signed_token}"
+
+    # Email content
     subject = 'QuietPage - Your Data Export is Ready'
     plain_message = f"""Ahoj {username},
 
