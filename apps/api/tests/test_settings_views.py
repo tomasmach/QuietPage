@@ -499,7 +499,7 @@ class TestExportDownloadAPIView:
         filename, storage_path = create_export_file(user.id)
 
         # Generate signed token
-        signer = TimestampSigner()
+        signer = TimestampSigner(salt='export-download')
         signed_token = signer.sign(filename)
 
         # Request download
@@ -534,7 +534,7 @@ class TestExportDownloadAPIView:
         filename, storage_path = create_export_file(user.id)
 
         # Generate signed token and mock it as expired
-        signer = TimestampSigner()
+        signer = TimestampSigner(salt='export-download')
 
         # Create a token with an old timestamp (more than 48 hours ago)
         with mock.patch('django.core.signing.time.time') as mock_time:
@@ -577,7 +577,7 @@ class TestExportDownloadAPIView:
         client.force_login(user)
 
         # Create a signed token with invalid filename format
-        signer = TimestampSigner()
+        signer = TimestampSigner(salt='export-download')
         invalid_filename = 'malicious_file.json'
         signed_token = signer.sign(invalid_filename)
 
@@ -600,7 +600,7 @@ class TestExportDownloadAPIView:
         filename, storage_path = create_export_file(user1.id)
 
         # Generate signed token for user1's file
-        signer = TimestampSigner()
+        signer = TimestampSigner(salt='export-download')
         signed_token = signer.sign(filename)
 
         # User2 tries to download user1's export
@@ -622,7 +622,7 @@ class TestExportDownloadAPIView:
         # Create token for non-existent file (valid UUID format)
         fake_uuid = uuid.uuid4()
         filename = f'user_{user.id}_{fake_uuid}.json'
-        signer = TimestampSigner()
+        signer = TimestampSigner(salt='export-download')
         signed_token = signer.sign(filename)
 
         response = client.get(
@@ -642,7 +642,7 @@ class TestExportDownloadAPIView:
         filename, storage_path = create_export_file(user.id)
 
         # Generate signed token
-        signer = TimestampSigner()
+        signer = TimestampSigner(salt='export-download')
         signed_token = signer.sign(filename)
 
         # Try to download without authentication
@@ -660,7 +660,7 @@ class TestExportDownloadAPIView:
 
         # Try directory traversal in filename
         malicious_filename = f'user_{user.id}_export_../../etc/passwd.json'
-        signer = TimestampSigner()
+        signer = TimestampSigner(salt='export-download')
         signed_token = signer.sign(malicious_filename)
 
         response = client.get(
@@ -682,7 +682,7 @@ class TestExportDownloadAPIView:
         filename, storage_path = create_export_file(user.id, use_uuid=False)
 
         # Generate signed token
-        signer = TimestampSigner()
+        signer = TimestampSigner(salt='export-download')
         signed_token = signer.sign(filename)
 
         # Should be rejected due to new UUID-only validation

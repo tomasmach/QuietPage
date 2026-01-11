@@ -414,19 +414,19 @@ class TestHealthCheck:
 
         assert result['disk_space'] is False
 
-    def test_health_check_no_redis_url_configured(self):
+    def test_health_check_no_redis_url_configured(self, settings):
         """
         Test health check when Redis URL is not configured.
 
         Why: Should skip Redis check gracefully if not configured.
         """
-        with patch('apps.core.tasks.getattr') as mock_getattr:
-            mock_getattr.return_value = None
+        settings.REDIS_URL = None
+        settings.CACHE_REDIS_URL = None
 
-            with patch('apps.core.tasks.shutil.disk_usage') as mock_disk:
-                mock_disk.return_value = Mock(free=5 * 1024**3)
+        with patch('apps.core.tasks.shutil.disk_usage') as mock_disk:
+            mock_disk.return_value = Mock(free=5 * 1024**3)
 
-                result = health_check()
+            result = health_check()
 
         # Redis check should be skipped
         assert 'redis' in result
