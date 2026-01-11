@@ -57,12 +57,12 @@ class TestDatabaseBackup:
         assert "db_backup_20250115_143000.sqlite3" in result
         mock_copy.assert_called_once()
 
-    @patch('apps.core.tasks.subprocess.run')
-    def test_postgres_backup_success(self, mock_run, tmp_path, settings):
+    @patch('apps.core.tasks.subprocess.Popen')
+    def test_postgres_backup_success(self, mock_popen, tmp_path, settings):
         """
         Test successful PostgreSQL database backup.
 
-        Why: PostgreSQL backups should use pg_dump with compression.
+        Why: PostgreSQL backups should use pg_dump with streaming compression.
         """
         settings.BACKUPS_DIR = tmp_path / "backups"
         settings.BACKUPS_DIR.mkdir(parents=True, exist_ok=True)

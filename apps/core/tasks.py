@@ -67,8 +67,11 @@ def database_backup(self):
             logger.info(f"SQLite backup created: {backup_path}")
 
         elif 'postgres' in db_config['ENGINE'].lower():
-            # PostgreSQL: Use pg_dump
+            # PostgreSQL: Use pg_dump with streaming to avoid OOM
             backup_path = backup_dir / f'db_backup_{timestamp}.sql.gz'
+
+            # Timeout for pg_dump (1 hour should be sufficient for most databases)
+            backup_timeout = getattr(settings, 'BACKUP_TIMEOUT_SECONDS', 3600)
 
             pg_dump_cmd = [
                 'pg_dump',
@@ -84,30 +87,60 @@ def database_backup(self):
             if db_config.get('PASSWORD'):
                 env['PGPASSWORD'] = db_config['PASSWORD']
 
-            # Run pg_dump
-            pg_dump_result = subprocess.run(
-                pg_dump_cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                env=env
-            )
-
-            if pg_dump_result.returncode != 0:
-                error_msg = f"pg_dump failed with return code {pg_dump_result.returncode}: {pg_dump_result.stderr.decode()}"
-                logger.error(error_msg)
-                raise Exception(error_msg)
-
-            # Compress and write to file
+            # Stream pg_dump directly to gzip to avoid loading entire dump into memory
             with open(backup_path, 'wb') as f:
-                gzip_result = subprocess.run(
+                pg_dump_proc = subprocess.Popen(
+                    pg_dump_cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    env=env
+                )
+
+                gzip_proc = subprocess.Popen(
                     ['gzip'],
-                    input=pg_dump_result.stdout,
+                    stdin=pg_dump_proc.stdout,
                     stdout=f,
                     stderr=subprocess.PIPE
                 )
 
-                if gzip_result.returncode != 0:
-                    error_msg = f"gzip compression failed with return code {gzip_result.returncode}"
+                # Allow pg_dump to receive SIGPIPE if gzip exits
+                pg_dump_proc.stdout.close()
+
+                try:
+                    # Wait for gzip to complete (it will finish when pg_dump closes its stdout)
+                    gzip_stderr = gzip_proc.communicate(timeout=backup_timeout)[1]
+                    gzip_returncode = gzip_proc.returncode
+
+                    # Also wait for pg_dump to fully complete and get its stderr
+                    pg_dump_stderr = pg_dump_proc.communicate(timeout=60)[1]
+                    pg_dump_returncode = pg_dump_proc.returncode
+
+                except subprocess.TimeoutExpired:
+                    # Kill both processes on timeout
+                    pg_dump_proc.kill()
+                    gzip_proc.kill()
+                    pg_dump_proc.wait()
+                    gzip_proc.wait()
+                    # Clean up partial backup
+                    if backup_path.exists():
+                        backup_path.unlink()
+                    error_msg = f"Backup timed out after {backup_timeout} seconds"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
+
+                if pg_dump_returncode != 0:
+                    # Clean up partial backup
+                    if backup_path.exists():
+                        backup_path.unlink()
+                    error_msg = f"pg_dump failed with return code {pg_dump_returncode}: {pg_dump_stderr.decode()}"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
+
+                if gzip_returncode != 0:
+                    # Clean up partial backup
+                    if backup_path.exists():
+                        backup_path.unlink()
+                    error_msg = f"gzip compression failed with return code {gzip_returncode}: {gzip_stderr.decode()}"
                     logger.error(error_msg)
                     raise Exception(error_msg)
 
