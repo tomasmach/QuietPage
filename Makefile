@@ -1,7 +1,7 @@
 # QuietPage - Makefile
 # Shortcuts for common Django management commands
 
-.PHONY: help setup run migrate makemigrations shell test collectstatic messages compilemessages cache superuser celery-worker celery-beat celery-status
+.PHONY: help setup run migrate makemigrations shell test collectstatic messages compilemessages cache superuser celery-worker celery-beat celery-status setup-prod deploy backup backup-list
 
 help:
 	@echo "QuietPage - Available commands:"
@@ -21,6 +21,12 @@ help:
 	@echo "  make celery-worker    - Start Celery worker"
 	@echo "  make celery-beat      - Start Celery beat scheduler"
 	@echo "  make celery-status    - Show active Celery tasks"
+	@echo ""
+	@echo "Production deployment commands:"
+	@echo "  make setup-prod       - Initial production setup (Docker)"
+	@echo "  make deploy           - Deploy updates with zero downtime"
+	@echo "  make backup           - Create database and media backup"
+	@echo "  make backup-list      - List all existing backups"
 
 # Run development server
 run:
@@ -84,3 +90,20 @@ celery-beat:
 
 celery-status:
 	celery -A config inspect active
+
+# Production deployment scripts
+setup-prod:
+	@echo "🚀 Running production setup..."
+	./scripts/setup.sh
+
+deploy:
+	@echo "🚀 Deploying QuietPage..."
+	./scripts/deploy.sh
+
+backup:
+	@echo "💾 Creating backup..."
+	./scripts/backup.sh
+
+backup-list:
+	@echo "📋 Listing backups..."
+	./scripts/backup.sh --list
