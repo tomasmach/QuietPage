@@ -77,31 +77,34 @@ class TestDatabaseBackup:
             }
         }
 
-        # Mock pg_dump and gzip
-        mock_pg_dump = Mock()
-        mock_pg_dump.returncode = 0
-        mock_pg_dump.stdout = b"SQL dump content"
-        mock_pg_dump.stderr = b""
+        # Mock pg_dump process
+        mock_pg_dump_proc = Mock()
+        mock_pg_dump_proc.stdout = Mock()
+        mock_pg_dump_proc.stdout.close = Mock()
+        mock_pg_dump_proc.returncode = 0
+        mock_pg_dump_proc.communicate.return_value = (b"", b"")
 
-        mock_gzip = Mock()
-        mock_gzip.returncode = 0
+        # Mock gzip process
+        mock_gzip_proc = Mock()
+        mock_gzip_proc.returncode = 0
+        mock_gzip_proc.communicate.return_value = (b"compressed", b"")
 
-        mock_run.side_effect = [mock_pg_dump, mock_gzip]
+        mock_popen.side_effect = [mock_pg_dump_proc, mock_gzip_proc]
 
         with freeze_time("2025-01-15 14:30:00"):
             result = database_backup()
 
         assert "db_backup_20250115_143000.sql.gz" in result
-        assert mock_run.call_count == 2
+        assert mock_popen.call_count == 2
 
         # Verify pg_dump was called with correct arguments
-        pg_dump_call = mock_run.call_args_list[0]
+        pg_dump_call = mock_popen.call_args_list[0]
         assert 'pg_dump' in pg_dump_call[0][0]
         assert '-d' in pg_dump_call[0][0]
         assert 'testdb' in pg_dump_call[0][0]
 
-    @patch('apps.core.tasks.subprocess.run')
-    def test_postgres_backup_pg_dump_failure(self, mock_run, tmp_path, settings):
+    @patch('apps.core.tasks.subprocess.Popen')
+    def test_postgres_backup_pg_dump_failure(self, mock_popen, tmp_path, settings):
         """
         Test handling of pg_dump failure.
 
@@ -120,10 +123,19 @@ class TestDatabaseBackup:
             }
         }
 
-        mock_pg_dump = Mock()
-        mock_pg_dump.returncode = 1
-        mock_pg_dump.stderr = b"pg_dump: connection failed"
-        mock_run.return_value = mock_pg_dump
+        # Mock pg_dump process that fails
+        mock_pg_dump_proc = Mock()
+        mock_pg_dump_proc.stdout = Mock()
+        mock_pg_dump_proc.stdout.close = Mock()
+        mock_pg_dump_proc.returncode = 1
+        mock_pg_dump_proc.communicate.return_value = (b"", b"pg_dump: connection failed")
+
+        # Mock gzip process (will still be created)
+        mock_gzip_proc = Mock()
+        mock_gzip_proc.returncode = 0
+        mock_gzip_proc.communicate.return_value = (b"", b"")
+
+        mock_popen.side_effect = [mock_pg_dump_proc, mock_gzip_proc]
 
         with pytest.raises(Exception) as exc_info:
             database_backup()
