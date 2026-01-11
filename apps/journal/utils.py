@@ -274,17 +274,20 @@ def send_export_link_email(user_email, username, storage_path):
     from django.conf import settings
     from django.core.signing import TimestampSigner
     from apps.accounts.tasks import send_email_async
+    from urllib.parse import urlencode
 
     # Extract filename from storage path
     filename = storage_path.split('/')[-1]
 
     # Create signed token with 48-hour expiration
     # Token format: "filename:signature:timestamp"
-    signer = TimestampSigner()
+    # Salt must match ExportDownloadView validation to ensure token verification works
+    signer = TimestampSigner(salt='export-download')
     signed_token = signer.sign(filename)
 
-    # Generate secure download URL with signed token
-    download_url = f"{settings.SITE_URL}/api/exports/download/?token={signed_token}"
+    # Generate secure download URL with signed token (properly URL-encoded)
+    base_url = str(settings.SITE_URL).rstrip('/')
+    download_url = f"{base_url}/api/exports/download/?{urlencode({'token': signed_token})}"
 
     # Email content
     subject = 'QuietPage - Your Data Export is Ready'
@@ -315,8 +318,8 @@ QuietPage tým
             plain_message=plain_message,
             recipient_list=[user_email]
         )
-        logger.info(f"Export download link email queued for {user_email}")
+        logger.info("Export download link email queued")
         return True
     except Exception as e:
-        logger.error(f"Failed to queue export email for {user_email}: {e}", exc_info=True)
+        logger.error(f"Failed to queue export email: {e}", exc_info=True)
         return False

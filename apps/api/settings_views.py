@@ -334,7 +334,8 @@ class ExportDownloadView(APIView):
 
         try:
             # Validate signature and expiration (48 hours = 172800 seconds)
-            signer = TimestampSigner()
+            # Salt must match send_export_link_email to ensure token verification works
+            signer = TimestampSigner(salt='export-download')
             filename = signer.unsign(token, max_age=172800)
 
             # Validate filename format: user_{user_id}_{uuid}.json
