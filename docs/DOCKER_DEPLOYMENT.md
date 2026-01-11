@@ -51,8 +51,8 @@ docker-compose up -d
 # Run migrations
 docker-compose exec web python manage.py migrate
 
-# Create cache table (pokud používáš database cache)
-docker-compose exec web python manage.py createcachetable
+# Verify Redis is configured and running
+docker-compose exec redis redis-cli ping
 
 # Create superuser
 docker-compose exec web python manage.py createsuperuser
