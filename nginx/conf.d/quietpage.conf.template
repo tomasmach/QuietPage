@@ -63,6 +63,15 @@ server {
         add_header X-Frame-Options "DENY" always;
     }
 
+    # Block direct access to export files (must be accessed via signed token endpoint)
+    # CRITICAL: This must come BEFORE general /media/ location for security
+    location /media/exports/ {
+        deny all;
+        return 404;
+        access_log off;
+        log_not_found off;
+    }
+
     # Media files - user uploads
     location /media/ {
         alias /app/media/;
