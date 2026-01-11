@@ -5,11 +5,10 @@
 
 help:
 	@echo "QuietPage - Available commands:"
-	@echo "  make setup            - Complete initial setup (migrate + cache table + superuser)"
+	@echo "  make setup            - Complete initial setup (migrate + superuser)"
 	@echo "  make run              - Run development server"
 	@echo "  make migrate          - Apply database migrations"
 	@echo "  make makemigrations   - Create new migrations"
-	@echo "  make cache            - Create cache table (required for first setup)"
 	@echo "  make superuser        - Create superuser account"
 	@echo "  make shell            - Open Django shell"
 	@echo "  make test             - Run tests"
@@ -38,10 +37,7 @@ setup:
 	@echo "1️⃣ Aplikuji migrace databáze..."
 	python manage.py migrate
 	@echo "✓ Migrace dokončeny\n"
-	@echo "2️⃣ Vytvářím cache tabulku..."
-	python manage.py createcachetable
-	@echo "✓ Cache tabulka vytvořena\n"
-	@echo "3️⃣ Vytváření superuživatele..."
+	@echo "2️⃣ Vytváření superuživatele..."
 	python manage.py createsuperuser
 	@echo "\n✅ Setup dokončen! Můžete spustit server pomocí: make run"
 
@@ -51,12 +47,6 @@ migrate:
 
 makemigrations:
 	python manage.py makemigrations
-
-# Create cache table (required for database cache backend)
-cache:
-	@echo "📦 Vytvářím cache tabulku..."
-	python manage.py createcachetable
-	@echo "✓ Cache tabulka úspěšně vytvořena"
 
 # Create superuser
 superuser:

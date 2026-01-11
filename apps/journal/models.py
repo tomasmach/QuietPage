@@ -66,7 +66,11 @@ class Entry(models.Model):
         editable=False,
         help_text="Automatically calculated word count"
     )
-    
+    is_favorite = models.BooleanField(
+        default=False,
+        help_text="Mark entry as favorite"
+    )
+
     # Tagging (free-form via django-taggit)
     tags = TaggableManager(through=UUIDTaggedItem, blank=True)
     

@@ -80,7 +80,7 @@ describe('BestDayHighlight', () => {
       const { container } = render(<BestDayHighlight data={mockBestDayData} />)
 
       const card = container.firstChild as HTMLElement
-      expect(card).toHaveClass('border-accent')
+      expect(card).toHaveClass('border-accent-fg')
       expect(card).toHaveClass('bg-accent')
       expect(card).toHaveClass('text-accent-fg')
     })

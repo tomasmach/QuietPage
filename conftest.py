@@ -171,3 +171,45 @@ def configure_test_authentication(settings):
     
     # Disable session saving on every request
     settings.SESSION_SAVE_EVERY_REQUEST = False
+
+
+@pytest.fixture(autouse=True)
+def disable_throttling_for_tests(request, settings):
+    """
+    Disable rate limiting for all tests to prevent 429 errors.
+
+    DRF throttling should not apply during tests as it causes false failures
+    when multiple test requests are made rapidly.
+
+    This fixture is skipped for tests marked with @pytest.mark.rate_limiting,
+    which need actual throttle limits to test rate limiting behavior.
+    """
+    # Skip this fixture if the test is marked with rate_limiting marker
+    if 'rate_limiting' in request.keywords:
+        return
+
+    # Set extremely high throttle rates instead of removing them
+    # This prevents ImproperlyConfigured errors while effectively disabling throttling
+    settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
+        'anon': '10000/hour',
+        'user': '10000/hour',
+        'register': '10000/hour',
+        'entries_create': '10000/day',
+        'avatar_upload': '10000/hour',
+        'statistics': '10000/hour',
+    }
+
+
+@pytest.fixture(autouse=True)
+def clear_cache_between_tests():
+    """
+    Clear Django cache before each test to prevent cache pollution.
+
+    Tests that create data and make API calls with caching enabled can leave
+    cached responses that affect subsequent tests, causing false failures.
+    This fixture ensures each test starts with a clean cache.
+    """
+    from django.core.cache import cache
+    cache.clear()
+    yield
+    cache.clear()

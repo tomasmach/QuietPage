@@ -18,35 +18,14 @@ from rest_framework.throttling import ScopedRateThrottle
 from django.db.models import Sum, Avg, Count, Q
 from django.db.models.functions import TruncDate
 from django.utils import timezone
-from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 from django.utils.decorators import method_decorator
+from django.core.cache import cache
 
 from apps.journal.models import Entry
 from apps.api.serializers import StatisticsSerializer
 
 logger = logging.getLogger(__name__)
-
-
-def custom_cache_key(request):
-    """
-    Generate cache key for statistics endpoint.
-
-    Note: cache_page decorator passes a standard Django HttpRequest,
-    not DRF's Request wrapper, so we use request.GET instead of query_params.
-
-    Args:
-        request: Django HttpRequest object
-
-    Returns:
-        str: Cache key in format 'statistics_{user_id}_{period}_{last_entry_date}'
-    """
-    user = request.user
-    period = request.GET.get("period", "7d")
-    last_entry_date = (
-        user.last_entry_date.isoformat() if user.last_entry_date else "none"
-    )
-    return f"statistics_{user.id}_{period}_{last_entry_date}"
 
 
 class StatisticsView(APIView):
@@ -770,7 +749,6 @@ class StatisticsView(APIView):
         }
 
     @method_decorator(vary_on_headers("Authorization"))
-    @method_decorator(cache_page(1800, key_prefix=custom_cache_key))
     def get(self, request):
         """
         Get statistics for the current user.
@@ -808,6 +786,20 @@ class StatisticsView(APIView):
                 },
                 status=400,
             )
+
+        # Generate cache key
+        last_entry_date = (
+            user.last_entry_date.isoformat() if user.last_entry_date else "none"
+        )
+        cache_key = f"statistics_{user.id}_{period}_{last_entry_date}"
+
+        # Try to get cached response
+        cached_data = cache.get(cache_key)
+        if cached_data is not None:
+            response = Response(cached_data)
+            response["Cache-Control"] = "max-age=1800"
+            response["Vary"] = "Authorization"
+            return response
 
         try:
             start_date, end_date = self._get_period_range(period, user)
@@ -849,4 +841,13 @@ class StatisticsView(APIView):
             "personal_records": personal_records,
         }
         serializer = StatisticsSerializer(data)
-        return Response(serializer.data)
+
+        # Cache the response data for 30 minutes (1800 seconds)
+        cache.set(cache_key, serializer.data, 1800)
+
+        # Create response with cache control headers
+        response = Response(serializer.data)
+        response["Cache-Control"] = "max-age=1800"
+        response["Vary"] = "Authorization"
+
+        return response

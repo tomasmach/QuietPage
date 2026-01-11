@@ -34,32 +34,33 @@ class EntryFactory(DjangoModelFactory):
     title = factory.Faker('sentence', nb_words=4, locale='cs_CZ')
     content = factory.Faker('paragraph', nb_sentences=5, locale='cs_CZ')
     mood_rating = factory.Faker('random_int', min=1, max=5)
-    
+    is_favorite = factory.Faker('boolean', chance_of_getting_true=30)
+
     # word_count is calculated automatically in model.save()
     
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         """
         Override _create to handle created_at parameter properly.
-        
+
         Django's auto_now_add=True prevents setting created_at during creation.
         This override allows tests to set created_at by updating after creation.
         """
         from django.db.models import signals
-        
+
         # Extract created_at if provided
         created_at_override = kwargs.pop('created_at', None)
-        
+
         # If created_at override is provided, temporarily disable post_save signal
         # to prevent it from firing with the wrong timestamp
         if created_at_override is not None:
             from apps.journal.signals import update_streak_on_entry_create
             signals.post_save.disconnect(update_streak_on_entry_create, sender=model_class)
-        
+
         try:
             # Create the instance normally
             instance = super()._create(model_class, *args, **kwargs)
-            
+
             # If created_at was provided, update it using queryset
             # (bypasses auto_now_add restriction)
             if created_at_override is not None:
@@ -72,7 +73,7 @@ class EntryFactory(DjangoModelFactory):
             if created_at_override is not None:
                 from apps.journal.signals import update_streak_on_entry_create
                 signals.post_save.connect(update_streak_on_entry_create, sender=model_class)
-        
+
         return instance
     
     @factory.post_generation

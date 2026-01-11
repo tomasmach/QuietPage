@@ -7,7 +7,7 @@ upstream django {
 server {
     listen 80;
     listen [::]:80;
-    server_name ${DOMAIN};
+    server_name _;
 
     # Allow certbot challenges
     location /.well-known/acme-challenge/ {
@@ -24,18 +24,11 @@ server {
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
+    server_name _;  # Replace with your domain in production
 
-    # IMPORTANT: Set DOMAIN environment variable to your actual domain (e.g., quietpage.com)
-    # Do NOT use placeholder values like "_" or "localhost" in production
-    # This domain must match your SSL certificate's Common Name (CN)
-    server_name ${DOMAIN};
-
-    # SSL configuration
-    # IMPORTANT: These paths will be populated based on DOMAIN variable
-    # Ensure your SSL certificates are obtained via certbot or placed at these paths
-    # before deploying to production
-    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    # SSL configuration - paths substituted from environment at container startup
+    ssl_certificate ${SSL_CERT_PATH};
+    ssl_certificate_key ${SSL_KEY_PATH};
 
     # SSL security settings
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -47,15 +40,7 @@ server {
     ssl_stapling_verify on;
 
     # HSTS (HTTP Strict Transport Security)
-    # WARNING: Only enable HSTS when using a REAL domain with valid SSL certificates
-    # HSTS with placeholder certs or self-signed certs will break browser access
-    #
-    # For production with real domain and valid certs, set HSTS_HEADER to:
-    #   'add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;'
-    #
-    # For testing/development WITHOUT real certs, set HSTS_HEADER to empty string ''
-    # or comment out the line below
-    ${HSTS_HEADER}
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 
     # Client upload size limit
     client_max_body_size 5M;

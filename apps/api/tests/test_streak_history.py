@@ -20,6 +20,21 @@ from apps.accounts.tests.factories import UserFactory
 from apps.journal.tests.factories import EntryFactory
 
 
+@pytest.fixture(autouse=True)
+def clear_cache():
+    """Clear cache before each test to prevent cross-test contamination.
+
+    The statistics API caches results by user_id. Since SQLite reuses user IDs
+    within test transactions, cached data from previous tests can leak into
+    subsequent tests, causing them to see entries that don't exist in their
+    database transaction.
+    """
+    from django.core.cache import cache
+    cache.clear()
+    yield
+    cache.clear()
+
+
 @pytest.mark.statistics
 @pytest.mark.streak
 @pytest.mark.unit

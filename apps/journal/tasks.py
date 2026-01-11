@@ -20,6 +20,7 @@ from celery import shared_task
 
 from apps.accounts.models import EmailChangeRequest
 from apps.journal.models import Entry
+from apps.journal.utils import upload_export_to_secure_storage, send_export_link_email
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -132,8 +133,6 @@ def export_user_data(self, user_id):
         - Stores export in secure file storage (not in Redis/database)
         - Sends time-limited download link via email
     """
-    from apps.journal.utils import upload_export_to_secure_storage, send_export_link_email
-
     try:
         user = User.objects.get(pk=user_id)
 

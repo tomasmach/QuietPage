@@ -462,7 +462,8 @@ class HealthCheckView(APIView):
                 cursor.execute("SELECT 1")
             components['database'] = 'healthy'
         except Exception as e:
-            components['database'] = f'unhealthy: {str(e)}'
+            logger.error(f"Health check - Database unhealthy: {str(e)}", exc_info=True)
+            components['database'] = 'unhealthy'
             is_healthy = False
 
         # Check 2: Redis cache connectivity
@@ -471,10 +472,12 @@ class HealthCheckView(APIView):
             if cache.get('health_check') == 'ok':
                 components['redis'] = 'healthy'
             else:
-                components['redis'] = 'unhealthy: cache read failed'
+                logger.error("Health check - Redis unhealthy: cache read failed")
+                components['redis'] = 'unhealthy'
                 is_healthy = False
         except Exception as e:
-            components['redis'] = f'unhealthy: {str(e)}'
+            logger.error(f"Health check - Redis unhealthy: {str(e)}", exc_info=True)
+            components['redis'] = 'unhealthy'
             is_healthy = False
 
         # Check 3: Celery worker availability (basic check)
@@ -486,9 +489,11 @@ class HealthCheckView(APIView):
             if active_workers and len(active_workers) > 0:
                 components['celery'] = 'healthy'
             else:
-                components['celery'] = 'unhealthy: no active workers'
+                logger.warning("Health check - Celery degraded: no active workers")
+                components['celery'] = 'degraded'
         except Exception as e:
-            components['celery'] = f'degraded: {str(e)}'
+            logger.error(f"Health check - Celery degraded: {str(e)}", exc_info=True)
+            components['celery'] = 'degraded'
 
         response_data = {
             'status': 'healthy' if is_healthy else 'unhealthy',
