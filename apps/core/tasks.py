@@ -242,14 +242,12 @@ def health_check(self):
     # Check Redis connection
     if REDIS_AVAILABLE:
         try:
-            # Use dedicated Redis URL if available, otherwise use default for testing
+            # Use dedicated Redis URL if available
             redis_url = getattr(settings, 'REDIS_URL', None) or getattr(settings, 'CACHE_REDIS_URL', None)
 
-            # If no URL configured, use default localhost URL (useful for testing with mocks)
             if not redis_url:
-                redis_url = 'redis://localhost:6379'
-
-            if redis_url.startswith('redis://'):
+                logger.debug("Redis health check: Skipped (no Redis URL configured)")
+            elif redis_url.startswith('redis://'):
                 redis_client = Redis.from_url(
                     redis_url,
                     socket_connect_timeout=2,
