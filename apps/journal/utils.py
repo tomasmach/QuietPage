@@ -231,13 +231,14 @@ def upload_export_to_secure_storage(user_id, user_data):
         a cleanup task for old exports.
     """
     import json
+    import uuid
     from django.core.files.base import ContentFile
     from django.core.files.storage import default_storage
-    from django.utils import timezone
 
-    # Generate secure filename with timestamp
-    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'exports/user_{user_id}_export_{timestamp}.json'
+    # Generate secure filename with UUID (unguessable, cryptographically random)
+    # Format: user_{id}_{uuid}.json for ownership validation + unpredictability
+    unique_id = uuid.uuid4()
+    filename = f'exports/user_{user_id}_{unique_id}.json'
 
     # Convert data to JSON
     json_content = json.dumps(user_data, indent=2, ensure_ascii=False)

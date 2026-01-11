@@ -672,3 +672,50 @@ class TestExportDownloadAPIView:
         assert response.status_code == 404
         data = response.json()
         assert 'error' in data
+
+    def test_download_export_rejects_old_timestamp_format(self, client, create_export_file):
+        """Old timestamp-based filenames are rejected (security fix)."""
+        user = UserFactory()
+        client.force_login(user)
+
+        # Create export file with old timestamp format
+        filename, storage_path = create_export_file(user.id, use_uuid=False)
+
+        # Generate signed token
+        signer = TimestampSigner()
+        signed_token = signer.sign(filename)
+
+        # Should be rejected due to new UUID-only validation
+        response = client.get(
+            reverse('api:export-download'),
+            {'token': signed_token}
+        )
+
+        assert response.status_code == 404
+        data = response.json()
+        assert 'error' in data
+
+    def test_uuid_filename_is_unguessable(self, create_export_file):
+        """UUID-based filenames are cryptographically random and unguessable."""
+        import uuid
+        import re
+
+        # Create two export files for same user
+        filename1, _ = create_export_file(user_id=1, use_uuid=True)
+        filename2, _ = create_export_file(user_id=1, use_uuid=True)
+
+        # Extract UUIDs from filenames
+        pattern = r'user_\d+_([a-f0-9\-]{36})\.json'
+        uuid1_str = re.search(pattern, filename1).group(1)
+        uuid2_str = re.search(pattern, filename2).group(1)
+
+        # Verify they are valid UUIDs
+        uuid1 = uuid.UUID(uuid1_str)
+        uuid2 = uuid.UUID(uuid2_str)
+
+        # Verify they are different (not sequential/predictable)
+        assert uuid1 != uuid2
+
+        # Verify they are version 4 UUIDs (random)
+        assert uuid1.version == 4
+        assert uuid2.version == 4
