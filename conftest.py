@@ -197,6 +197,7 @@ def disable_throttling_for_tests(request, settings):
         'entries_create': '10000/day',
         'avatar_upload': '10000/hour',
         'statistics': '10000/hour',
+        'export_download': '10000/hour',
     }
 
 
