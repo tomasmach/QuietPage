@@ -261,6 +261,7 @@ REST_FRAMEWORK = {
         'entries_create': '100/day',
         'avatar_upload': '10/hour',
         'statistics': '100/hour',  # Expensive queries - limit to prevent database exhaustion
+        'export_download': '5/hour',  # Limit export downloads to prevent abuse
     },
 }
 
