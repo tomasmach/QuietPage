@@ -157,8 +157,10 @@ def database_backup(self):
 
     except Exception as e:
         logger.error(f"Database backup failed: {e}", exc_info=True)
-        # Retry the task
-        raise self.retry(exc=e)
+        # Only retry when running as a Celery task, not when called directly
+        if not self.request.called_directly:
+            raise self.retry(exc=e)
+        raise
 
 
 @shared_task(bind=True)
