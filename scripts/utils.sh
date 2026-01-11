@@ -23,26 +23,20 @@ else
     NC=''
 fi
 
-# Logging functions
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $1" >> "${LOG_FILE:-/dev/null}"
+# Core logging function
+_log() {
+    local level="$1" color="$2" message="$3"
+    local output_stream=1
+    [ "$level" = "ERROR" ] && output_stream=2
+
+    echo -e "${color}[${level}]${NC} ${message}" >&$output_stream
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [${level}] ${message}" >> "${LOG_FILE:-/dev/null}"
 }
 
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [SUCCESS] $1" >> "${LOG_FILE:-/dev/null}"
-}
-
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [WARNING] $1" >> "${LOG_FILE:-/dev/null}"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1" >&2
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] $1" >> "${LOG_FILE:-/dev/null}"
-}
+log_info()    { _log "INFO" "$BLUE" "$1"; }
+log_success() { _log "SUCCESS" "$GREEN" "$1"; }
+log_warning() { _log "WARNING" "$YELLOW" "$1"; }
+log_error()   { _log "ERROR" "$RED" "$1"; }
 
 # Check if Docker is installed and running
 check_docker() {
@@ -151,55 +145,39 @@ validate_env_vars() {
     return 0
 }
 
+# Generic retry loop helper
+_retry_until() {
+    local description="$1"
+    local check_cmd="$2"
+    local max_attempts="${3:-30}"
+    local wait_seconds="${4:-5}"
+
+    log_info "$description (max ${max_attempts} attempts)..."
+
+    for attempt in $(seq 1 "$max_attempts"); do
+        if eval "$check_cmd"; then
+            log_success "$description - success!"
+            return 0
+        fi
+        log_info "Attempt $attempt/$max_attempts failed, waiting ${wait_seconds}s..."
+        sleep "$wait_seconds"
+    done
+
+    log_error "$description failed after $max_attempts attempts"
+    return 1
+}
+
 # Wait for health endpoint to respond
 wait_for_health() {
     local url="${1:-http://localhost:8000/api/health/}"
-    local max_attempts="${2:-30}"
-    local wait_seconds="${3:-5}"
-    local attempt=1
-
-    log_info "Waiting for health check at $url (max ${max_attempts} attempts)..."
-
-    while [ $attempt -le "$max_attempts" ]; do
-        if curl -sf "$url" > /dev/null 2>&1; then
-            log_success "Health check passed!"
-            return 0
-        fi
-
-        log_info "Attempt $attempt/$max_attempts failed, waiting ${wait_seconds}s..."
-        sleep "$wait_seconds"
-        ((attempt++))
-    done
-
-    log_error "Health check failed after $max_attempts attempts"
-    return 1
+    _retry_until "Health check at $url" "curl -sf '$url' > /dev/null 2>&1" "${2:-30}" "${3:-5}"
 }
 
 # Wait for Docker service to be healthy
 wait_for_service() {
     local service="$1"
-    local max_attempts="${2:-30}"
-    local wait_seconds="${3:-2}"
-    local attempt=1
-
-    log_info "Waiting for service '$service' to be healthy..."
-
-    while [ $attempt -le "$max_attempts" ]; do
-        local health_status
-        health_status=$(docker inspect --format='{{.State.Health.Status}}' "$service" 2>/dev/null || echo "unknown")
-
-        if [ "$health_status" = "healthy" ]; then
-            log_success "Service '$service' is healthy"
-            return 0
-        fi
-
-        log_info "Service status: $health_status (attempt $attempt/$max_attempts)"
-        sleep "$wait_seconds"
-        ((attempt++))
-    done
-
-    log_error "Service '$service' did not become healthy after $max_attempts attempts"
-    return 1
+    local check_cmd="[ \"\$(docker inspect --format='{{.State.Health.Status}}' '$service' 2>/dev/null)\" = 'healthy' ]"
+    _retry_until "Waiting for service '$service'" "$check_cmd" "${2:-30}" "${3:-2}"
 }
 
 # Check disk space
