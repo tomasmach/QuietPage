@@ -152,15 +152,19 @@ STORAGES = {
     },
 }
 
-# Caching Configuration (Database-backed - no Redis required)
+# Caching Configuration (Redis-backed for production performance)
 # https://docs.djangoproject.com/en/5.2/topics/cache/
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'cache_table',
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.getenv('REDIS_URL', 'redis://localhost:6379/1'),
         'OPTIONS': {
-            'MAX_ENTRIES': 1000,  # Limit cache size
-            'CULL_FREQUENCY': 3,  # Delete 1/3 of entries when MAX_ENTRIES is reached
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+            },
         }
     }
 }

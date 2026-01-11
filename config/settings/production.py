@@ -51,7 +51,7 @@ DATABASES = {
 # Default: admin/ (for backward compatibility in development)
 
 # HTTPS
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True'
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 # CSRF_COOKIE_HTTPONLY must be False for React SPA - JavaScript needs to read

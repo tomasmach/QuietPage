@@ -39,7 +39,7 @@ function getViewModeClasses(isActive: boolean): string {
   );
 }
 
-export function StatsPage(): JSX.Element {
+export function StatsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('30d');
   const [viewMode, setViewMode] = useState<ViewMode>('milestones');
   const { data, isLoading, error, refetch } = useStatistics(selectedPeriod);
