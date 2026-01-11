@@ -337,9 +337,10 @@ class ExportDownloadView(APIView):
             signer = TimestampSigner()
             filename = signer.unsign(token, max_age=172800)
 
-            # Validate filename format: user_{user_id}_export_{timestamp}.json
+            # Validate filename format: user_{user_id}_{uuid}.json
+            # UUID format: 8-4-4-4-12 hexadecimal characters with dashes
             # This prevents directory traversal and ensures user owns the file
-            pattern = r'^user_(\d+)_export_\d{8}_\d{6}\.json$'
+            pattern = r'^user_(\d+)_[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.json$'
             match = re.match(pattern, filename)
 
             if not match:
