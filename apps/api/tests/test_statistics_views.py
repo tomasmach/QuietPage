@@ -2925,12 +2925,8 @@ class TestStatisticsViewRateLimiting:
         # DRF adds X-RateLimit headers when throttling is enabled
         # Note: Headers may not be present in every response, but status 200 indicates success
 
-    def test_rate_limit_prevents_excessive_requests(self, client, settings, reload_drf_settings):
+    def test_rate_limit_prevents_excessive_requests(self, client, with_statistics_rate_limit):
         """Excessive requests to statistics endpoint are throttled."""
-        # Override throttle rate for testing
-        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['statistics'] = '5/hour'
-        reload_drf_settings()  # Reload DRF settings to pick up the change
-
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
@@ -2938,24 +2934,21 @@ class TestStatisticsViewRateLimiting:
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
         EntryFactory(user=user, mood_rating=5, created_at=base_date)
 
-        # Make requests up to the limit
-        for i in range(5):
+        with with_statistics_rate_limit("5/hour"):
+            # Make requests up to the limit
+            for i in range(5):
+                response = client.get(reverse("api:statistics"), {"period": "7d"})
+                assert response.status_code == 200, f"Request {i+1} should succeed"
+
+            # Next request should be throttled
             response = client.get(reverse("api:statistics"), {"period": "7d"})
-            assert response.status_code == 200, f"Request {i+1} should succeed"
+            assert response.status_code == 429, "Request beyond limit should be throttled"
 
-        # Next request should be throttled
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 429, "Request beyond limit should be throttled"
-        
-        # Response should contain retry information
-        assert 'Retry-After' in response or 'retry-after' in response.headers
+            # Response should contain retry information
+            assert "Retry-After" in response or "retry-after" in response.headers
 
-    def test_different_periods_count_toward_same_limit(self, client, settings, reload_drf_settings):
+    def test_different_periods_count_toward_same_limit(self, client, with_statistics_rate_limit):
         """Requests with different period parameters count toward the same throttle limit."""
-        # Override throttle rate for testing
-        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['statistics'] = '3/hour'
-        reload_drf_settings()  # Reload DRF settings to pick up the change
-
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
