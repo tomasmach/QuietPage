@@ -2956,87 +2956,85 @@ class TestStatisticsViewRateLimiting:
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
         EntryFactory(user=user, mood_rating=5, created_at=base_date)
 
-        # Make requests with different periods
-        periods = ['7d', '30d', '90d']
-        for period in periods:
-            response = client.get(reverse("api:statistics"), {"period": period})
-            assert response.status_code == 200, f"Request with period {period} should succeed"
+        with with_statistics_rate_limit("3/hour"):
+            # Make requests with different periods
+            periods = ["7d", "30d", "90d"]
+            for period in periods:
+                response = client.get(reverse("api:statistics"), {"period": period})
+                assert response.status_code == 200, f"Request with period {period} should succeed"
 
-        # Next request should be throttled regardless of period
-        response = client.get(reverse("api:statistics"), {"period": "1y"})
-        assert response.status_code == 429, "Request beyond limit should be throttled"
+            # Next request should be throttled regardless of period
+            response = client.get(reverse("api:statistics"), {"period": "1y"})
+            assert response.status_code == 429, "Request beyond limit should be throttled"
 
-    def test_rate_limit_per_user_isolation(self, client, settings, reload_drf_settings):
+    def test_rate_limit_per_user_isolation(self, client, with_statistics_rate_limit):
         """Rate limits are enforced per user, not globally."""
-        # Override throttle rate for testing
-        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['statistics'] = '2/hour'
-        reload_drf_settings()  # Reload DRF settings to pick up the change
-
         user1 = UserFactory(timezone="Europe/Prague")
         user2 = UserFactory(timezone="Europe/Prague")
-        
+
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
         EntryFactory(user=user1, mood_rating=5, created_at=base_date)
         EntryFactory(user=user2, mood_rating=3, created_at=base_date)
 
-        # User 1 makes requests up to limit
-        client.force_login(user1)
-        for i in range(2):
+        with with_statistics_rate_limit("2/hour"):
+            # User 1 makes requests up to limit
+            client.force_login(user1)
+            for i in range(2):
+                response = client.get(reverse("api:statistics"), {"period": "7d"})
+                assert response.status_code == 200
+
+            # User 1 is now throttled
             response = client.get(reverse("api:statistics"), {"period": "7d"})
-            assert response.status_code == 200
+            assert response.status_code == 429
 
-        # User 1 is now throttled
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 429
+            # User 2 should still be able to make requests
+            client.force_login(user2)
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+            assert response.status_code == 200, "User 2 should not be affected by User 1's throttle"
 
-        # User 2 should still be able to make requests
-        client.force_login(user2)
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 200, "User 2 should not be affected by User 1's throttle"
-
-    def test_throttle_status_code_and_message(self, client, settings, reload_drf_settings):
+    def test_throttle_status_code_and_message(self, client, with_statistics_rate_limit):
         """Throttled requests return 429 status with appropriate message."""
-        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['statistics'] = '1/hour'
-        reload_drf_settings()  # Reload DRF settings to pick up the change
-
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
-        # First request succeeds
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 200
+        with with_statistics_rate_limit("1/hour"):
+            # First request succeeds
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+            assert response.status_code == 200
 
-        # Second request is throttled
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 429
-        
-        # Check response contains throttle information
-        data = response.json()
-        assert 'detail' in data
-        # Message can be in English or Czech
-        detail_lower = data['detail'].lower()
-        assert ('throttled' in detail_lower or 'rate' in detail_lower 
-                or 'limitován' in detail_lower or 'požadavek' in detail_lower)
+            # Second request is throttled
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+            assert response.status_code == 429
 
-    def test_cache_and_throttle_interaction(self, client, settings, reload_drf_settings):
+            # Check response contains throttle information
+            data = response.json()
+            assert "detail" in data
+            # Message can be in English or Czech
+            detail_lower = data["detail"].lower()
+            assert (
+                "throttled" in detail_lower
+                or "rate" in detail_lower
+                or "limitován" in detail_lower
+                or "požadavek" in detail_lower
+            )
+
+    def test_cache_and_throttle_interaction(self, client, with_statistics_rate_limit):
         """Cached responses still count toward rate limit."""
-        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['statistics'] = '3/hour'
-        reload_drf_settings()  # Reload DRF settings to pick up the change
-
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
         EntryFactory(user=user, mood_rating=5, created_at=base_date)
 
-        # Make identical requests (should be cached)
-        for i in range(3):
-            response = client.get(reverse("api:statistics"), {"period": "7d"})
-            assert response.status_code == 200
+        with with_statistics_rate_limit("3/hour"):
+            # Make identical requests (should be cached)
+            for i in range(3):
+                response = client.get(reverse("api:statistics"), {"period": "7d"})
+                assert response.status_code == 200
 
-        # Even though responses were cached, throttle should still apply
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 429
+            # Even though responses were cached, throttle should still apply
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+            assert response.status_code == 429
 
 
 @pytest.mark.statistics
