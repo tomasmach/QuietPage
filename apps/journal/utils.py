@@ -213,7 +213,7 @@ def upload_export_to_secure_storage(user_id, user_data):
 
     Creates a JSON file with the user's exported data and saves it to
     Django's default storage backend. Files are stored in a private
-    'exports' directory with a time-limited filename.
+    'exports' directory with a UUID-based filename.
 
     Args:
         user_id (int): ID of the user whose data is being exported
@@ -226,9 +226,13 @@ def upload_export_to_secure_storage(user_id, user_data):
         Exception: If file upload fails
 
     Note:
-        Files should be cleaned up after user downloads them or after a
-        reasonable expiration period (e.g., 48 hours). Consider implementing
-        a cleanup task for old exports.
+        - Files persist indefinitely in storage. The 48-hour time limit applies
+          only to the download token (created in send_export_link_email), not the
+          file itself. A cleanup task should be implemented to remove expired
+          exports from storage.
+        - Ensure default_storage is configured as private in production (e.g.,
+          S3 bucket with restricted ACLs) to prevent unauthorized access to
+          exported files.
     """
     import json
     import uuid
