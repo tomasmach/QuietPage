@@ -5,20 +5,71 @@ Tests all statistics API endpoints in apps/api/statistics_views.py with 80%+ cov
 Focuses on mood analytics calculations with timezone awareness and edge cases.
 """
 
+import contextlib
+import copy
 import json
 import pytest
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from django.urls import reverse
+from django.urls import reverse, clear_url_caches
 from django.contrib.auth import get_user_model
+from django.test import override_settings
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from unittest.mock import patch
+from rest_framework.settings import api_settings
+from rest_framework.throttling import SimpleRateThrottle
+from importlib import reload
+import rest_framework.settings
+import rest_framework.throttling
+from django.core.cache import cache
+import apps.api.statistics_views
 
 from apps.accounts.tests.factories import UserFactory
 from apps.journal.tests.factories import EntryFactory
 
 User = get_user_model()
+
+
+@pytest.fixture
+def reload_drf_settings():
+    """
+    Fixture to reload Django REST Framework settings after modification.
+
+    DRF caches api_settings at module load time, and throttle classes cache
+    references to the api_settings. When tests modify settings.REST_FRAMEWORK,
+    we need to reload settings, throttling, views, and clear URL caches.
+
+    This fixture yields a callable that tests can use after modifying settings,
+    and ensures cleanup by reloading at both the start and end of each test.
+    """
+    # Reload at the start to clear any cached settings from previous tests
+    cache.clear()
+    reload(rest_framework.settings)
+    reload(rest_framework.throttling)
+    reload(apps.api.statistics_views)
+    clear_url_caches()
+
+    def _reload():
+        # Clear cache and reload all necessary modules
+        cache.clear()
+        reload(rest_framework.settings)
+        reload(rest_framework.throttling)
+        reload(apps.api.statistics_views)
+        clear_url_caches()
+        # Return the new api_settings object for convenience
+        from rest_framework.settings import api_settings as new_api_settings
+        return new_api_settings
+
+    # Yield the reload function
+    yield _reload
+
+    # After the test, reload again to clean up
+    cache.clear()
+    reload(rest_framework.settings)
+    reload(rest_framework.throttling)
+    reload(apps.api.statistics_views)
+    clear_url_caches()
 
 
 @pytest.mark.statistics
@@ -1746,7 +1797,12 @@ class TestWritingPatternsDayOfWeek:
         user_tz = ZoneInfo("Europe/Prague")
         now = timezone.now().astimezone(user_tz)
 
-        sunday_1 = now - timedelta(days=(now.weekday() + 1) % 7)
+        # Calculate last Sunday (ensure it's in the past, not today)
+        days_since_last_sunday = (now.weekday() + 1) % 7
+        if days_since_last_sunday == 0:
+            # Today is Sunday, use last week's Sunday
+            days_since_last_sunday = 7
+        sunday_1 = now - timedelta(days=days_since_last_sunday)
         monday_1 = sunday_1 + timedelta(days=1)
 
         EntryFactory.create_batch(10, user=user, created_at=sunday_1.replace(hour=12))
@@ -2827,10 +2883,38 @@ class TestWritingPatternsIntegration:
 
 @pytest.mark.statistics
 @pytest.mark.unit
+@pytest.mark.rate_limiting
 class TestStatisticsViewRateLimiting:
     """Test rate limiting on StatisticsView to prevent abuse of expensive queries."""
 
-    def test_rate_limit_headers_present(self, client, settings):
+    @pytest.fixture
+    def with_statistics_rate_limit(self, settings):
+        """Apply a specific rate limit for the statistics endpoint within a test.
+
+        Uses override_settings with a deep-copied REST_FRAMEWORK dict and patches
+        SimpleRateThrottle.THROTTLE_RATES to ensure DRF sees the per-test config.
+        """
+
+        @contextlib.contextmanager
+        def _apply_rate_limit(rate):
+            # Deep copy current REST_FRAMEWORK settings
+            rf_settings = copy.deepcopy(settings.REST_FRAMEWORK)
+            rf_settings.setdefault("DEFAULT_THROTTLE_RATES", {})
+            rf_settings["DEFAULT_THROTTLE_RATES"]["statistics"] = rate
+
+            # Apply settings override and patch throttle rates so DRF sees the change
+            with override_settings(REST_FRAMEWORK=rf_settings):
+                with patch.object(
+                    SimpleRateThrottle,
+                    "THROTTLE_RATES",
+                    rf_settings["DEFAULT_THROTTLE_RATES"],
+                ):
+                    cache.clear()
+                    yield
+
+        return _apply_rate_limit
+
+    def test_rate_limit_headers_present(self, client):
         """Rate limit headers are present in response."""
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
@@ -2841,11 +2925,8 @@ class TestStatisticsViewRateLimiting:
         # DRF adds X-RateLimit headers when throttling is enabled
         # Note: Headers may not be present in every response, but status 200 indicates success
 
-    def test_rate_limit_prevents_excessive_requests(self, client, settings):
+    def test_rate_limit_prevents_excessive_requests(self, client, with_statistics_rate_limit):
         """Excessive requests to statistics endpoint are throttled."""
-        # Override throttle rate for testing
-        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['statistics'] = '5/hour'
-        
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
@@ -2853,23 +2934,21 @@ class TestStatisticsViewRateLimiting:
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
         EntryFactory(user=user, mood_rating=5, created_at=base_date)
 
-        # Make requests up to the limit
-        for i in range(5):
+        with with_statistics_rate_limit("5/hour"):
+            # Make requests up to the limit
+            for i in range(5):
+                response = client.get(reverse("api:statistics"), {"period": "7d"})
+                assert response.status_code == 200, f"Request {i+1} should succeed"
+
+            # Next request should be throttled
             response = client.get(reverse("api:statistics"), {"period": "7d"})
-            assert response.status_code == 200, f"Request {i+1} should succeed"
+            assert response.status_code == 429, "Request beyond limit should be throttled"
 
-        # Next request should be throttled
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 429, "Request beyond limit should be throttled"
-        
-        # Response should contain retry information
-        assert 'Retry-After' in response or 'retry-after' in response.headers
+            # Response should contain retry information
+            assert "Retry-After" in response or "retry-after" in response.headers
 
-    def test_different_periods_count_toward_same_limit(self, client, settings):
+    def test_different_periods_count_toward_same_limit(self, client, with_statistics_rate_limit):
         """Requests with different period parameters count toward the same throttle limit."""
-        # Override throttle rate for testing
-        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['statistics'] = '3/hour'
-        
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
@@ -2877,84 +2956,85 @@ class TestStatisticsViewRateLimiting:
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
         EntryFactory(user=user, mood_rating=5, created_at=base_date)
 
-        # Make requests with different periods
-        periods = ['7d', '30d', '90d']
-        for period in periods:
-            response = client.get(reverse("api:statistics"), {"period": period})
-            assert response.status_code == 200, f"Request with period {period} should succeed"
+        with with_statistics_rate_limit("3/hour"):
+            # Make requests with different periods
+            periods = ["7d", "30d", "90d"]
+            for period in periods:
+                response = client.get(reverse("api:statistics"), {"period": period})
+                assert response.status_code == 200, f"Request with period {period} should succeed"
 
-        # Next request should be throttled regardless of period
-        response = client.get(reverse("api:statistics"), {"period": "1y"})
-        assert response.status_code == 429, "Request beyond limit should be throttled"
+            # Next request should be throttled regardless of period
+            response = client.get(reverse("api:statistics"), {"period": "1y"})
+            assert response.status_code == 429, "Request beyond limit should be throttled"
 
-    def test_rate_limit_per_user_isolation(self, client, settings):
+    def test_rate_limit_per_user_isolation(self, client, with_statistics_rate_limit):
         """Rate limits are enforced per user, not globally."""
-        # Override throttle rate for testing
-        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['statistics'] = '2/hour'
-        
         user1 = UserFactory(timezone="Europe/Prague")
         user2 = UserFactory(timezone="Europe/Prague")
-        
+
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
         EntryFactory(user=user1, mood_rating=5, created_at=base_date)
         EntryFactory(user=user2, mood_rating=3, created_at=base_date)
 
-        # User 1 makes requests up to limit
-        client.force_login(user1)
-        for i in range(2):
+        with with_statistics_rate_limit("2/hour"):
+            # User 1 makes requests up to limit
+            client.force_login(user1)
+            for i in range(2):
+                response = client.get(reverse("api:statistics"), {"period": "7d"})
+                assert response.status_code == 200
+
+            # User 1 is now throttled
             response = client.get(reverse("api:statistics"), {"period": "7d"})
-            assert response.status_code == 200
+            assert response.status_code == 429
 
-        # User 1 is now throttled
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 429
+            # User 2 should still be able to make requests
+            client.force_login(user2)
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+            assert response.status_code == 200, "User 2 should not be affected by User 1's throttle"
 
-        # User 2 should still be able to make requests
-        client.force_login(user2)
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 200, "User 2 should not be affected by User 1's throttle"
-
-    def test_throttle_status_code_and_message(self, client, settings):
+    def test_throttle_status_code_and_message(self, client, with_statistics_rate_limit):
         """Throttled requests return 429 status with appropriate message."""
-        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['statistics'] = '1/hour'
-        
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
-        # First request succeeds
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 200
+        with with_statistics_rate_limit("1/hour"):
+            # First request succeeds
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+            assert response.status_code == 200
 
-        # Second request is throttled
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 429
-        
-        # Check response contains throttle information
-        data = response.json()
-        assert 'detail' in data
-        # Message can be in English or Czech
-        detail_lower = data['detail'].lower()
-        assert ('throttled' in detail_lower or 'rate' in detail_lower 
-                or 'limitován' in detail_lower or 'požadavek' in detail_lower)
+            # Second request is throttled
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+            assert response.status_code == 429
 
-    def test_cache_and_throttle_interaction(self, client, settings):
+            # Check response contains throttle information
+            data = response.json()
+            assert "detail" in data
+            # Message can be in English or Czech
+            detail_lower = data["detail"].lower()
+            assert (
+                "throttled" in detail_lower
+                or "rate" in detail_lower
+                or "limitován" in detail_lower
+                or "požadavek" in detail_lower
+            )
+
+    def test_cache_and_throttle_interaction(self, client, with_statistics_rate_limit):
         """Cached responses still count toward rate limit."""
-        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['statistics'] = '3/hour'
-        
         user = UserFactory(timezone="Europe/Prague")
         client.force_login(user)
 
         base_date = timezone.now().astimezone(ZoneInfo("Europe/Prague"))
         EntryFactory(user=user, mood_rating=5, created_at=base_date)
 
-        # Make identical requests (should be cached)
-        for i in range(3):
-            response = client.get(reverse("api:statistics"), {"period": "7d"})
-            assert response.status_code == 200
+        with with_statistics_rate_limit("3/hour"):
+            # Make identical requests (should be cached)
+            for i in range(3):
+                response = client.get(reverse("api:statistics"), {"period": "7d"})
+                assert response.status_code == 200
 
-        # Even though responses were cached, throttle should still apply
-        response = client.get(reverse("api:statistics"), {"period": "7d"})
-        assert response.status_code == 429
+            # Even though responses were cached, throttle should still apply
+            response = client.get(reverse("api:statistics"), {"period": "7d"})
+            assert response.status_code == 429
 
 
 @pytest.mark.statistics

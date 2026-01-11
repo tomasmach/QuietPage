@@ -155,7 +155,10 @@ DEBUG = False  # ✅
 ALLOWED_HOSTS = ['yourdomain.com', 'www.yourdomain.com']  # ✅
 
 # HTTPS settings
-SECURE_SSL_REDIRECT = True  # ✅
+# SECURE_SSL_REDIRECT must be True when Django terminates SSL.
+# May be set to False ONLY when Nginx reverse proxy performs SSL termination
+# (typical in containerized deployments with Nginx handling HTTPS).
+SECURE_SSL_REDIRECT = True  # ✅ (or False if Nginx terminates SSL)
 SESSION_COOKIE_SECURE = True  # ✅
 CSRF_COOKIE_SECURE = True  # ✅
 SESSION_COOKIE_HTTPONLY = True  # ✅
@@ -287,11 +290,23 @@ openssl s_client -connect yourdomain.com:443 -servername yourdomain.com < /dev/n
 
 ### 9.2 Test HSTS Headers
 
+**DŮLEŽITÉ:** HSTS musí být nakonfigurováno přes environment variable `HSTS_HEADER` v `.env` souboru.
+Nastav pouze po získání validních SSL certifikátů:
+
+```bash
+# V .env souboru:
+HSTS_HEADER=add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+```
+
+Pak otestuj:
+
 ```bash
 curl -I https://yourdomain.com | grep -i strict
 ```
 
 **✅ Očekávaný výstup:** `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+
+**⚠️ VAROVÁNÍ:** Nikdy neaktivuj HSTS s placeholder nebo self-signed certifikáty!
 
 ---
 

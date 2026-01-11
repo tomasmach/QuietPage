@@ -195,8 +195,135 @@ INSPIRATIONAL_QUOTES = [
 def get_random_quote():
     """
     Get a random inspirational quote for empty state.
-    
+
     Returns:
         dict with 'text' and 'author' (author can be None)
     """
     return random.choice(INSPIRATIONAL_QUOTES)
+
+
+# ============================================
+# DATA EXPORT UTILITIES
+# ============================================
+
+
+def upload_export_to_secure_storage(user_id, user_data):
+    """
+    Upload user data export to secure storage.
+
+    Creates a JSON file with the user's exported data and saves it to
+    Django's default storage backend. Files are stored in a private
+    'exports' directory with a UUID-based filename.
+
+    Args:
+        user_id (int): ID of the user whose data is being exported
+        user_data (dict): Complete user data export dictionary
+
+    Returns:
+        str: Storage path to the uploaded file
+
+    Raises:
+        Exception: If file upload fails
+
+    Note:
+        - Files persist indefinitely in storage. The 48-hour time limit applies
+          only to the download token (created in send_export_link_email), not the
+          file itself. A cleanup task should be implemented to remove expired
+          exports from storage.
+        - Ensure default_storage is configured as private in production (e.g.,
+          S3 bucket with restricted ACLs) to prevent unauthorized access to
+          exported files.
+    """
+    import json
+    import uuid
+    from django.core.files.base import ContentFile
+    from django.core.files.storage import default_storage
+
+    # Generate secure filename with UUID (unguessable, cryptographically random)
+    # Format: user_{id}_{uuid}.json for ownership validation + unpredictability
+    unique_id = uuid.uuid4()
+    filename = f'exports/user_{user_id}_{unique_id}.json'
+
+    # Convert data to JSON
+    json_content = json.dumps(user_data, indent=2, ensure_ascii=False)
+    json_bytes = json_content.encode('utf-8')
+
+    # Upload to storage
+    storage_path = default_storage.save(filename, ContentFile(json_bytes))
+
+    logger.info(f"User data export saved to storage: {storage_path}")
+    return storage_path
+
+
+def send_export_link_email(user_email, username, storage_path):
+    """
+    Send email with time-limited, signed download link for user data export.
+
+    Generates a cryptographically signed token that expires after 48 hours
+    and queues an async Celery task to send the download link via email.
+
+    Args:
+        user_email (str): User's email address
+        username (str): User's username (for personalization)
+        storage_path (str): Storage path to the export file (used to derive filename)
+
+    Returns:
+        bool: True if email task was queued successfully
+
+    Security:
+        - Uses Django's TimestampSigner for cryptographic signatures
+        - Tokens expire after 48 hours
+        - Download endpoint validates signature and user ownership
+    """
+    from django.conf import settings
+    from django.core.signing import TimestampSigner
+    from apps.accounts.tasks import send_email_async
+    from urllib.parse import urlencode
+
+    # Extract filename from storage path
+    filename = storage_path.split('/')[-1]
+
+    # Create signed token with 48-hour expiration
+    # Token format: "filename:signature:timestamp"
+    # Salt must match ExportDownloadView validation to ensure token verification works
+    signer = TimestampSigner(salt='export-download')
+    signed_token = signer.sign(filename)
+
+    # Generate secure download URL with signed token (properly URL-encoded)
+    base_url = str(settings.SITE_URL).rstrip('/')
+    download_url = f"{base_url}/api/exports/download/?{urlencode({'token': signed_token})}"
+
+    # Email content
+    subject = 'QuietPage - Your Data Export is Ready'
+    plain_message = f"""Ahoj {username},
+
+Tvůj export dat je připravený ke stažení.
+
+Odkaz ke stažení:
+{download_url}
+
+Tento odkaz vyprší za 48 hodin z bezpečnostních důvodů.
+
+Export obsahuje:
+- Tvůj profil a nastavení
+- Všechny záznamy z deníku (dešifrované)
+- Statistiky a tagy
+
+Pokud jsi o tento export nežádal/a, ihned nás kontaktuj.
+
+QuietPage tým
+{settings.SITE_URL}
+"""
+
+    try:
+        # Queue async email task
+        send_email_async.delay(
+            subject=subject,
+            plain_message=plain_message,
+            recipient_list=[user_email]
+        )
+        logger.info("Export download link email queued")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to queue export email: {e}", exc_info=True)
+        return False

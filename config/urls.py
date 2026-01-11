@@ -20,6 +20,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views  # type: ignore
+from apps.api.views import HealthCheckView
 
 # Admin URL obfuscation - use environment variable in production
 # Security: Using a non-standard admin URL makes it harder for attackers to find the admin panel
@@ -32,6 +33,9 @@ admin_pattern = re.escape(ADMIN_URL)
 
 urlpatterns = [
     path(ADMIN_URL, admin.site.urls),
+    # Health check endpoint (unauthenticated, for monitoring)
+    path('api/health/', HealthCheckView.as_view(), name='health-check'),
+    # API v1 routes
     path('api/v1/', include('apps.api.urls', namespace='api')),
     # Catch-all pattern for React SPA - MUST be last
     # Excludes: API routes, admin panel, and debug toolbar
@@ -41,9 +45,13 @@ urlpatterns = [
 
 # Django Debug Toolbar URLs (only in development)
 if settings.DEBUG:
-    import debug_toolbar
-    urlpatterns = [
-        path('__debug__/', include(debug_toolbar.urls)),
-    ] + urlpatterns
+    try:
+        import debug_toolbar
+        urlpatterns = [
+            path('__debug__/', include(debug_toolbar.urls)),
+        ] + urlpatterns
+    except ImportError:
+        # debug_toolbar not installed (e.g., in Docker with production deps)
+        pass
     # Serve media files in development
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

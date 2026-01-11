@@ -1,0 +1,20 @@
+QuietPage - Writing Reminder
+=============================
+
+Time to write, {{ user.first_name|default:user.username }}!
+
+Have you captured your thoughts today?
+
+{% if user.current_streak > 0 %}🔥 Current streak: {{ user.current_streak }} day{{ user.current_streak|pluralize }}
+Keep it going! Write at least {{ user.daily_word_goal }} words today.
+{% endif %}
+
+Start writing: {{ dashboard_url }}
+
+Tip: The best writing comes from consistency. Even a short daily session makes a difference!
+
+---
+QuietPage - Your safe space for writing
+
+Want to stop receiving reminders?
+Change your settings: {{ settings_url }}

@@ -1,10 +1,6 @@
 # Project-specific files
-todo.md
-howtorun.md
-current_tasks.md
-architect_page.html
+todo
 .claude/
-REVIEW_STATISTICS.md
 
 # Frontend
 frontend/node_modules/

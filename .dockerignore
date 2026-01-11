@@ -1,0 +1,72 @@
+# Git
+.git/
+.gitignore
+.github/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Development
+.env
+*.log
+db.sqlite3
+celerybeat-schedule
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+# Logs and temporary files
+logs/
+*.log
+tmp/
+temp/
+
+# Media and static (will be mounted as volumes or collected)
+media/
+staticfiles/
+
+# Documentation
+README.md
+docs/
+styles.md
+CLAUDE.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test and coverage
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Backup files
+*.bak
+*.tmp

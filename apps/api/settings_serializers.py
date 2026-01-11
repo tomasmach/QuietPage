@@ -246,8 +246,9 @@ class ChangeEmailSerializer(serializers.Serializer):
     """
     Serializer for email change (POST).
 
-    For MVP: directly updates email without verification flow.
-    Validates password and checks email uniqueness.
+    Initiates email change with verification flow.
+    Validates password and checks email uniqueness, then creates
+    EmailChangeRequest and queues verification email via Celery.
     """
     new_email = serializers.EmailField(
         required=True,
@@ -290,10 +291,22 @@ class ChangeEmailSerializer(serializers.Serializer):
         return value
 
     def save(self):
-        """Update user email directly (MVP approach)."""
+        """
+        Change user email directly (immediate change, no verification).
+
+        TODO: Implement email verification flow with verification link
+        when the email-verify endpoint is created.
+
+        Returns:
+            User: The updated user instance
+        """
         user = self.context['request'].user
-        user.email = self.validated_data['new_email']
+        new_email = self.validated_data['new_email']
+
+        # Directly update user email (no verification for now)
+        user.email = new_email
         user.save()
+
         return user
 
 

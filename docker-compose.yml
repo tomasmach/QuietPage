@@ -1,0 +1,170 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: quietpage_db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-quietpage}
+      POSTGRES_USER: ${DB_USER:-quietpage}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-quietpage}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-quietpage}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - quietpage_network
+
+  # Redis Cache & Celery Broker
+  redis:
+    image: redis:7-alpine
+    container_name: quietpage_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - quietpage_network
+
+  # Django Web Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quietpage_web
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 30
+    environment:
+      - DJANGO_SERVICE=web
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DJANGO_ENV=production
+      - DEBUG=${DEBUG:-False}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
+      - SECRET_KEY=${SECRET_KEY}
+      - FERNET_KEY_PRIMARY=${FERNET_KEY_PRIMARY}
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=${DB_NAME:-quietpage}
+      - DB_USER=${DB_USER:-quietpage}
+      - DB_PASSWORD=${DB_PASSWORD:-quietpage}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/1
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./logs:/app/logs
+      - ./media:/app/media
+      - static_volume:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - quietpage_network
+
+  # Celery Worker
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quietpage_celery_worker
+    command: celery -A config worker --loglevel=info --concurrency=4
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DJANGO_ENV=production
+      - DEBUG=${DEBUG:-False}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
+      - SECRET_KEY=${SECRET_KEY}
+      - FERNET_KEY_PRIMARY=${FERNET_KEY_PRIMARY}
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=${DB_NAME:-quietpage}
+      - DB_USER=${DB_USER:-quietpage}
+      - DB_PASSWORD=${DB_PASSWORD:-quietpage}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/1
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./logs:/app/logs
+      - ./media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping | grep -q 'pong'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - quietpage_network
+
+  # Celery Beat Scheduler
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quietpage_celery_beat
+    command: celery -A config beat --loglevel=info --schedule=/app/celerybeat-schedule/celerybeat-schedule.db
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DJANGO_ENV=production
+      - DEBUG=${DEBUG:-False}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
+      - SECRET_KEY=${SECRET_KEY}
+      - FERNET_KEY_PRIMARY=${FERNET_KEY_PRIMARY}
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=${DB_NAME:-quietpage}
+      - DB_USER=${DB_USER:-quietpage}
+      - DB_PASSWORD=${DB_PASSWORD:-quietpage}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/1
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./logs:/app/logs
+      - celerybeat_schedule:/app/celerybeat-schedule
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /app/celerybeat-schedule/celerybeat-schedule.db || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - quietpage_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_volume:
+  celerybeat_schedule:
+
+networks:
+  quietpage_network:
+    driver: bridge

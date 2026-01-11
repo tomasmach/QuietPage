@@ -4,5 +4,9 @@
 # Production server
 gunicorn==23.0.0
 
+# Redis cache backend (celery and redis already in base.txt)
+django-redis==6.0.0
+
 # Security & monitoring
 django-environ==0.12.0
+sentry-sdk==2.49.0

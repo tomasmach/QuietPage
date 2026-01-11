@@ -10,6 +10,7 @@ import os
 from datetime import timedelta
 from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.journal',
     'apps.api',
+    'apps.core',  # Infrastructure tasks
 ]
 
 MIDDLEWARE = [
@@ -150,15 +152,19 @@ STORAGES = {
     },
 }
 
-# Caching Configuration (Database-backed - no Redis required)
+# Caching Configuration (Redis-backed for production performance)
 # https://docs.djangoproject.com/en/5.2/topics/cache/
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'cache_table',
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.getenv('REDIS_URL', 'redis://localhost:6379/1'),
         'OPTIONS': {
-            'MAX_ENTRIES': 1000,  # Limit cache size
-            'CULL_FREQUENCY': 3,  # Delete 1/3 of entries when MAX_ENTRIES is reached
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+            },
         }
     }
 }
@@ -255,5 +261,91 @@ REST_FRAMEWORK = {
         'entries_create': '100/day',
         'avatar_upload': '10/hour',
         'statistics': '100/hour',  # Expensive queries - limit to prevent database exhaustion
+        'export_download': '5/hour',  # Limit export downloads to prevent abuse
     },
 }
+
+# ============================================
+# CELERY CONFIGURATION
+# ============================================
+# https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html
+
+# Broker and Backend
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+
+# Task Serialization
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_TRACK_STARTED = True
+
+# Task Limits
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes hard limit
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes soft limit
+
+# Timezone
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+
+# Result Backend
+CELERY_RESULT_EXPIRES = 3600  # 1 hour
+CELERY_RESULT_BACKEND_ALWAYS_RETRY = True
+CELERY_RESULT_BACKEND_MAX_RETRIES = 10
+
+# Execution Settings
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+# Retry Policy
+CELERY_TASK_DEFAULT_RETRY_DELAY = 60
+CELERY_TASK_MAX_RETRIES = 3
+
+# Beat Schedule (Periodic Tasks)
+# Using file-based scheduler (celerybeat-schedule) until django-celery-beat supports Django 6.0
+CELERY_BEAT_SCHEDULE = {
+    'cleanup-expired-email-requests-daily': {
+        'task': 'apps.journal.tasks.cleanup_expired_email_requests',
+        'schedule': crontab(hour=2, minute=0),  # 2:00 AM daily
+        'options': {'expires': 3600},
+    },
+    'weekly-cleanup': {
+        'task': 'apps.journal.tasks.weekly_cleanup',
+        'schedule': crontab(hour=3, minute=0, day_of_week=0),  # Sunday 3:00 AM
+        'options': {'expires': 7200},
+    },
+    'database-backup-daily': {
+        'task': 'apps.core.tasks.database_backup',
+        'schedule': crontab(hour=1, minute=0),  # 1:00 AM daily
+        'options': {'expires': 3600},
+    },
+    'cleanup-old-backups-weekly': {
+        'task': 'apps.core.tasks.cleanup_old_backups',
+        'schedule': crontab(hour=4, minute=0, day_of_week=0),  # Sunday 4:00 AM
+        'options': {'expires': 3600},
+    },
+    'health-check-hourly': {
+        'task': 'apps.core.tasks.health_check',
+        'schedule': crontab(minute=0),  # Every hour
+        'options': {'expires': 300},
+    },
+    'send-writing-reminders-daily': {
+        'task': 'apps.accounts.tasks.send_reminder_emails',
+        'schedule': crontab(hour=8, minute=0),  # 8:00 AM daily
+        'options': {'expires': 3600},
+    },
+}
+
+# Logging
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+
+# Site URL for absolute URL generation in emails
+SITE_URL = os.getenv('SITE_URL', 'http://localhost:5173')
+
+# ============================================
+# BACKUPS CONFIGURATION
+# ============================================
+# Directory for database backups
+# In production, this should be a persistent volume mounted path
+# Default to BASE_DIR/backups for development
+BACKUPS_DIR = Path(os.getenv('BACKUPS_PATH', str(BASE_DIR / 'backups')))

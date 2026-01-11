@@ -146,6 +146,8 @@ python manage.py check
 python manage.py shell
 ```
 
+> **Poznámka k testování:** Pro podrobné informace o testování, známých problémech s izolací testů a best practices viz [docs/TESTING.md](docs/TESTING.md)
+
 ---
 
 ## 💡 Project Goals

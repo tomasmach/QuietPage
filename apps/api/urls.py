@@ -30,6 +30,7 @@ from apps.api.settings_views import (
     ChangePasswordView,
     ChangeEmailView,
     DeleteAccountView,
+    ExportDownloadView,
 )
 
 app_name = 'api'
@@ -67,6 +68,9 @@ urlpatterns = [
     path('settings/change-password/', ChangePasswordView.as_view(), name='settings-change-password'),
     path('settings/change-email/', ChangeEmailView.as_view(), name='settings-change-email'),
     path('settings/delete-account/', DeleteAccountView.as_view(), name='settings-delete-account'),
+
+    # Export download endpoint
+    path('exports/download/', ExportDownloadView.as_view(), name='export-download'),
 
     # Router URLs (ViewSets) - must come last to avoid URL conflicts
     path('', include(router.urls)),

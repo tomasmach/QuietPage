@@ -9,6 +9,11 @@ import pytest
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.core.signing import TimestampSigner
+from django.utils import timezone
+from unittest import mock
 
 from apps.accounts.tests.factories import UserFactory
 from apps.journal.tests.factories import EntryFactory
@@ -439,3 +444,278 @@ class TestChangeEmailAPIView:
         assert response.status_code == 400
         data = response.json()
         assert 'errors' in data
+
+
+@pytest.mark.views
+@pytest.mark.unit
+class TestExportDownloadAPIView:
+    """Test ExportDownloadView for secure export downloads."""
+
+    @pytest.fixture
+    def create_export_file(self):
+        """Fixture to create a test export file in storage with UUID-based filename."""
+        import uuid
+        created_paths = []
+
+        def _create_file(user_id, use_uuid=True):
+            if use_uuid:
+                # New UUID-based format for security
+                unique_id = uuid.uuid4()
+                filename = f'user_{user_id}_{unique_id}.json'
+            else:
+                # Old timestamp format (for testing backward compatibility/rejection)
+                timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                filename = f'user_{user_id}_export_{timestamp}.json'
+
+            storage_path = f'exports/{filename}'
+
+            # Create test export data
+            test_data = json.dumps({
+                'user': {'username': 'testuser'},
+                'entries': []
+            }, indent=2)
+
+            # Save to storage
+            default_storage.save(storage_path, ContentFile(test_data.encode('utf-8')))
+            created_paths.append(storage_path)
+
+            return filename, storage_path
+
+        yield _create_file
+
+        # Cleanup: remove only files created by this fixture
+        for storage_path in created_paths:
+            try:
+                default_storage.delete(storage_path)
+            except Exception:
+                pass
+
+    def test_download_export_success(self, client, create_export_file):
+        """User can download their own export with valid signed token."""
+        user = UserFactory()
+        client.force_login(user)
+
+        # Create export file
+        filename, storage_path = create_export_file(user.id)
+
+        # Generate signed token
+        signer = TimestampSigner(salt='export-download')
+        signed_token = signer.sign(filename)
+
+        # Request download
+        response = client.get(
+            reverse('api:export-download'),
+            {'token': signed_token}
+        )
+
+        assert response.status_code == 200
+        assert response['Content-Type'] == 'application/json'
+        assert 'attachment' in response['Content-Disposition']
+        assert f'quietpage_export_{user.username}.json' in response['Content-Disposition']
+
+    def test_download_export_missing_token(self, client):
+        """Download fails when token is missing."""
+        user = UserFactory()
+        client.force_login(user)
+
+        response = client.get(reverse('api:export-download'))
+
+        assert response.status_code == 400
+        data = response.json()
+        assert 'error' in data
+        assert 'required' in data['error'].lower()
+
+    def test_download_export_expired_token(self, client, create_export_file):
+        """Download fails when token has expired (>48 hours)."""
+        user = UserFactory()
+        client.force_login(user)
+
+        # Create export file
+        filename, storage_path = create_export_file(user.id)
+
+        # Generate signed token and mock it as expired
+        signer = TimestampSigner(salt='export-download')
+
+        # Create a token with an old timestamp (more than 48 hours ago)
+        with mock.patch('django.core.signing.time.time') as mock_time:
+            # Set time to 49 hours ago (172800 + 3600 seconds)
+            mock_time.return_value = timezone.now().timestamp() - 176400
+            signed_token = signer.sign(filename)
+
+        # Request download with expired token
+        response = client.get(
+            reverse('api:export-download'),
+            {'token': signed_token}
+        )
+
+        assert response.status_code == 410  # HTTP 410 GONE
+        data = response.json()
+        assert 'error' in data
+        assert 'expired' in data['error'].lower()
+
+    def test_download_export_invalid_signature(self, client):
+        """Download fails when token signature is invalid or tampered."""
+        user = UserFactory()
+        client.force_login(user)
+
+        # Use a tampered/invalid token
+        invalid_token = 'user_1_export_20240101_120000.json:invalid:signature'
+
+        response = client.get(
+            reverse('api:export-download'),
+            {'token': invalid_token}
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert 'error' in data
+        assert 'invalid' in data['error'].lower() or 'tampered' in data['error'].lower()
+
+    def test_download_export_invalid_filename_format(self, client):
+        """Download fails when filename doesn't match expected format."""
+        user = UserFactory()
+        client.force_login(user)
+
+        # Create a signed token with invalid filename format
+        signer = TimestampSigner(salt='export-download')
+        invalid_filename = 'malicious_file.json'
+        signed_token = signer.sign(invalid_filename)
+
+        response = client.get(
+            reverse('api:export-download'),
+            {'token': signed_token}
+        )
+
+        assert response.status_code == 404
+        data = response.json()
+        assert 'error' in data
+
+    def test_download_export_wrong_user(self, client, create_export_file):
+        """User cannot download another user's export."""
+        user1 = UserFactory()
+        user2 = UserFactory()
+        client.force_login(user2)
+
+        # Create export file for user1
+        filename, storage_path = create_export_file(user1.id)
+
+        # Generate signed token for user1's file
+        signer = TimestampSigner(salt='export-download')
+        signed_token = signer.sign(filename)
+
+        # User2 tries to download user1's export
+        response = client.get(
+            reverse('api:export-download'),
+            {'token': signed_token}
+        )
+
+        assert response.status_code == 404  # Should not reveal file exists
+        data = response.json()
+        assert 'error' in data
+
+    def test_download_export_file_not_found(self, client):
+        """Download fails when export file doesn't exist in storage."""
+        import uuid
+        user = UserFactory()
+        client.force_login(user)
+
+        # Create token for non-existent file (valid UUID format)
+        fake_uuid = uuid.uuid4()
+        filename = f'user_{user.id}_{fake_uuid}.json'
+        signer = TimestampSigner(salt='export-download')
+        signed_token = signer.sign(filename)
+
+        response = client.get(
+            reverse('api:export-download'),
+            {'token': signed_token}
+        )
+
+        assert response.status_code == 404
+        data = response.json()
+        assert 'error' in data
+
+    def test_download_export_requires_auth(self, client, create_export_file):
+        """Unauthenticated users cannot download exports."""
+        user = UserFactory()
+
+        # Create export file
+        filename, storage_path = create_export_file(user.id)
+
+        # Generate signed token
+        signer = TimestampSigner(salt='export-download')
+        signed_token = signer.sign(filename)
+
+        # Try to download without authentication
+        response = client.get(
+            reverse('api:export-download'),
+            {'token': signed_token}
+        )
+
+        assert response.status_code == 403
+
+    def test_download_export_directory_traversal_prevention(self, client):
+        """Download prevents directory traversal attacks."""
+        user = UserFactory()
+        client.force_login(user)
+
+        # Try directory traversal in filename
+        malicious_filename = f'user_{user.id}_export_../../etc/passwd.json'
+        signer = TimestampSigner(salt='export-download')
+        signed_token = signer.sign(malicious_filename)
+
+        response = client.get(
+            reverse('api:export-download'),
+            {'token': signed_token}
+        )
+
+        # Should fail validation due to filename format regex
+        assert response.status_code == 404
+        data = response.json()
+        assert 'error' in data
+
+    def test_download_export_rejects_old_timestamp_format(self, client, create_export_file):
+        """Old timestamp-based filenames are rejected (security fix)."""
+        user = UserFactory()
+        client.force_login(user)
+
+        # Create export file with old timestamp format
+        filename, storage_path = create_export_file(user.id, use_uuid=False)
+
+        # Generate signed token
+        signer = TimestampSigner(salt='export-download')
+        signed_token = signer.sign(filename)
+
+        # Should be rejected due to new UUID-only validation
+        response = client.get(
+            reverse('api:export-download'),
+            {'token': signed_token}
+        )
+
+        assert response.status_code == 404
+        data = response.json()
+        assert 'error' in data
+
+    def test_uuid_filename_is_unguessable(self, create_export_file):
+        """UUID-based filenames are cryptographically random and unguessable."""
+        import uuid
+        import re
+
+        # Create two export files for same user
+        filename1, _ = create_export_file(user_id=1, use_uuid=True)
+        filename2, _ = create_export_file(user_id=1, use_uuid=True)
+
+        # Extract UUIDs from filenames
+        pattern = r'user_\d+_([a-f0-9\-]{36})\.json'
+        uuid1_str = re.search(pattern, filename1).group(1)
+        uuid2_str = re.search(pattern, filename2).group(1)
+
+        # Verify they are valid UUIDs
+        uuid1 = uuid.UUID(uuid1_str)
+        uuid2 = uuid.UUID(uuid2_str)
+
+        # Verify they are different (not sequential/predictable)
+        assert uuid1 != uuid2
+
+        # Verify they are version 4 UUIDs (random)
+        assert uuid1.version == 4
+        assert uuid2.version == 4

@@ -355,7 +355,7 @@ describe('MilestonesGrid', () => {
       const { container } = render(<MilestonesGrid data={entriesData} />)
 
       // Check that SVG icon is present in the icon container
-      const iconContainer = container.querySelector('.w-10.h-10')
+      const iconContainer = container.querySelector('.w-12.h-12')
       expect(iconContainer).toBeInTheDocument()
       expect(iconContainer?.querySelector('svg')).toBeInTheDocument()
     })
@@ -370,7 +370,7 @@ describe('MilestonesGrid', () => {
       const { container } = render(<MilestonesGrid data={wordsData} />)
 
       // Check that SVG icon is present in the icon container
-      const iconContainer = container.querySelector('.w-10.h-10')
+      const iconContainer = container.querySelector('.w-12.h-12')
       expect(iconContainer).toBeInTheDocument()
       expect(iconContainer?.querySelector('svg')).toBeInTheDocument()
     })
@@ -385,7 +385,7 @@ describe('MilestonesGrid', () => {
       const { container } = render(<MilestonesGrid data={streakData} />)
 
       // Check that SVG icon is present in the icon container
-      const iconContainer = container.querySelector('.w-10.h-10')
+      const iconContainer = container.querySelector('.w-12.h-12')
       expect(iconContainer).toBeInTheDocument()
       expect(iconContainer?.querySelector('svg')).toBeInTheDocument()
     })
@@ -400,7 +400,7 @@ describe('MilestonesGrid', () => {
       const { container } = render(<MilestonesGrid data={achievedData} />)
 
       // Check icon has accent color class
-      const icon = container.querySelector('.w-10.h-10 svg')
+      const icon = container.querySelector('.w-12.h-12 svg')
       expect(icon).toHaveClass('text-accent-fg')
     })
 
@@ -414,7 +414,7 @@ describe('MilestonesGrid', () => {
       const { container } = render(<MilestonesGrid data={unachievedData} />)
 
       // Check icon has muted color class
-      const icon = container.querySelector('.w-10.h-10 svg')
+      const icon = container.querySelector('.w-12.h-12 svg')
       expect(icon).toHaveClass('text-text-muted')
     })
   })
@@ -445,15 +445,12 @@ describe('MilestonesGrid', () => {
       expect(titleContainer?.querySelector('svg')).toBeInTheDocument()
     })
 
-    it('renders milestone badges in a grid layout', () => {
+    it('renders milestone badges in a stacked layout', () => {
       const { container } = render(<MilestonesGrid data={mockMilestonesData} />)
 
-      // Check for grid container with responsive columns
-      const grid = container.querySelector('.grid')
-      expect(grid).toBeInTheDocument()
-      expect(grid).toHaveClass('grid-cols-2')
-      expect(grid).toHaveClass('md:grid-cols-3')
-      expect(grid).toHaveClass('lg:grid-cols-4')
+      // Check for stacked layout container with vertical spacing
+      const stackedContainer = container.querySelector('.space-y-3')
+      expect(stackedContainer).toBeInTheDocument()
     })
   })
 

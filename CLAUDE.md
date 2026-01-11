@@ -10,6 +10,8 @@ QuietPage is a journaling and mindfulness application with a Django REST API bac
 
 - Always use best coding practices with a security-first approach
 - Always use Context7 MCP when library/API documentation, code generation, setup or configuration steps are needed without requiring explicit user request
+- This project uses `uv` package manager with Python 3.14 - use `uv` for running Python commands, tests, and package management
+- No need to activate `.venv/bin/activate` when using `uv run` - it automatically uses the project's virtual environment
 
 ## Development Commands
 
@@ -28,9 +30,9 @@ make compilemessages   # Compile translations
 
 Run specific tests:
 ```bash
-pytest apps/journal/tests/test_models.py -v
-pytest -k "test_streak" -v
-pytest -m unit  # Run only unit tests
+uv run pytest apps/journal/tests/test_models.py -v
+uv run pytest -k "test_streak" -v
+uv run pytest -m unit  # Run only unit tests
 ```
 
 ### Frontend (React)
