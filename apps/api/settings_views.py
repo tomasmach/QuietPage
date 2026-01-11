@@ -8,9 +8,16 @@ This module provides REST API endpoints for user settings including:
 - Password change (POST)
 - Email change (POST)
 - Account deletion (POST)
+- Data export download (GET)
 """
 
+import logging
+import re
+
 from django.contrib.auth import logout, update_session_auth_hash
+from django.core.files.storage import default_storage
+from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
+from django.http import FileResponse, Http404
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
@@ -27,6 +34,8 @@ from apps.api.settings_serializers import (
     ChangeEmailSerializer,
     DeleteAccountSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ProfileSettingsView(APIView):
@@ -289,3 +298,128 @@ class DeleteAccountView(APIView):
             {'message': 'Ucet byl uspesne smazan.'},
             status=status.HTTP_200_OK
         )
+
+
+class ExportDownloadView(APIView):
+    """
+    API endpoint for downloading user data exports.
+
+    GET /api/exports/download/?token=<signed_token>
+    - Validates cryptographically signed token
+    - Verifies token hasn't expired (48 hour limit)
+    - Verifies requesting user owns the export file
+    - Returns export file as downloadable attachment
+
+    Requires authentication.
+
+    Security:
+        - Signed tokens prevent unauthorized access
+        - 48-hour expiration limits exposure window
+        - User ownership verification prevents cross-user access
+        - Logs all download attempts for audit trail
+    """
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'export_download'
+
+    def get(self, request):
+        """Download user data export with signed token validation."""
+        token = request.GET.get('token')
+
+        if not token:
+            return Response(
+                {'error': 'Token is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Validate signature and expiration (48 hours = 172800 seconds)
+            signer = TimestampSigner()
+            filename = signer.unsign(token, max_age=172800)
+
+            # Validate filename format: user_{user_id}_export_{timestamp}.json
+            # This prevents directory traversal and ensures user owns the file
+            pattern = r'^user_(\d+)_export_\d{8}_\d{6}\.json$'
+            match = re.match(pattern, filename)
+
+            if not match:
+                logger.warning(
+                    f"Invalid export filename format: {filename} "
+                    f"(user: {request.user.username})"
+                )
+                raise Http404("Export not found")
+
+            # Extract user ID from filename and verify ownership
+            file_user_id = int(match.group(1))
+            if file_user_id != request.user.id:
+                logger.warning(
+                    f"User {request.user.username} (ID: {request.user.id}) "
+                    f"attempted to access export for user ID: {file_user_id}"
+                )
+                log_security_event(
+                    'UNAUTHORIZED_EXPORT_ACCESS',
+                    request.user,
+                    request,
+                    details={'attempted_file': filename}
+                )
+                raise Http404("Export not found")
+
+            # Construct storage path and verify file exists
+            storage_path = f'exports/{filename}'
+            if not default_storage.exists(storage_path):
+                logger.warning(f"Export file not found: {storage_path}")
+                raise Http404("Export not found")
+
+            # Open file from storage and return as download
+            file_obj = default_storage.open(storage_path, 'rb')
+            response = FileResponse(
+                file_obj,
+                content_type='application/json',
+                as_attachment=True,
+                filename=f'quietpage_export_{request.user.username}.json'
+            )
+
+            logger.info(
+                f"Export downloaded successfully: {filename} "
+                f"(user: {request.user.username})"
+            )
+
+            return response
+
+        except SignatureExpired:
+            logger.info(f"Expired export token used by {request.user.username}")
+            return Response(
+                {'error': 'Download link has expired (48 hour limit)'},
+                status=status.HTTP_410_GONE
+            )
+
+        except BadSignature:
+            logger.warning(
+                f"Invalid export token signature from {request.user.username}"
+            )
+            log_security_event(
+                'INVALID_EXPORT_TOKEN',
+                request.user,
+                request,
+                details={'token': token[:20] + '...'}
+            )
+            return Response(
+                {'error': 'Invalid or tampered download link'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except Http404 as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Export download failed for {request.user.username}: {e}",
+                exc_info=True
+            )
+            return Response(
+                {'error': 'Failed to process download request'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
