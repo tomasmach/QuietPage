@@ -30,6 +30,15 @@ COMPOSE_FILE="docker-compose.prod.yml"
 SKIP_SUPERUSER=false
 DRY_RUN=false
 
+# Helper to get health endpoint URL based on running services
+get_health_url() {
+    if docker ps --format '{{.Names}}' | grep -q "nginx"; then
+        echo "http://localhost/api/health/"
+    else
+        echo "http://localhost:8000/api/health/"
+    fi
+}
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -392,21 +401,10 @@ verify_health() {
         return 0
     fi
 
-    # Determine the correct host (check if nginx is running)
-    local health_url
-    if docker ps --format '{{.Names}}' | grep -q "nginx"; then
-        # If nginx is running, use port 80
-        health_url="http://localhost/api/health/"
-    else
-        # Otherwise use Django directly
-        health_url="http://localhost:8000/api/health/"
-    fi
-
-    if ! wait_for_health "$health_url" 10 3; then
+    if ! wait_for_health "$(get_health_url)" 10 3; then
         log_error "Health check failed"
         return 5
     fi
-
     return 0
 }
 
@@ -416,41 +414,43 @@ print_summary() {
     log_success "QuietPage Setup Complete!"
     print_separator
 
+    local dc_cmd base_url
+    dc_cmd=$(get_docker_compose_cmd)
+
+    # Determine base URL based on nginx availability
+    if docker ps --format '{{.Names}}' | grep -q "nginx"; then
+        base_url="http://localhost"
+    else
+        base_url="http://localhost:8000"
+    fi
+
     echo ""
     echo "Services Status:"
     echo "---------------"
-
-    local dc_cmd
-    dc_cmd=$(get_docker_compose_cmd)
-
     $dc_cmd -f "$COMPOSE_FILE" ps 2>/dev/null || true
 
-    echo ""
-    echo "Next Steps:"
-    echo "----------"
-    echo "1. Access the application:"
-    if docker ps --format '{{.Names}}' | grep -q "nginx"; then
-        echo "   - Frontend: http://localhost"
-        echo "   - Admin: http://localhost/admin/"
-        echo "   - API: http://localhost/api/"
-    else
-        echo "   - Frontend: http://localhost:8000"
-        echo "   - Admin: http://localhost:8000/admin/"
-        echo "   - API: http://localhost:8000/api/"
-    fi
-    echo ""
-    echo "2. View logs:"
-    echo "   $dc_cmd -f $COMPOSE_FILE logs -f [service]"
-    echo ""
-    echo "3. Run tests:"
-    echo "   $dc_cmd -f $COMPOSE_FILE run --rm web pytest"
-    echo ""
-    echo "4. Create backups:"
-    echo "   ./scripts/backup.sh"
-    echo ""
-    echo "5. Deploy updates:"
-    echo "   ./scripts/deploy.sh"
-    echo ""
+    cat <<EOF
+
+Next Steps:
+----------
+1. Access the application:
+   - Frontend: $base_url
+   - Admin: $base_url/admin/
+   - API: $base_url/api/
+
+2. View logs:
+   $dc_cmd -f $COMPOSE_FILE logs -f [service]
+
+3. Run tests:
+   $dc_cmd -f $COMPOSE_FILE run --rm web pytest
+
+4. Create backups:
+   ./scripts/backup.sh
+
+5. Deploy updates:
+   ./scripts/deploy.sh
+
+EOF
     print_separator
 }
 

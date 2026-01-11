@@ -40,6 +40,21 @@ LIST_ONLY=false
 CLEANUP_ONLY=false
 DRY_RUN=false
 
+# Helper to get file size (cross-platform)
+get_file_size() {
+    stat -f%z "$1" 2>/dev/null || stat -c%s "$1" 2>/dev/null
+}
+
+# Helper to get file modification time (cross-platform)
+get_file_mtime() {
+    stat -f%m "$1" 2>/dev/null || stat -c%Y "$1" 2>/dev/null
+}
+
+# Helper to calculate file age in days
+get_file_age_days() {
+    echo $(( ($(date +%s) - $(get_file_mtime "$1")) / 86400 ))
+}
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -85,6 +100,32 @@ cd "$PROJECT_ROOT"
 # Ensure logs directory exists
 mkdir -p logs
 
+# Helper to list backups of a specific type
+_list_backup_type() {
+    local label="$1"
+    local pattern="$2"
+    local total_size_var="$3"
+    local count_var="$4"
+
+    echo ""
+    echo "${label}:"
+    echo "$(printf '%*s' ${#label} '' | tr ' ' '-')-"
+
+    if ! compgen -G "$pattern" > /dev/null; then
+        echo "  No ${label,,} found"
+        return
+    fi
+
+    for backup in $pattern; do
+        local size age_days
+        size=$(get_file_size "$backup")
+        age_days=$(get_file_age_days "$backup")
+        echo "  $(basename "$backup") - $(format_size "$size") - ${age_days} days old"
+        eval "$total_size_var=\$((\$$total_size_var + size))"
+        eval "(($count_var++))"
+    done
+}
+
 # Function to list all backups
 list_backups() {
     print_separator
@@ -96,59 +137,21 @@ list_backups() {
         return 0
     fi
 
-    local total_size=0
-    local backup_count=0
+    local total_size=0 backup_count=0
 
-    # Database backups
-    echo ""
-    echo "Database Backups:"
-    echo "----------------"
-    if compgen -G "$BACKUP_DIR/db_*.dump.gz" > /dev/null; then
-        for backup in "$BACKUP_DIR"/db_*.dump.gz; do
-            local size
-            size=$(stat -f%z "$backup" 2>/dev/null || stat -c%s "$backup" 2>/dev/null)
-            local age_days
-            age_days=$(( ($(date +%s) - $(stat -f%m "$backup" 2>/dev/null || stat -c%Y "$backup" 2>/dev/null)) / 86400 ))
-            echo "  $(basename "$backup") - $(format_size "$size") - ${age_days} days old"
-            total_size=$((total_size + size))
-            ((backup_count++))
-        done
-    else
-        echo "  No database backups found"
-    fi
+    _list_backup_type "Database Backups" "$BACKUP_DIR/db_*.dump.gz" "total_size" "backup_count"
+    _list_backup_type "Media Backups" "$BACKUP_DIR/media_*.tar.gz" "total_size" "backup_count"
 
-    # Media backups
-    echo ""
-    echo "Media Backups:"
-    echo "-------------"
-    if compgen -G "$BACKUP_DIR/media_*.tar.gz" > /dev/null; then
-        for backup in "$BACKUP_DIR"/media_*.tar.gz; do
-            local size
-            size=$(stat -f%z "$backup" 2>/dev/null || stat -c%s "$backup" 2>/dev/null)
-            local age_days
-            age_days=$(( ($(date +%s) - $(stat -f%m "$backup" 2>/dev/null || stat -c%Y "$backup" 2>/dev/null)) / 86400 ))
-            echo "  $(basename "$backup") - $(format_size "$size") - ${age_days} days old"
-            total_size=$((total_size + size))
-            ((backup_count++))
-        done
-    else
-        echo "  No media backups found"
-    fi
-
-    # Summary
     echo ""
     print_separator
     echo "Total: $backup_count backups, $(format_size "$total_size")"
 
-    # Disk space
-    local available_kb
+    local available_kb available_gb
     available_kb=$(df -k "$BACKUP_DIR" | tail -1 | awk '{print $4}')
-    local available_gb=$((available_kb / 1024 / 1024))
+    available_gb=$((available_kb / 1024 / 1024))
     echo "Available disk space: ${available_gb}GB"
 
-    if [ "$available_gb" -lt 5 ]; then
-        log_warning "Low disk space! Less than 5GB available"
-    fi
+    [ "$available_gb" -lt 5 ] && log_warning "Low disk space! Less than 5GB available"
     print_separator
 }
 
@@ -164,33 +167,23 @@ cleanup_backups() {
     local cutoff_timestamp=$(($(date +%s) - (BACKUP_RETENTION_DAYS * 86400)))
     local deleted_count=0
 
-    # Find all backup files
+    # Collect all backup files matching known patterns
     local all_backups=()
-    if compgen -G "$BACKUP_DIR/db_*.dump.gz" > /dev/null; then
-        all_backups+=("$BACKUP_DIR"/db_*.dump.gz)
-    fi
-    if compgen -G "$BACKUP_DIR/media_*.tar.gz" > /dev/null; then
-        all_backups+=("$BACKUP_DIR"/media_*.tar.gz)
-    fi
-    if compgen -G "$BACKUP_DIR/db_*.meta.json" > /dev/null; then
-        all_backups+=("$BACKUP_DIR"/db_*.meta.json)
-    fi
-    if compgen -G "$BACKUP_DIR/media_*.meta.json" > /dev/null; then
-        all_backups+=("$BACKUP_DIR"/media_*.meta.json)
-    fi
+    for pattern in "db_*.dump.gz" "media_*.tar.gz" "db_*.meta.json" "media_*.meta.json"; do
+        compgen -G "$BACKUP_DIR/$pattern" > /dev/null && all_backups+=("$BACKUP_DIR"/$pattern)
+    done
+
+    [ ${#all_backups[@]} -eq 0 ] && { log_info "No backups found"; return 0; }
 
     # Sort backups by modification time (newest first)
-    local sorted_backups=()
-    if [ ${#all_backups[@]} -gt 0 ]; then
-        IFS=$'\n' sorted_backups=($(ls -t "${all_backups[@]}" 2>/dev/null))
-        unset IFS
-    fi
+    local sorted_backups
+    IFS=$'\n' read -r -d '' -a sorted_backups < <(ls -t "${all_backups[@]}" 2>/dev/null && printf '\0')
 
     # Keep at least MIN_BACKUPS_TO_KEEP newest backups
     local kept_count=0
     for backup in "${sorted_backups[@]}"; do
         local file_time
-        file_time=$(stat -f%m "$backup" 2>/dev/null || stat -c%Y "$backup" 2>/dev/null)
+        file_time=$(get_file_mtime "$backup")
 
         if [ "$file_time" -lt "$cutoff_timestamp" ] && [ "$kept_count" -ge "$MIN_BACKUPS_TO_KEEP" ]; then
             if [ "$DRY_RUN" = true ]; then
@@ -205,11 +198,7 @@ cleanup_backups() {
         fi
     done
 
-    if [ "$deleted_count" -gt 0 ]; then
-        log_success "Cleaned up $deleted_count old backup files"
-    else
-        log_info "No old backups to clean up"
-    fi
+    [ "$deleted_count" -gt 0 ] && log_success "Cleaned up $deleted_count old backup files" || log_info "No old backups to clean up"
 }
 
 # Function to backup PostgreSQL database
@@ -275,13 +264,10 @@ backup_database() {
         return 2
     fi
 
-    # Calculate checksum
-    local checksum
+    # Calculate checksum and size
+    local checksum file_size
     checksum=$(get_checksum "$compressed_file")
-
-    # Get file size
-    local file_size
-    file_size=$(stat -f%z "$compressed_file" 2>/dev/null || stat -c%s "$compressed_file" 2>/dev/null)
+    file_size=$(get_file_size "$compressed_file")
 
     # Create metadata file
     cat > "$meta_file" <<EOF
@@ -303,13 +289,9 @@ EOF
     log_success "Database backup created: $(basename "$compressed_file") ($(format_size "$file_size"))"
     log_info "Checksum: $checksum"
 
-    # Quick verification using pg_restore
-    if command -v pg_restore &> /dev/null; then
-        if gunzip -c "$compressed_file" | pg_restore --list > /dev/null 2>&1; then
-            log_success "Backup verification passed"
-        else
-            log_warning "Backup verification failed, but file was created"
-        fi
+    # Quick verification using pg_restore (if available locally)
+    if command -v pg_restore &> /dev/null && gunzip -c "$compressed_file" | pg_restore --list > /dev/null 2>&1; then
+        log_success "Backup verification passed"
     fi
 
     return 0
@@ -355,13 +337,10 @@ backup_media() {
         return 3
     fi
 
-    # Calculate checksum
-    local checksum
+    # Calculate checksum and size
+    local checksum file_size
     checksum=$(get_checksum "$backup_file")
-
-    # Get file size
-    local file_size
-    file_size=$(stat -f%z "$backup_file" 2>/dev/null || stat -c%s "$backup_file" 2>/dev/null)
+    file_size=$(get_file_size "$backup_file")
 
     # Create metadata file
     cat > "$meta_file" <<EOF
