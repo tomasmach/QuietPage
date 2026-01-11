@@ -11,9 +11,7 @@ from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.exceptions import ValidationError
 from django.conf import settings
-from django.core.mail import send_mail
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
-from django.template.loader import render_to_string
 from django.urls import reverse
 import secrets
 

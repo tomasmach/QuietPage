@@ -104,7 +104,7 @@ def weekly_cleanup(self):
         return stats
 
 
-@shared_task(bind=True, max_retries=2, default_retry_delay=300)
+@shared_task(bind=True, max_retries=2, default_retry_delay=300, ignore_result=True)
 def export_user_data(self, user_id):
     """
     Export all user data for GDPR compliance.
@@ -114,19 +114,26 @@ def export_user_data(self, user_id):
     - All journal entries (decrypted)
     - Statistics and preferences
 
+    The export is saved to secure storage and a download link is emailed
+    to the user. No decrypted data is returned from this task to prevent
+    sensitive information from being persisted in the Celery result backend.
+
     Args:
         user_id (int): ID of user requesting data export
 
     Returns:
-        dict: Exported user data as JSON-serializable dictionary
+        None: Task uses ignore_result=True for security
 
     Raises:
         Exception: If export fails (task will retry)
 
-    Note:
-        In production, this should save to file storage and email download link,
-        not return data directly (could be large).
+    Security:
+        - Uses ignore_result=True to prevent decrypted data in result backend
+        - Stores export in secure file storage (not in Redis/database)
+        - Sends time-limited download link via email
     """
+    from apps.journal.utils import upload_export_to_secure_storage, send_export_link_email
+
     try:
         user = User.objects.get(pk=user_id)
 
@@ -178,9 +185,17 @@ def export_user_data(self, user_id):
 
         logger.info(f"Data export completed for user {user.username}: {len(entries)} entries")
 
-        # TODO: In production, save to file and send download link via email
-        # For now, just return the data (fine for small datasets)
-        return user_data
+        # Save export to secure storage
+        storage_path = upload_export_to_secure_storage(user_id, user_data)
+
+        # Send download link via email
+        send_export_link_email(user.email, user.username, storage_path)
+
+        logger.info(f"Export stored and email sent for user {user.username}")
+
+        # Don't return user_data - ignore_result=True prevents it from being stored
+        # in the Celery result backend (security measure)
+        return None
 
     except User.DoesNotExist:
         logger.error(f"User {user_id} not found for data export")

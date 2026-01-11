@@ -24,5 +24,5 @@ if [ "${DJANGO_SERVICE}" = "web" ] || [ "$1" = "gunicorn" ]; then
 fi
 
 # Execute the main command (gunicorn, celery, etc.)
-echo -e "${GREEN}Starting: $@${NC}"
+echo -e "${GREEN}Starting: $*${NC}"
 exec "$@"

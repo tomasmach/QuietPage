@@ -246,8 +246,9 @@ class ChangeEmailSerializer(serializers.Serializer):
     """
     Serializer for email change (POST).
 
-    For MVP: directly updates email without verification flow.
-    Validates password and checks email uniqueness.
+    Initiates email change with verification flow.
+    Validates password and checks email uniqueness, then creates
+    EmailChangeRequest and queues verification email via Celery.
     """
     new_email = serializers.EmailField(
         required=True,

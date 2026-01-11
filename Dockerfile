@@ -76,7 +76,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/')" || exit 1
+    CMD python -c "import urllib.request; r = urllib.request.urlopen('http://localhost:8000/api/health/', timeout=5); r.close()" || exit 1
 
 # Set entrypoint and default command
 ENTRYPOINT ["/docker-entrypoint.sh"]

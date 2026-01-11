@@ -138,9 +138,24 @@ SENTRY_DSN=https://...@sentry.io/...
 
 ### 2. Aktualizuj nginx konfiguraci
 
-Uprav `nginx/conf.d/quietpage.conf`:
-- Změň `server_name _` na `server_name yourdomain.com www.yourdomain.com`
-- Uprav SSL certificate cesty
+Nginx konfigurace se automaticky generuje z template souboru pomocí environment variables.
+V souboru `.env` nastav:
+
+```bash
+# Domain name pro SSL certifikáty a nginx
+DOMAIN=yourdomain.com
+
+# Email pro Let's Encrypt notifikace
+EMAIL=your-email@example.com
+
+# HSTS header - DŮLEŽITÉ: Nastav pouze po získání validních SSL certifikátů!
+# Pro testování: HSTS_HEADER=
+# Pro produkci s validními certy:
+HSTS_HEADER=add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+```
+
+**VAROVÁNÍ:** HSTS (HTTP Strict Transport Security) aktivuj pouze když máš validní SSL certifikáty.
+HSTS s placeholder nebo self-signed certifikáty znemožní přístup v prohlížeči!
 
 ### 3. Získání SSL certifikátu
 
@@ -339,6 +354,13 @@ Před production deploymentem zkontroluj:
 - [ ] Monitoring (Sentry) aktivní
 - [ ] Rate limiting funguje (zkontroluj nginx config)
 - [ ] Security headers přítomné (curl -I https://yourdomain.com)
+
+**Note on SSL Termination:**
+In containerized deployments using Nginx reverse proxy, SSL/TLS termination is handled by Nginx (not Django). This means:
+- Nginx accepts HTTPS connections on port 443
+- Nginx communicates with Django over HTTP internally (within Docker network)
+- `SECURE_SSL_REDIRECT` can be set to `False` in this architecture since Django receives HTTP requests
+- All other security settings (SESSION_COOKIE_SECURE, CSRF_COOKIE_SECURE, etc.) should remain True
 
 ---
 

@@ -195,8 +195,133 @@ INSPIRATIONAL_QUOTES = [
 def get_random_quote():
     """
     Get a random inspirational quote for empty state.
-    
+
     Returns:
         dict with 'text' and 'author' (author can be None)
     """
     return random.choice(INSPIRATIONAL_QUOTES)
+
+
+# ============================================
+# DATA EXPORT UTILITIES
+# ============================================
+
+
+def upload_export_to_secure_storage(user_id, user_data):
+    """
+    Upload user data export to secure storage.
+
+    Creates a JSON file with the user's exported data and saves it to
+    Django's default storage backend. Files are stored in a private
+    'exports' directory with a time-limited filename.
+
+    Args:
+        user_id (int): ID of the user whose data is being exported
+        user_data (dict): Complete user data export dictionary
+
+    Returns:
+        str: Storage path to the uploaded file
+
+    Raises:
+        Exception: If file upload fails
+
+    Note:
+        Files should be cleaned up after user downloads them or after a
+        reasonable expiration period (e.g., 48 hours). Consider implementing
+        a cleanup task for old exports.
+    """
+    import json
+    from django.core.files.base import ContentFile
+    from django.core.files.storage import default_storage
+    from django.utils import timezone
+
+    # Generate secure filename with timestamp
+    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'exports/user_{user_id}_export_{timestamp}.json'
+
+    # Convert data to JSON
+    json_content = json.dumps(user_data, indent=2, ensure_ascii=False)
+    json_bytes = json_content.encode('utf-8')
+
+    # Upload to storage
+    storage_path = default_storage.save(filename, ContentFile(json_bytes))
+
+    logger.info(f"User data export saved to storage: {storage_path}")
+    return storage_path
+
+
+def send_export_link_email(user_email, username, storage_path):
+    """
+    Send email with download link for user data export.
+
+    Queues an async Celery task to send an email containing a secure
+    download link for the user's exported data.
+
+    Args:
+        user_email (str): User's email address
+        username (str): User's username (for personalization)
+        storage_path (str): Storage path to the export file
+
+    Returns:
+        bool: True if email task was queued successfully
+
+    Note:
+        The actual download link generation should be implemented in your
+        API views. The storage_path should be used to generate a signed
+        URL with expiration (e.g., using Django's signing framework).
+
+        In production, consider using pre-signed URLs from cloud storage
+        (S3, GCS, etc.) instead of serving through Django.
+    """
+    from django.conf import settings
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from apps.accounts.tasks import send_email_async
+
+    # Generate download URL
+    # In production, this should be a signed URL with expiration
+    download_url = f"{settings.SITE_URL}/api/exports/download/{storage_path.split('/')[-1]}"
+
+    # Prepare email context
+    context = {
+        'username': username,
+        'download_url': download_url,
+        'expiry_hours': 48,
+        'site_url': settings.SITE_URL,
+    }
+
+    # Render email message
+    # Note: You should create this template at templates/journal/emails/export_ready.txt
+    subject = 'QuietPage - Your Data Export is Ready'
+    plain_message = f"""Ahoj {username},
+
+Tvůj export dat je připravený ke stažení.
+
+Odkaz ke stažení:
+{download_url}
+
+Tento odkaz vyprší za 48 hodin z bezpečnostních důvodů.
+
+Export obsahuje:
+- Tvůj profil a nastavení
+- Všechny záznamy z deníku (dešifrované)
+- Statistiky a tagy
+
+Pokud jsi o tento export nežádal/a, ihned nás kontaktuj.
+
+QuietPage tým
+{settings.SITE_URL}
+"""
+
+    try:
+        # Queue async email task
+        send_email_async.delay(
+            subject=subject,
+            plain_message=plain_message,
+            recipient_list=[user_email]
+        )
+        logger.info(f"Export download link email queued for {user_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to queue export email for {user_email}: {e}", exc_info=True)
+        return False

@@ -30,7 +30,7 @@ source "$SCRIPT_DIR/utils.sh"
 BACKUP_DIR="${BACKUP_DIR:-$PROJECT_ROOT/backups}"
 BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-30}"
 MIN_BACKUPS_TO_KEEP=3
-LOG_FILE="$PROJECT_ROOT/logs/deployment.log"
+export LOG_FILE="$PROJECT_ROOT/logs/deployment.log"
 
 # Flags
 PRE_DEPLOY=false
@@ -104,8 +104,8 @@ mkdir -p logs
 _list_backup_type() {
     local label="$1"
     local pattern="$2"
-    local total_size_var="$3"
-    local count_var="$4"
+    local -n total_size_ref="$3"
+    local -n count_ref="$4"
 
     echo ""
     echo "${label}:"
@@ -116,13 +116,14 @@ _list_backup_type() {
         return
     fi
 
-    for backup in $pattern; do
+    local -a backups=($pattern)
+    for backup in "${backups[@]}"; do
         local size age_days
         size=$(get_file_size "$backup")
         age_days=$(get_file_age_days "$backup")
         echo "  $(basename "$backup") - $(format_size "$size") - ${age_days} days old"
-        eval "$total_size_var=\$((\$$total_size_var + size))"
-        eval "(($count_var++))"
+        ((total_size_ref += size))
+        ((count_ref++))
     done
 }
 
@@ -215,10 +216,6 @@ backup_database() {
         return 2
     fi
 
-    # Get docker-compose command
-    local dc_cmd
-    dc_cmd=$(get_docker_compose_cmd)
-
     # Check if db container is running
     if ! docker ps --format '{{.Names}}' | grep -q "^quietpage.*db"; then
         log_error "Database container is not running"
@@ -236,9 +233,17 @@ backup_database() {
 
     # Create pg_dump inside container
     log_info "Creating PostgreSQL dump..."
-    if ! docker exec "$db_container" pg_dump -U "${DB_USER:-quietpage}" -d "${DB_NAME:-quietpage}" -F c -f /tmp/backup.dump; then
-        log_error "pg_dump failed"
-        return 2
+    if [ -n "$DB_PASSWORD" ]; then
+        if ! docker exec -e PGPASSWORD="$DB_PASSWORD" "$db_container" pg_dump -U "${DB_USER:-quietpage}" -d "${DB_NAME:-quietpage}" -F c -f /tmp/backup.dump; then
+            log_error "pg_dump failed"
+            return 2
+        fi
+    else
+        # Fallback for local trust/peer auth (no password needed)
+        if ! docker exec "$db_container" pg_dump -U "${DB_USER:-quietpage}" -d "${DB_NAME:-quietpage}" -F c -f /tmp/backup.dump; then
+            log_error "pg_dump failed"
+            return 2
+        fi
     fi
 
     # Copy dump from container

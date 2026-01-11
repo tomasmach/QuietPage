@@ -51,6 +51,9 @@ DATABASES = {
 # Default: admin/ (for backward compatibility in development)
 
 # HTTPS
+# Django redirects HTTP to HTTPS by default (True) for security.
+# Can be set to False when SSL/TLS termination is handled by an upstream
+# Nginx reverse proxy in containerized deployments (SSL terminates at Nginx).
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True'
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

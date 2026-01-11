@@ -12,8 +12,13 @@ import os
 from celery import Celery
 from celery.schedules import crontab
 
-# Set default Django settings module for Celery
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
+# Require explicit Django settings module for Celery (no unsafe defaults)
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    raise RuntimeError(
+        'DJANGO_SETTINGS_MODULE environment variable is required. '
+        'Set it to "config.settings.production" for production or '
+        '"config.settings.development" for local development.'
+    )
 
 # Create Celery app instance
 app = Celery('quietpage')

@@ -53,11 +53,11 @@ def send_email_async(self, subject, plain_message, recipient_list, from_email=No
             fail_silently=False
         )
 
-        logger.info(f"Email sent successfully: {subject} to {recipient_list}")
+        logger.info(f"Email sent successfully: {subject} to recipients_count={len(recipient_list)}")
         return sent
 
     except Exception as e:
-        logger.error(f"Email sending failed: {subject} to {recipient_list} - {e}", exc_info=True)
+        logger.error(f"Email sending failed: {subject} to recipients_count={len(recipient_list)} - {e}", exc_info=True)
         # Retry the task with exponential backoff
         raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
 
@@ -107,7 +107,7 @@ def send_verification_email_async(self, user_id, new_email, verification_url):
             fail_silently=False
         )
 
-        logger.info(f"Verification email sent to {new_email} for user {user.username}")
+        logger.info(f"Verification email sent for user_id={user_id}")
         return True
 
     except User.DoesNotExist:
@@ -115,7 +115,7 @@ def send_verification_email_async(self, user_id, new_email, verification_url):
         return False
 
     except Exception as e:
-        logger.error(f"Failed to send verification email to {new_email}: {e}", exc_info=True)
+        logger.error(f"Failed to send verification email for user_id={user_id}: {e}", exc_info=True)
         raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
 
 
@@ -157,13 +157,14 @@ def send_reminder_emails(self):
 
                 # Check if it's within 1 hour of user's reminder time
                 reminder_time = user.reminder_time or time(8, 0)
-                time_diff = abs(
-                    (current_time.hour * 60 + current_time.minute) -
-                    (reminder_time.hour * 60 + reminder_time.minute)
-                )
+                minutes_now = current_time.hour * 60 + current_time.minute
+                minutes_reminder = reminder_time.hour * 60 + reminder_time.minute
+                diff = abs(minutes_now - minutes_reminder)
+                # Handle midnight boundary with circular time difference
+                circular_diff = min(diff, 1440 - diff)
 
                 # Skip if not within reminder window (1 hour)
-                if time_diff > 60:
+                if circular_diff > 60:
                     stats['skipped'] += 1
                     continue
 

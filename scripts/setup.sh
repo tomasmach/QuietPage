@@ -352,14 +352,8 @@ verify_celery() {
 
     log_success "Celery worker and beat are running"
 
-    # List scheduled tasks
-    log_info "Scheduled Celery tasks:"
-    $dc_cmd -f "$COMPOSE_FILE" run --rm web python manage.py shell -c "
-from django_celery_beat.models import PeriodicTask
-tasks = PeriodicTask.objects.filter(enabled=True)
-for task in tasks:
-    print(f'  - {task.name} ({task.task}): {task.interval or task.crontab}')
-" 2>/dev/null | grep "^  -" || log_warning "Could not list scheduled tasks"
+    # Note: Using file-based scheduler (CELERY_BEAT_SCHEDULE in settings)
+    log_info "Scheduled tasks are configured in config/settings/base.py (CELERY_BEAT_SCHEDULE)"
 
     return 0
 }

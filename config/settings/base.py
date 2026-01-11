@@ -340,3 +340,11 @@ CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 
 # Site URL for absolute URL generation in emails
 SITE_URL = os.getenv('SITE_URL', 'http://localhost:5173')
+
+# ============================================
+# BACKUPS CONFIGURATION
+# ============================================
+# Directory for database backups
+# In production, this should be a persistent volume mounted path
+# Default to BASE_DIR/backups for development
+BACKUPS_DIR = Path(os.getenv('BACKUPS_PATH', str(BASE_DIR / 'backups')))

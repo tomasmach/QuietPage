@@ -12,6 +12,7 @@ These tasks are scheduled to run periodically via Celery Beat.
 import os
 import logging
 import shutil
+import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -41,8 +42,8 @@ def database_backup(self):
     """
     try:
         # Create backups directory if it doesn't exist
-        backup_dir = Path(settings.BASE_DIR) / 'backups'
-        backup_dir.mkdir(exist_ok=True)
+        backup_dir = settings.BACKUPS_DIR
+        backup_dir.mkdir(parents=True, exist_ok=True)
 
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         db_config = settings.DATABASES['default']
@@ -55,12 +56,59 @@ def database_backup(self):
             shutil.copy2(db_path, backup_path)
             logger.info(f"SQLite backup created: {backup_path}")
 
+        elif 'postgres' in db_config['ENGINE'].lower():
+            # PostgreSQL: Use pg_dump
+            backup_path = backup_dir / f'db_backup_{timestamp}.sql.gz'
+
+            pg_dump_cmd = [
+                'pg_dump',
+                '-h', db_config.get('HOST', 'localhost'),
+                '-p', str(db_config.get('PORT', 5432)),
+                '-U', db_config.get('USER', 'postgres'),
+                '-d', db_config['NAME'],
+                '--no-password',
+            ]
+
+            # Set up environment with password
+            env = os.environ.copy()
+            if db_config.get('PASSWORD'):
+                env['PGPASSWORD'] = db_config['PASSWORD']
+
+            # Run pg_dump
+            pg_dump_result = subprocess.run(
+                pg_dump_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env
+            )
+
+            if pg_dump_result.returncode != 0:
+                error_msg = f"pg_dump failed with return code {pg_dump_result.returncode}: {pg_dump_result.stderr.decode()}"
+                logger.error(error_msg)
+                raise Exception(error_msg)
+
+            # Compress and write to file
+            with open(backup_path, 'wb') as f:
+                gzip_result = subprocess.run(
+                    ['gzip'],
+                    input=pg_dump_result.stdout,
+                    stdout=f,
+                    stderr=subprocess.PIPE
+                )
+
+                if gzip_result.returncode != 0:
+                    error_msg = f"gzip compression failed with return code {gzip_result.returncode}"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
+
+            logger.info(f"PostgreSQL backup created: {backup_path}")
+
         else:
-            # PostgreSQL or other: Use dumpdata
+            # Other databases: Use dumpdata as fallback
             backup_path = backup_dir / f'db_backup_{timestamp}.json'
             with open(backup_path, 'w') as f:
                 call_command('dumpdata', stdout=f, indent=2)
-            logger.info(f"Database backup created: {backup_path}")
+            logger.info(f"Database backup (dumpdata) created: {backup_path}")
 
         return str(backup_path)
 
@@ -82,7 +130,7 @@ def cleanup_old_backups(self, days=30):
         dict: {'deleted': int, 'errors': int}
     """
     try:
-        backup_dir = Path(settings.BASE_DIR) / 'backups'
+        backup_dir = settings.BACKUPS_DIR
 
         if not backup_dir.exists():
             logger.warning(f"Backup directory does not exist: {backup_dir}")
@@ -149,13 +197,28 @@ def health_check(self):
     # Check Redis connection
     try:
         from redis import Redis
-        redis_url = settings.CELERY_BROKER_URL
-        redis_client = Redis.from_url(redis_url)
-        redis_client.ping()
-        health_status['redis'] = True
-        logger.debug("Redis health check: OK")
+        import redis.exceptions
+
+        # Use dedicated Redis URL if available
+        redis_url = getattr(settings, 'REDIS_URL', None) or getattr(settings, 'CACHE_REDIS_URL', None)
+
+        if redis_url and redis_url.startswith('redis://'):
+            redis_client = Redis.from_url(
+                redis_url,
+                socket_connect_timeout=2,
+                socket_timeout=2
+            )
+            redis_client.ping()
+            health_status['redis'] = True
+            logger.debug("Redis health check: OK")
+        else:
+            logger.debug("Redis health check: Skipped (no Redis URL configured)")
+    except (redis.exceptions.RedisError, ConnectionError, TimeoutError) as e:
+        logger.error(f"Redis health check failed: {e}")
+        health_status['redis'] = False
     except Exception as e:
         logger.error(f"Redis health check failed: {e}")
+        health_status['redis'] = False
 
     # Check disk space (warn if < 1GB free)
     try:
