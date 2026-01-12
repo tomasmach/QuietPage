@@ -1,10 +1,17 @@
 # QuietPage - Makefile
 # Shortcuts for common Django management commands
 
-.PHONY: help setup run migrate makemigrations shell test collectstatic messages compilemessages cache superuser celery-worker celery-beat celery-status setup-prod deploy backup backup-list
+.PHONY: help setup run migrate makemigrations shell test collectstatic messages compilemessages cache superuser celery-worker celery-beat celery-status setup-prod deploy backup backup-list install-dev dev dev-full
 
 help:
 	@echo "QuietPage - Available commands:"
+	@echo ""
+	@echo "Development workflow:"
+	@echo "  make install-dev      - Install development dependencies"
+	@echo "  make dev              - Start development (Django + Vite)"
+	@echo "  make dev-full         - Start full development (Redis + Django + Vite + Celery)"
+	@echo ""
+	@echo "Basic commands:"
 	@echo "  make setup            - Complete initial setup (migrate + superuser)"
 	@echo "  make run              - Run development server"
 	@echo "  make migrate          - Apply database migrations"
@@ -29,57 +36,57 @@ help:
 
 # Run development server
 run:
-	python manage.py runserver
+	uv run python manage.py runserver
 
 # Initial project setup
 setup:
 	@echo "🚀 Spouštím kompletní setup projektu QuietPage..."
 	@echo "1️⃣ Aplikuji migrace databáze..."
-	python manage.py migrate
+	uv run python manage.py migrate
 	@echo "✓ Migrace dokončeny\n"
 	@echo "2️⃣ Vytváření superuživatele..."
-	python manage.py createsuperuser
+	uv run python manage.py createsuperuser
 	@echo "\n✅ Setup dokončen! Můžete spustit server pomocí: make run"
 
 # Database migrations
 migrate:
-	python manage.py migrate
+	uv run python manage.py migrate
 
 makemigrations:
-	python manage.py makemigrations
+	uv run python manage.py makemigrations
 
 # Create superuser
 superuser:
-	python manage.py createsuperuser
+	uv run python manage.py createsuperuser
 
 # Django shell
 shell:
-	python manage.py shell
+	uv run python manage.py shell
 
 # Run tests
 test:
-	python manage.py test
+	uv run python manage.py test
 
 # Static files
 collectstatic:
-	python manage.py collectstatic --noinput
+	uv run python manage.py collectstatic --noinput
 
 # Translation commands
 messages:
-	python manage.py makemessages -l cs --ignore=venv --ignore=staticfiles
+	uv run python manage.py makemessages -l cs --ignore=venv --ignore=staticfiles
 
 compilemessages:
-	python manage.py compilemessages --ignore=venv
+	uv run python manage.py compilemessages --ignore=venv
 
 # Celery commands
 celery-worker:
-	celery -A config worker --loglevel=info
+	uv run celery -A config worker --loglevel=info
 
 celery-beat:
-	celery -A config beat --loglevel=info
+	uv run celery -A config beat --loglevel=info
 
 celery-status:
-	celery -A config inspect active
+	uv run celery -A config inspect active
 
 # Production deployment scripts
 setup-prod:
@@ -97,3 +104,19 @@ backup:
 backup-list:
 	@echo "📋 Listing backups..."
 	./scripts/backup.sh --list
+
+# Development workflow commands
+install-dev:
+	@echo "📦 Installing development dependencies..."
+	uv pip install -r requirements/development.txt
+	@echo "✅ Development dependencies installed!"
+
+dev:
+	@echo "🚀 Starting simple development environment (Django + Vite)..."
+	@echo "Services: Django (http://localhost:8000) + Vite (http://localhost:5173)"
+	uv run honcho start
+
+dev-full:
+	@echo "🚀 Starting full development environment (Redis + Django + Vite + Celery)..."
+	@echo "Services: Redis + Django (http://localhost:8000) + Vite (http://localhost:5173) + Celery Worker + Celery Beat"
+	uv run honcho start -f Procfile.full
