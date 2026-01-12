@@ -15,14 +15,21 @@ QuietPage is a journaling and mindfulness application with a Django REST API bac
 
 ## Development Commands
 
+### Quick Start Workflows
+
+```bash
+make install-dev       # Install all dependencies (Python + Node.js)
+make setup             # Initial setup (migrate + superuser)
+make dev               # Start development (Django + Vite)
+make dev-full          # Start full stack (Redis + Django + Vite + Celery)
+```
+
 ### Backend (Django)
 
 ```bash
-make setup             # Initial setup (migrate + cache + superuser)
 make run               # Start dev server (port 8000)
 make migrate           # Apply migrations
 make makemigrations    # Create new migrations
-make test              # Run tests with coverage
 make shell             # Django interactive shell
 make messages          # Generate translation files
 make compilemessages   # Compile translations
@@ -35,6 +42,8 @@ uv run pytest -k "test_streak" -v
 uv run pytest -m unit  # Run only unit tests
 ```
 
+Note: `make test` uses Django's test runner. For pytest with markers and coverage, use `uv run pytest` directly.
+
 ### Frontend (React)
 
 ```bash
@@ -46,6 +55,8 @@ npm run test           # Vitest watch mode
 npm run test:run       # Single test run (CI)
 ```
 
+For detailed setup instructions and troubleshooting, reference `docs/LOCAL_DEVELOPMENT.md`.
+
 ## Architecture
 
 ### Backend Structure
@@ -53,12 +64,14 @@ npm run test:run       # Single test run (CI)
 - `apps/accounts/` - User model, authentication, profile management
 - `apps/journal/` - Entry model with encryption, word counting, streaks
 - `apps/api/` - REST endpoints, serializers, statistics views
+- `apps/core/` - Infrastructure tasks (Celery tasks for backups, cleanup, reminders)
 - `config/` - Django settings (base, development, production)
 
 Key patterns:
-- Custom `EncryptedTextField` in `apps/journal/fields.py` using Fernet encryption
+- Custom `EncryptedTextField` in `apps/journal/fields.py` using Fernet encryption (AES-128-CBC + HMAC-SHA256)
 - Signal handlers for auto word-count and encryption (`apps/journal/signals.py`)
 - Factory fixtures for testing (`conftest.py`)
+- Celery tasks for async operations (requires Redis in full mode)
 
 ### Frontend Structure
 
@@ -69,21 +82,23 @@ Key patterns:
 
 Path alias: `@/*` maps to `src/*`
 
+Tech stack: React 19 + TypeScript + Tailwind CSS + Vite
+
 ### API Communication
 
-Frontend proxies `/api` requests to Django backend at localhost:8000 (configured in `vite.config.ts`).
+Frontend proxies `/api` requests to Django backend at localhost:8000 (configured in `vite.config.ts`). Always access the app through http://localhost:5173 during development, not port 8000.
 
 ## Design System
 
-The app uses an "analog tech" aesthetic with:
-- IBM Plex Mono font throughout
-- Two themes: Midnight (dark, default) and Paper (light)
-- Hard borders (no rounded corners), hard shadows (4px offset)
-- No gradients or blur effects
+The app uses an "analog tech" aesthetic inspired by an architect's drafting table or terminal:
+- IBM Plex Mono font throughout (monospace for everything)
+- Two themes: Midnight (dark, priority) and Paper (light)
+- Hard borders (no rounded corners), hard shadows (4px offset with `shadow-hard`)
+- No gradients, blur effects, or soft shadows
+- Theme switching via `data-theme` attribute on root element
+- CSS variables defined in `index.css` for semantic colors (bg-app, bg-panel, text-main, text-muted, accent, border)
 
-Theme switching via `data-theme` attribute on root element. CSS variables defined in `index.css`.
-
-Reference `styles.md` for detailed design guidelines.
+Reference `styles.md` for complete design rules and component guidelines.
 
 ## Testing
 
@@ -97,10 +112,12 @@ Frontend: Vitest with React Testing Library
 
 ## Key Domain Concepts
 
-- **Entry encryption**: Server-side Fernet encryption via custom field
-- **Goal streaks**: Consecutive days meeting word count goal (default 750 words)
-- **Word counting**: Automatic via Django signal on entry save
-- **Statistics**: Heatmaps, mood charts, tag analytics, personal records
+- **Entry encryption**: Server-side Fernet encryption via custom `EncryptedTextField`. Cannot filter/order by encrypted fields. Encryption key set via `FERNET_KEY_PRIMARY` env var.
+- **Goal streaks**: Consecutive days meeting word count goal (default 750 words). Calculated and cached on entry save.
+- **Word counting**: Automatic via Django signal on entry save. Counts words in entry content.
+- **Statistics**: Heatmaps (calendar view), mood charts (over time), tag analytics (frequency/usage), personal records (longest streak, most words, etc.)
+- **Cache**: Development uses LocMemCache (in-memory, no setup). Production uses Redis. No database cache table needed.
+- **Celery tasks**: Background jobs for backups, cleanup, and reminders. Require Redis and run via `make dev-full` or Docker.
 
 ## Environment Setup
 
