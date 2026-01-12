@@ -1,0 +1,5 @@
+redis: redis-server
+django: uv run python manage.py runserver
+vite: cd frontend && npm run dev
+worker: uv run celery -A config worker --loglevel=info
+beat: uv run celery -A config beat --loglevel=info
