@@ -35,8 +35,14 @@ export function EntryCard({ entry }: EntryCardProps) {
 
   const MoodIcon = entry.mood_rating ? MOOD_ICONS[entry.mood_rating as keyof typeof MOOD_ICONS] : null;
 
+  // Determine if entry is from today
+  const entryDate = new Date(entry.created_at).toDateString();
+  const todayDate = new Date().toDateString();
+  const isToday = entryDate === todayDate;
+  const linkTo = isToday ? '/write' : `/entries/${entry.id}`;
+
   return (
-    <Link to={`/entries/${entry.id}`} className="block group">
+    <Link to={linkTo} className="block group">
       <Card className="transition-all hover:translate-x-1 hover:translate-y-1 hover:border-dashed">
         <div className="space-y-3">
           {/* Header with date and mood */}

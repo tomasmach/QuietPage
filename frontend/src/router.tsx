@@ -8,7 +8,7 @@ import { OnboardingPage } from './pages/OnboardingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { StatsPage } from './pages/StatsPage';
 import { ArchivePage } from './pages/ArchivePage';
-import { EntryEditorPage } from './pages/EntryEditorPage';
+import { EntryViewPage } from './pages/EntryViewPage';
 import { TodayEntryPage } from './pages/TodayEntryPage';
 import { SettingsLayout } from './components/layout/SettingsLayout';
 import {
@@ -96,18 +96,10 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/entries/new',
-    element: (
-      <ProtectedRoute>
-        <EntryEditorPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
     path: '/entries/:id',
     element: (
       <ProtectedRoute>
-        <EntryEditorPage />
+        <EntryViewPage />
       </ProtectedRoute>
     ),
   },

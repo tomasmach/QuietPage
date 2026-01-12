@@ -41,7 +41,7 @@ export function useAutoSave(
     setError(null);
 
     try {
-      const payload = entryId ? { ...data, id: entryId } : data;
+      const payload = entryId ? { ...data, entry_id: entryId } : data;
       const response = await api.post<{ id: string }>('/entries/autosave/', payload);
 
       setLastSaved(new Date());
@@ -72,7 +72,7 @@ export function useAutoSave(
       return;
     }
 
-    const payload = entryId ? { ...pendingData, id: entryId } : pendingData;
+    const payload = entryId ? { ...pendingData, entry_id: entryId } : pendingData;
 
     // Read CSRF token from cookie
     const getCsrfToken = (): string | null => {

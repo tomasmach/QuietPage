@@ -17,7 +17,7 @@ export function DashboardPage() {
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
 
   const handleNewEntry = () => {
-    navigate('/entries/new');
+    navigate('/write');
   };
 
   const handleMoodSelect = (mood: number) => {
