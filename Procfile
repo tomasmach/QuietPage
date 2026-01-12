@@ -1,2 +1,2 @@
-web: uv run python manage.py runserver
-frontend: cd frontend && npm run dev
+django: uv run python manage.py runserver
+vite: cd frontend && npm run dev

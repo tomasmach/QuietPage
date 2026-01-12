@@ -1,37 +1,32 @@
 # Local Development Guide
 
-Comprehensive guide for developing QuietPage locally with various workflow options.
+Guide for developing QuietPage locally with various workflow options.
 
 ## Prerequisites
 
 - **Python 3.14+** with `uv` package manager
 - **Node.js 18+** with npm
-- **Redis** (optional, for full development mode with Celery)
-- **Git** for version control
+- **Redis** (optional, for full development mode)
+- **Git**
 
 ## Quick Start
 
-### Initial Setup
-
 ```bash
-# 1. Clone repository (if not already done)
+# Clone and enter repository
 git clone <repository-url>
 cd QuietPage
 
-# 2. Copy environment file
+# Copy environment file and configure
 cp .env.example .env
-# Edit .env and set SECRET_KEY, FERNET_KEY_PRIMARY
+# Edit .env: set SECRET_KEY and FERNET_KEY_PRIMARY
 
-# 3. Install backend dependencies
-uv pip install -r requirements/development.txt
+# Install all dependencies
+make install-dev
 
-# 4. Install frontend dependencies
-cd frontend && npm install && cd ..
-
-# 5. Run database migrations and create superuser
+# Run migrations and create superuser
 make setup
 
-# 6. You're ready to develop!
+# Start development
 make dev
 ```
 
@@ -39,73 +34,38 @@ Access the app at **http://localhost:5173**
 
 ## Development Workflows
 
-QuietPage supports three development approaches. Choose based on your current needs:
+Choose the approach that fits your current needs:
 
-### Option 1: Simple Local Development (Recommended)
+### Option 1: Simple Development (Recommended)
 
-**Best for:** Daily development, frontend/API work, feature development
+Best for daily development, frontend/API work, and feature development.
 
-**Services:**
-- Django dev server (port 8000)
-- Vite dev server (port 5173)
-- SQLite database (embedded)
-- In-memory cache (no Redis needed)
-
-**Start command:**
 ```bash
 make dev
 ```
 
-**What it does:**
-- Starts Django and Vite in a single terminal
-- All service logs displayed with color coding
-- Press Ctrl+C to stop all services
+**Services:** Django (8000) + Vite (5173) + SQLite + in-memory cache
 
-**Pros:**
-- Fast startup
-- No external dependencies
-- Perfect for most development tasks
-
-**Cons:**
+- Fast startup, no external dependencies
 - Cannot test async tasks (backups, reminders, cleanup)
 
 ---
 
-### Option 2: Full Local Development
+### Option 2: Full Development
 
-**Best for:** Testing Celery tasks, production-like behavior, background jobs
+Best for testing Celery tasks, background jobs, and production-like behavior.
 
-**Services:**
-- Redis server
-- Django dev server (port 8000)
-- Vite dev server (port 5173)
-- Celery worker (background tasks)
-- Celery beat (scheduled tasks)
-- SQLite database (or PostgreSQL if configured)
-- Redis cache
-
-**Start command:**
 ```bash
 make dev-full
 ```
 
-**What it does:**
-- Starts all 5 services in a single terminal
-- All service logs displayed with color coding
-- Press Ctrl+C to stop all services
+**Services:** Redis + Django + Vite + Celery worker + Celery beat
 
-**Pros:**
-- Complete feature set
-- Test async tasks locally
-- Redis-backed cache and task queue
-
-**Cons:**
+- Complete feature set with Redis-backed cache and task queue
 - Requires Redis installed locally
-- Slightly slower startup
 
-**Verify Celery is working:**
+Verify Celery is working:
 ```bash
-# In another terminal
 make celery-status
 ```
 
@@ -113,33 +73,16 @@ make celery-status
 
 ### Option 3: Docker Development
 
-**Best for:** Production-like environment, testing deployment, PostgreSQL needed
+Best for production-like environment with PostgreSQL.
 
-**Services:**
-- PostgreSQL 16 database
-- Redis 7
-- Django (Gunicorn)
-- Celery worker
-- Celery beat
-
-**Start command:**
 ```bash
 docker-compose up
 ```
 
-**Access:**
-- Django API: http://localhost:8000/api/
-- Frontend: Build separately with `cd frontend && npm run build`
+**Services:** PostgreSQL 16 + Redis 7 + Django (Gunicorn) + Celery
 
-**Pros:**
-- Closest to production environment
-- PostgreSQL instead of SQLite
-- Isolated from local system
-
-**Cons:**
-- Slower startup
-- Requires Docker Desktop
-- Less convenient for rapid iteration
+- Closest to production, isolated from local system
+- Slower startup, requires Docker Desktop
 
 ---
 
@@ -149,143 +92,75 @@ docker-compose up
 |---------|-----|---------|
 | Django API | http://localhost:8000 | Backend REST API |
 | Vite Frontend | http://localhost:5173 | React SPA with hot reload |
-| Vite Proxy | http://localhost:5173/api | Proxies to Django (port 8000) |
-| Redis | localhost:6379 | Cache & Celery broker (full mode only) |
+| Vite Proxy | http://localhost:5173/api | Proxies to Django |
+| Redis | localhost:6379 | Cache & Celery broker (full mode) |
 
-**Important:** Always access the app through **http://localhost:5173** during development. Vite proxies `/api` requests to Django automatically.
+**Note:** Always access the app through **http://localhost:5173** during development. Vite proxies `/api` requests to Django automatically.
 
 ---
 
-## Common Development Tasks
+## Common Tasks
 
-### Database Management
-
+### Database
 ```bash
-# Apply migrations
-make migrate
-
-# Create new migrations after model changes
-make makemigrations
-
-# Open Django shell
-make shell
-
-# Create additional superuser
-make superuser
+make migrate          # Apply migrations
+make makemigrations   # Create new migrations
+make shell            # Open Django shell
+make superuser        # Create superuser
 ```
 
-### Running Tests
+### Testing
 
-**Backend tests:**
+**Backend:**
 ```bash
-# Run all tests
-make test
-
-# Run specific test file
-uv run pytest apps/journal/tests/test_models.py -v
-
-# Run specific test
-uv run pytest -k "test_streak" -v
-
-# Run with markers
-uv run pytest -m unit  # Only unit tests
-uv run pytest -m encryption  # Only encryption tests
+make test                                          # Run all tests
+uv run pytest apps/journal/tests/test_models.py -v # Specific file
+uv run pytest -k "test_streak" -v                  # By name
+uv run pytest -m unit                              # By marker
 ```
 
-**Frontend tests:**
+**Frontend:**
 ```bash
 cd frontend
-
-# Watch mode (interactive)
-npm run test
-
-# Single run (CI)
-npm run test:run
-
-# With coverage
-npm run test:run -- --coverage
+npm run test          # Watch mode
+npm run test:run      # Single run (CI)
 ```
 
 ### Code Quality
-
 ```bash
-# Format Python code
-uv run black .
-
-# Lint Python code
-uv run flake8
-
-# Lint frontend
-cd frontend && npm run lint
+uv run black .                    # Format Python
+uv run flake8                     # Lint Python
+cd frontend && npm run lint       # Lint frontend
 ```
 
-### Translation Management
-
+### Translations
 ```bash
-# Generate .po files
-make messages
-
-# Compile .mo files
-make compilemessages
+make messages         # Generate .po files
+make compilemessages  # Compile .mo files
 ```
 
-### Celery Task Management
-
+### Celery
 ```bash
-# Start Celery worker manually
-make celery-worker
-
-# Start Celery beat manually
-make celery-beat
-
-# Check active tasks
-make celery-status
+make celery-worker    # Start worker
+make celery-beat      # Start scheduler
+make celery-status    # Check active tasks
 ```
 
 ---
 
-## Manual Service Start (Alternative)
+## Manual Service Start
 
-If you prefer separate terminal windows instead of `honcho`:
+If you prefer separate terminals instead of honcho:
 
-### Simple Development
-
-**Terminal 1 - Django:**
+**Simple mode:**
 ```bash
+# Terminal 1
 make run
-```
-
-**Terminal 2 - Frontend:**
-```bash
+# Terminal 2
 cd frontend && npm run dev
 ```
 
-### Full Development
-
-**Terminal 1 - Redis:**
-```bash
-redis-server
-```
-
-**Terminal 2 - Django:**
-```bash
-make run
-```
-
-**Terminal 3 - Frontend:**
-```bash
-cd frontend && npm run dev
-```
-
-**Terminal 4 - Celery Worker:**
-```bash
-make celery-worker
-```
-
-**Terminal 5 - Celery Beat:**
-```bash
-make celery-beat
-```
+**Full mode:** Add redis-server, make celery-worker, and make celery-beat in separate terminals.
 
 ---
 
@@ -294,25 +169,20 @@ make celery-beat
 Key variables in `.env`:
 
 ```bash
-# Core Django settings
 SECRET_KEY=<your-secret-key>
 DEBUG=True
 DJANGO_SETTINGS_MODULE=config.settings.development
-
-# Encryption key for journal entries
 FERNET_KEY_PRIMARY=<your-fernet-key>
-
-# Optional: Redis (only needed for full development mode)
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://localhost:6379  # Optional, for full mode
 ```
 
 **Generate keys:**
 ```bash
 # SECRET_KEY
-python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+uv run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 
 # FERNET_KEY_PRIMARY
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ```
 
 ---
@@ -321,83 +191,45 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 
 ### Port Already in Use
 
-**Problem:** `Address already in use: 8000` or `Port 5173 is already in use`
-
-**Solution:**
 ```bash
-# Find process using port 8000
-lsof -ti:8000 | xargs kill -9
-
-# Find process using port 5173
-lsof -ti:5173 | xargs kill -9
+lsof -ti:8000 | xargs kill -9   # Kill process on port 8000
+lsof -ti:5173 | xargs kill -9   # Kill process on port 5173
 ```
 
 ### Redis Connection Failed
 
-**Problem:** `Error 61 connecting to localhost:6379. Connection refused.`
-
-**Solution:**
 ```bash
-# Check if Redis is installed
-redis-server --version
-
-# Install Redis (macOS)
-brew install redis
-
-# Start Redis manually
-redis-server
-
-# Or use simple dev mode instead
-make dev  # No Redis needed
+brew install redis    # Install Redis (macOS)
+redis-server          # Start Redis
+redis-cli ping        # Verify (should return PONG)
 ```
 
-**Verify Redis is running:**
-```bash
-redis-cli ping
-# Should return: PONG
-```
+Or use `make dev` which does not require Redis.
 
-### Frontend Proxy Errors
+### Frontend Proxy Errors (502 Bad Gateway)
 
-**Problem:** Frontend shows `502 Bad Gateway` or API errors
-
-**Solution:**
 - Ensure Django is running on port 8000
 - Check terminal for Django errors
 - Verify Vite proxy config in `frontend/vite.config.ts`
 
 ### Celery Tasks Not Running
 
-**Problem:** Scheduled tasks don't execute
-
-**Checklist:**
 1. Redis is running: `redis-cli ping`
 2. Celery worker is running: `make celery-status`
 3. Celery beat is running (check terminal output)
-4. Check for task errors in worker logs
 
-### Database Migrations Out of Sync
+### Database Migration Conflicts
 
-**Problem:** `Migration foo conflicts with migration bar`
-
-**Solution:**
 ```bash
-# Reset database (development only!)
-rm db.sqlite3
+rm db.sqlite3         # Reset database (development only)
 make migrate
 make superuser
 ```
 
-### Import Errors After Installing Dependencies
+### Module Not Found Errors
 
-**Problem:** `ModuleNotFoundError: No module named 'foo'`
-
-**Solution:**
 ```bash
-# Reinstall dependencies
-uv pip install -r requirements/development.txt
-
-# Verify uv is using correct Python
+make install-dev      # Reinstall all dependencies
 uv run python --version
 ```
 
@@ -405,93 +237,49 @@ uv run python --version
 
 ## Switching Between Workflows
 
-You can freely switch between development modes:
+Switch freely between modes - just Ctrl+C and run the new command:
 
-### From Docker to Local:
 ```bash
-# Stop Docker
-docker-compose down
-
-# Start local development
-make dev
+docker-compose down && make dev       # Docker to local
+make dev-full                         # Simple to full
+make dev                              # Full to simple
 ```
 
-### From Simple to Full:
-```bash
-# Stop simple mode (Ctrl+C in terminal)
-# Start full mode
-make dev-full
-```
-
-### From Full to Simple:
-```bash
-# Stop full mode (Ctrl+C in terminal)
-# Start simple mode
-make dev
-```
-
-**Note:** Database is shared (db.sqlite3) across local modes, so data persists.
+Database (db.sqlite3) is shared across local modes, so data persists.
 
 ---
 
-## Development Tips
+## Tips
 
-1. **Use `make dev` for daily work** - it's fast and covers 90% of development needs
-2. **Use `make dev-full` when testing background jobs** - backups, email reminders, cleanup tasks
-3. **Use Docker for final testing** - before deploying to production
-4. **Frontend hot reload** - Vite automatically reloads on file changes
-5. **Django auto-reload** - Django dev server reloads on Python file changes
-6. **Git hooks** - Consider setting up pre-commit hooks for code quality
+- Use `make dev` for daily work (fast, covers 90% of needs)
+- Use `make dev-full` when testing background jobs
+- Use Docker for final testing before production
+- Both Django and Vite auto-reload on file changes
 
-### Recommended VSCode Extensions
-
-- Python (Microsoft)
-- ESLint
-- Prettier
-- Django Template
-- Vite
-
-### Recommended PyCharm/IntelliJ Plugins
-
-- .env files support
-- Django
-- JavaScript and TypeScript
+**Recommended VSCode extensions:** Python, ESLint, Prettier, Django Template
 
 ---
 
-## Performance Notes
+## Performance
 
-### Startup Times (Approximate)
-
-- **Simple mode (`make dev`)**: ~3-5 seconds
-- **Full mode (`make dev-full`)**: ~5-8 seconds
-- **Docker mode (`docker-compose up`)**: ~20-30 seconds (first run), ~10 seconds (subsequent)
-
-### Resource Usage
-
-- **Simple mode**: ~500MB RAM
-- **Full mode**: ~800MB RAM (Redis + Celery)
-- **Docker mode**: ~1.5GB RAM (PostgreSQL + all services)
+| Mode | Startup | RAM |
+|------|---------|-----|
+| Simple (`make dev`) | ~3-5s | ~500MB |
+| Full (`make dev-full`) | ~5-8s | ~800MB |
+| Docker | ~10-30s | ~1.5GB |
 
 ---
 
 ## Getting Help
 
-- Check `make help` for all available commands
-- Review `CLAUDE.md` for project guidelines
-- Check `docs/SECURITY_CHECKLIST.md` for security best practices
-- Report issues on GitHub
-
----
+- `make help` - List all commands
+- `CLAUDE.md` - Project guidelines
+- `docs/SECURITY_CHECKLIST.md` - Security best practices
 
 ## Next Steps
 
-After setting up local development:
-
-1. Review the design system in `styles.md`
-2. Explore the API at http://localhost:8000/api/
-3. Review test coverage: `make test`
-4. Try creating a journal entry via the UI
-5. Experiment with different themes (Midnight/Paper)
-
-Happy coding!
+1. Review design system in `styles.md`
+2. Explore API at http://localhost:8000/api/
+3. Run tests: `make test`
+4. Create a journal entry
+5. Try both themes (Midnight/Paper)
