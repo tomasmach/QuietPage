@@ -122,3 +122,37 @@ class Entry(models.Model):
         date_str = self.created_at.strftime('%Y-%m-%d') if self.created_at else "Unsaved"
         title_preview = self.title[:30] if self.title else "Untitled"
         return f"{self.user.username} - {date_str} - {title_preview}"
+
+
+class FeaturedEntry(models.Model):
+    """
+    Stores the randomly selected 'memory' entry shown on dashboard each day.
+
+    Ensures same entry is shown across all devices for the same user on the same day.
+    Date is stored in user's timezone to handle midnight correctly.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='featured_entries'
+    )
+    date = models.DateField(
+        help_text="Date in user's timezone when this entry was featured"
+    )
+    entry = models.ForeignKey(
+        Entry,
+        on_delete=models.CASCADE,
+        related_name='featured_appearances'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Featured Entry"
+        verbose_name_plural = "Featured Entries"
+        unique_together = ['user', 'date']
+        indexes = [
+            models.Index(fields=['user', 'date']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date} - {self.entry_id}"
