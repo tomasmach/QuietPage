@@ -7,7 +7,7 @@ for journal entries, dashboard data, and autosave functionality.
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from rest_framework import viewsets, status
@@ -20,7 +20,7 @@ from django.db import transaction
 from django.core.cache import cache
 from django.utils import timezone
 
-from apps.journal.models import Entry
+from apps.journal.models import Entry, FeaturedEntry
 from apps.journal.utils import get_random_quote
 from apps.api.serializers import (
     EntrySerializer,
@@ -131,6 +131,108 @@ class DashboardView(APIView):
         else:  # 18-4
             return "Dobrý večer"
 
+    def get_user_today(self, user):
+        """Get today's date in user's timezone."""
+        user_tz = ZoneInfo(str(user.timezone))
+        return timezone.now().astimezone(user_tz).date()
+
+    def get_featured_entry(self, user, user_date):
+        """
+        Get or create today's featured entry for user.
+        Returns None if user has < 10 entries.
+        Excludes today's entries from selection.
+        """
+        entry_count = Entry.objects.filter(user=user).count()
+        if entry_count < 10:
+            return None
+
+        featured = FeaturedEntry.objects.filter(
+            user=user,
+            date=user_date
+        ).select_related('entry').first()
+
+        if featured:
+            return featured.entry
+
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        random_entry = Entry.objects.filter(
+            user=user
+        ).exclude(
+            created_at__gte=today_start
+        ).order_by('?').first()
+
+        if not random_entry:
+            return None
+
+        FeaturedEntry.objects.create(
+            user=user,
+            date=user_date,
+            entry=random_entry
+        )
+
+        return random_entry
+
+    def get_weekly_stats(self, user):
+        """Calculate statistics for the last 7 days."""
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+
+        week_ago = (now - timedelta(days=7)).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+
+        weekly_entries = Entry.objects.filter(
+            user=user,
+            created_at__gte=week_ago
+        ).values('created_at', 'word_count')
+
+        total_words = 0
+        daily_words = {}
+
+        for entry in weekly_entries:
+            total_words += entry['word_count']
+            entry_date = entry['created_at'].astimezone(user_tz).date()
+            daily_words[entry_date] = daily_words.get(entry_date, 0) + entry['word_count']
+
+        best_day = None
+        if daily_words:
+            best_date = max(daily_words, key=daily_words.get)
+            weekday_names = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+            best_day = {
+                'date': best_date.isoformat(),
+                'words': daily_words[best_date],
+                'weekday': weekday_names[best_date.weekday()]
+            }
+
+        return {
+            'total_words': total_words,
+            'best_day': best_day
+        }
+
+    def serialize_featured_entry(self, entry, user_date):
+        """Serialize featured entry for API response."""
+        if not entry:
+            return None
+
+        entry_date = entry.created_at.date()
+        days_ago = (user_date - entry_date).days
+
+        content_preview = entry.content[:200] if entry.content else ''
+        if entry.content and len(entry.content) > 200:
+            content_preview += '...'
+
+        return {
+            'id': str(entry.id),
+            'title': entry.title,
+            'content_preview': content_preview,
+            'created_at': entry.created_at.isoformat(),
+            'word_count': entry.word_count,
+            'days_ago': days_ago
+        }
+
     def get(self, request):
         """
         Get dashboard data for the current user.
@@ -183,6 +285,13 @@ class DashboardView(APIView):
         # Random inspirational quote
         quote = get_random_quote()
 
+        # Featured entry from history
+        user_date = self.get_user_today(user)
+        featured_entry = self.get_featured_entry(user, user_date)
+
+        # Weekly stats
+        weekly_stats = self.get_weekly_stats(user)
+
         return Response({
             'greeting': greeting,
             'stats': stats,
@@ -192,6 +301,8 @@ class DashboardView(APIView):
                 context={'request': request}
             ).data,
             'quote': quote,
+            'featured_entry': self.serialize_featured_entry(featured_entry, user_date),
+            'weekly_stats': weekly_stats,
         })
 
 
