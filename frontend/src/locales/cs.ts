@@ -418,6 +418,15 @@ export interface Translations {
       noRecords: string;
     };
   };
+  weekdays: {
+    monday: string;
+    tuesday: string;
+    wednesday: string;
+    thursday: string;
+    friday: string;
+    saturday: string;
+    sunday: string;
+  };
 }
 
 export const cs: Translations = {
@@ -898,5 +907,14 @@ export const cs: Translations = {
       entries: 'zápisů',
       noRecords: 'Začni psát a vytvoř si rekordy!',
     },
+  },
+  weekdays: {
+    monday: 'pondělí',
+    tuesday: 'úterý',
+    wednesday: 'středa',
+    thursday: 'čtvrtek',
+    friday: 'pátek',
+    saturday: 'sobota',
+    sunday: 'neděle',
   },
 };
