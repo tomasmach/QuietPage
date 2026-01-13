@@ -306,6 +306,73 @@ class DashboardView(APIView):
         })
 
 
+class RefreshFeaturedEntryView(APIView):
+    """
+    API endpoint to refresh the featured entry for today.
+    POST: Generates a new random featured entry (different from current).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """Refresh featured entry and return new one."""
+        user = request.user
+        user_tz = ZoneInfo(str(user.timezone))
+        user_date = timezone.now().astimezone(user_tz).date()
+
+        entry_count = Entry.objects.filter(user=user).count()
+        if entry_count < 10:
+            return Response({
+                'featured_entry': None,
+                'message': 'Not enough entries for featured entry'
+            })
+
+        current = FeaturedEntry.objects.filter(user=user, date=user_date).first()
+        exclude_ids = [current.entry_id] if current else []
+
+        FeaturedEntry.objects.filter(user=user, date=user_date).delete()
+
+        now = timezone.now().astimezone(user_tz)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        new_entry = Entry.objects.filter(
+            user=user
+        ).exclude(
+            id__in=exclude_ids
+        ).exclude(
+            created_at__gte=today_start
+        ).order_by('?').first()
+
+        if not new_entry and exclude_ids:
+            new_entry = Entry.objects.get(id=exclude_ids[0])
+
+        if new_entry:
+            FeaturedEntry.objects.create(
+                user=user,
+                date=user_date,
+                entry=new_entry
+            )
+
+        featured_data = None
+        if new_entry:
+            days_ago = (user_date - new_entry.created_at.date()).days
+            content_preview = new_entry.content[:200] if new_entry.content else ''
+            if new_entry.content and len(new_entry.content) > 200:
+                content_preview += '...'
+
+            featured_data = {
+                'id': str(new_entry.id),
+                'title': new_entry.title,
+                'content_preview': content_preview,
+                'created_at': new_entry.created_at.isoformat(),
+                'word_count': new_entry.word_count,
+                'days_ago': days_ago
+            }
+
+        return Response({
+            'featured_entry': featured_data
+        })
+
+
 class TodayEntryView(APIView):
     """
     API endpoint pro dnešní daily note.

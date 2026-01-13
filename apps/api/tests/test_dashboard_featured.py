@@ -122,7 +122,7 @@ class TestFeaturedEntryRefresh:
         """Refresh endpoint should require authentication."""
         client = APIClient()
         response = client.post('/api/v1/dashboard/refresh-featured/')
-        assert response.status_code == 401
+        assert response.status_code == 403
 
 
 @pytest.mark.django_db

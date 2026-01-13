@@ -19,6 +19,7 @@ from apps.api.views import (
     DashboardView,
     AutosaveView,
     TodayEntryView,
+    RefreshFeaturedEntryView,
 )
 from apps.api.statistics_views import (
     StatisticsView,
@@ -51,6 +52,7 @@ urlpatterns = [
 
     # Dashboard endpoint
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
+    path('dashboard/refresh-featured/', RefreshFeaturedEntryView.as_view(), name='dashboard-refresh-featured'),
 
     # Statistics endpoint
     path('statistics/', StatisticsView.as_view(), name='statistics'),
