@@ -147,7 +147,8 @@ class ApiClient {
       // Create error with full error data preserved
       // For register/login endpoints, the error is in errorData.errors or direct in errorData
       const errorPayload = errorData.errors || errorData;
-      const error = new Error(JSON.stringify(errorPayload));
+      // Include status code in error message so handlers can check for specific HTTP errors (e.g., 404)
+      const error = new Error(`${response.status}: ${JSON.stringify(errorPayload)}`);
 
       // Suppress console errors for expected 403 on auth check endpoints
       // (These are normal when user is not authenticated)
@@ -222,3 +223,20 @@ class ApiClient {
 
 // Export singleton instance
 export const api = new ApiClient();
+
+/**
+ * Parse API error message to extract the JSON payload
+ * Error format: "STATUS_CODE: {json_payload}"
+ */
+export function parseApiError(error: Error): Record<string, unknown> {
+  try {
+    const colonIndex = error.message.indexOf(': ');
+    if (colonIndex !== -1) {
+      const jsonPart = error.message.slice(colonIndex + 2);
+      return JSON.parse(jsonPart);
+    }
+    return JSON.parse(error.message);
+  } catch {
+    return {};
+  }
+}

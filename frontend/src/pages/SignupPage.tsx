@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { parseApiError } from '@/lib/api';
 import logger from '@/utils/logger';
 
 export function SignupPage() {
@@ -41,7 +42,7 @@ export function SignupPage() {
       if (err instanceof Error) {
         try {
           // Try to parse JSON error response
-          const errorData = JSON.parse(err.message);
+          const errorData = parseApiError(err);
           if (typeof errorData === 'object') {
             // Sanitize - zobraz pouze známé chybové klíče
             const safeErrors: Record<string, string> = {};

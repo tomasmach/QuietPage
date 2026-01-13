@@ -333,6 +333,14 @@ class AutosaveView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    def get_today_date_range(self, user):
+        """Return start/end datetime for today in user's timezone."""
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        return today_start, today_end
+
     def post(self, request):
         """
         Handle autosave request.
@@ -387,6 +395,14 @@ class AutosaveView(APIView):
                             id=entry_id,
                             user=request.user
                         )
+
+                        # Check if entry is from today - prevent editing past entries
+                        today_start, today_end = self.get_today_date_range(request.user)
+                        if not (today_start <= entry.created_at <= today_end):
+                            return Response({
+                                'status': 'error',
+                                'message': 'Cannot edit past entries'
+                            }, status=status.HTTP_403_FORBIDDEN)
                         entry.title = title
                         entry.content = content
                         entry.mood_rating = mood_rating
