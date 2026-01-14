@@ -5,7 +5,7 @@ export const StorytellingSection: React.FC = () => {
 
   return (
     <section className="mb-20">
-      <div className="bg-bg-panel border-2 border-border shadow-hard p-8 md:p-12">
+      <div className="theme-aware bg-bg-panel border-2 border-border shadow-hard p-8 md:p-12">
         <div className="max-w-3xl mx-auto text-center">
           {/* Headline */}
           <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-wider mb-8 text-text-main">

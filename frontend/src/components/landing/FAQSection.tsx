@@ -7,14 +7,21 @@ interface FAQItemProps {
   answer: string;
   isOpen: boolean;
   onToggle: () => void;
+  id: string;
 }
 
-const FAQItem: React.FC<FAQItemProps> = ({ question, answer, isOpen, onToggle }) => {
+const FAQItem: React.FC<FAQItemProps> = ({ question, answer, isOpen, onToggle, id }) => {
+  const questionId = `${id}-question`;
+  const answerId = `${id}-answer`;
+
   return (
-    <div className="border-2 border-border bg-bg-panel">
+    <div className="theme-aware border-2 border-border bg-bg-panel">
       {/* Question (clickable header) */}
       <button
+        id={questionId}
         onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-controls={answerId}
         className="w-full p-4 flex items-center justify-between text-left transition-colors duration-150 hover:bg-bg-app"
       >
         <span className="text-base font-medium text-text-main pr-4">
@@ -30,8 +37,11 @@ const FAQItem: React.FC<FAQItemProps> = ({ question, answer, isOpen, onToggle })
 
       {/* Answer (collapsible content) */}
       <div
+        id={answerId}
+        role="region"
+        aria-labelledby={questionId}
         className={`overflow-hidden transition-all duration-200 ${
-          isOpen ? 'max-h-96' : 'max-h-0'
+          isOpen ? 'max-h-[500px]' : 'max-h-0'
         }`}
       >
         <div className="p-4 pt-0 border-t-2 border-dashed border-border">
@@ -83,6 +93,7 @@ export const FAQSection: React.FC = () => {
         {faqs.map((faq, index) => (
           <FAQItem
             key={index}
+            id={`faq-${index}`}
             question={faq.question}
             answer={faq.answer}
             isOpen={openIndex === index}

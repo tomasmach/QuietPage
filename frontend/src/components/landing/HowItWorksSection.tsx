@@ -10,7 +10,7 @@ interface StepCardProps {
 
 const StepCard: React.FC<StepCardProps> = ({ number, icon, title, description }) => {
   return (
-    <div className="bg-bg-panel border-2 border-border p-6 shadow-hard transition-all duration-150 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-shadow)]">
+    <div className="theme-aware bg-bg-panel border-2 border-border p-6 shadow-hard transition-all duration-150 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-shadow)]">
       {/* Step number and icon */}
       <div className="flex items-center gap-4 mb-4">
         <span className="text-3xl font-bold text-accent">{number}.</span>
