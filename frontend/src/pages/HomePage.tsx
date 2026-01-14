@@ -10,6 +10,7 @@ import { TrustBadge } from '@/components/landing/TrustBadge';
 import { StorytellingSection } from '@/components/landing/StorytellingSection';
 import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
 import { FAQSection } from '@/components/landing/FAQSection';
+import { Footer } from '@/components/landing/Footer';
 
 export function HomePage() {
   const { t } = useLanguage();
@@ -137,6 +138,9 @@ export function HomePage() {
           </div>
         </section>
       </div>
+
+      {/* SECTION 7: FOOTER */}
+      <Footer />
     </div>
   );
 }

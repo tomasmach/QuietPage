@@ -126,6 +126,7 @@ export interface Translations {
     };
   };
   footer: {
+    links: string;
     contact: string;
     termsOfService: string;
     privacyPolicy: string;
@@ -636,6 +637,7 @@ export const cs: Translations = {
     },
   },
   footer: {
+    links: 'Odkazy',
     contact: 'Kontakt',
     termsOfService: 'Obchodní podmínky',
     privacyPolicy: 'Ochrana soukromí',

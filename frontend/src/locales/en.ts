@@ -128,6 +128,7 @@ export const en: Translations = {
     },
   },
   footer: {
+    links: 'Links',
     contact: 'Contact',
     termsOfService: 'Terms of Service',
     privacyPolicy: 'Privacy Policy',
