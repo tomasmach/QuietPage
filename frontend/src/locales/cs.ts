@@ -643,7 +643,7 @@ export const cs: Translations = {
     email: 'tomades1@gmail.com',
     termsOfService: 'Obchodní podmínky',
     privacyPolicy: 'Ochrana soukromí',
-    copyright: '© 2025 Tomáš Mach. Všechna práva vyhrazena.',
+    copyright: '© {year} Tomáš Mach. Všechna práva vyhrazena.',
   },
   legal: {
     termsOfService: {

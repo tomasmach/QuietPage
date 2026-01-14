@@ -53,7 +53,7 @@ export const Footer: React.FC = () => {
         {/* Copyright line */}
         <div className="theme-aware border-t-2 border-dashed border-border mt-10 pt-6 text-center">
           <p className="theme-aware text-sm text-text-muted">
-            {t('footer.copyright')}
+            {t('footer.copyright').replace('{year}', new Date().getFullYear().toString())}
           </p>
         </div>
       </div>

@@ -133,7 +133,7 @@ export const en: Translations = {
     email: 'tomades1@gmail.com',
     termsOfService: 'Terms of Service',
     privacyPolicy: 'Privacy Policy',
-    copyright: '© 2025 Tomáš Mach. All rights reserved.',
+    copyright: '© {year} Tomáš Mach. All rights reserved.',
   },
   legal: {
     termsOfService: {
