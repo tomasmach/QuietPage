@@ -7,6 +7,9 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { FeatureCard } from '@/components/landing/FeatureCard';
 import { TrustBadge } from '@/components/landing/TrustBadge';
+import { StorytellingSection } from '@/components/landing/StorytellingSection';
+import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
+import { FAQSection } from '@/components/landing/FAQSection';
 
 export function HomePage() {
   const { t } = useLanguage();
@@ -56,7 +59,10 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 2: FEATURES */}
+        {/* SECTION 2: STORYTELLING */}
+        <StorytellingSection />
+
+        {/* SECTION 3: FEATURES */}
         <section className="mb-20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Feature 1: Privacy */}
@@ -89,7 +95,13 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 3: FINAL CTA */}
+        {/* SECTION 4: HOW IT WORKS */}
+        <HowItWorksSection />
+
+        {/* SECTION 5: FAQ */}
+        <FAQSection />
+
+        {/* SECTION 6: FINAL CTA */}
         <section className="text-center">
           {/* Container with subtle accent background */}
           <div className="bg-bg-panel border-2 border-border shadow-hard p-10 md:p-12">
