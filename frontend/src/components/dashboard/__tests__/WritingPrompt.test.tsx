@@ -4,7 +4,7 @@
  * Tests rendering of daily writing prompts based on day of year,
  * CTA button functionality, and i18n title display.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { WritingPrompt } from '../WritingPrompt';
 
