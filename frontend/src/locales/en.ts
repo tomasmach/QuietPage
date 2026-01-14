@@ -179,7 +179,7 @@ export const en: Translations = {
       },
       encryption: {
         title: 'Encryption',
-        content: 'Your entries are encrypted using AES encryption. This means that even we, as the operator, cannot read the content of your entries. The encryption key is derived in a way that ensures only you have access to your content.',
+        content: 'Your entries are encrypted using Fernet (AES-128-CBC with HMAC-SHA256). This means that even we, as the operator, cannot read the content of your entries. The encryption key is derived in a way that ensures only you have access to your content.',
       },
       cookies: {
         title: 'Cookies',
@@ -284,7 +284,7 @@ export const en: Translations = {
       emailNotifications: 'Email Notifications',
       emailNotificationsHint: 'Receive emails about updates and reminders',
       dataPrivacy: 'Data Privacy',
-      encryptionInfo: 'All your entries are encrypted using AES-256 encryption.',
+      encryptionInfo: 'All your entries are encrypted using Fernet (AES-128-CBC with HMAC-SHA256).',
       dataUsageInfo: 'We never share your data with third parties.',
     },
     security: {

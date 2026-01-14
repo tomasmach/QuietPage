@@ -689,7 +689,7 @@ export const cs: Translations = {
       },
       encryption: {
         title: 'Šifrování',
-        content: 'Vaše záznamy jsou šifrovány pomocí AES šifrování. To znamená, že obsah vašich zápisků nemůžeme číst ani my jako provozovatel. Šifrovací klíč je odvozen způsobem, který zajišťuje, že pouze vy máte přístup ke svému obsahu.',
+        content: 'Vaše záznamy jsou šifrovány pomocí Fernet (AES-128-CBC s HMAC-SHA256). To znamená, že obsah vašich zápisků nemůžeme číst ani my jako provozovatel. Šifrovací klíč je odvozen způsobem, který zajišťuje, že pouze vy máte přístup ke svému obsahu.',
       },
       cookies: {
         title: 'Cookies',
@@ -794,7 +794,7 @@ export const cs: Translations = {
       emailNotifications: 'E-mailová oznámení',
       emailNotificationsHint: 'Dostávat e-maily o novinkách a připomínkách',
       dataPrivacy: 'Ochrana dat',
-      encryptionInfo: 'Všechny tvé záznamy jsou šifrovány pomocí AES-256 šifrování.',
+      encryptionInfo: 'Všechny tvé záznamy jsou šifrovány pomocí Fernet (AES-128-CBC s HMAC-SHA256).',
       dataUsageInfo: 'Tvá data nikdy nesdílíme s třetími stranami.',
     },
     security: {
