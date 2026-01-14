@@ -15,7 +15,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ question, answer, isOpen, onToggle, i
   const answerId = `${id}-answer`;
 
   return (
-    <div className="theme-aware border-2 border-border bg-bg-panel">
+    <div className="theme-aware border-2 border-border bg-bg-panel shadow-hard">
       {/* Question (clickable header) */}
       <button
         id={questionId}
@@ -44,7 +44,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ question, answer, isOpen, onToggle, i
           isOpen ? 'max-h-[500px]' : 'max-h-0'
         }`}
       >
-        <div className="p-4 pt-0 border-t-2 border-dashed border-border">
+        <div className="px-4 py-4 border-t-2 border-dashed border-border">
           <p className="text-sm text-text-muted leading-relaxed">
             {answer}
           </p>
