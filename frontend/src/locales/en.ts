@@ -130,6 +130,7 @@ export const en: Translations = {
   footer: {
     links: 'Links',
     contact: 'Contact',
+    email: 'tomades1@gmail.com',
     termsOfService: 'Terms of Service',
     privacyPolicy: 'Privacy Policy',
     copyright: '© 2025 Tomáš Mach. All rights reserved.',

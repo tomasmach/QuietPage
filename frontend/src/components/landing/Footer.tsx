@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Logo } from '@/components/ui/Logo';
 
-export function Footer() {
+export const Footer: React.FC = () => {
   const { t } = useLanguage();
 
   return (
@@ -42,10 +42,10 @@ export function Footer() {
               {t('footer.contact')}
             </h3>
             <a
-              href="mailto:tomades1@gmail.com"
+              href={`mailto:${t('footer.email')}`}
               className="theme-aware text-sm text-text-muted hover:text-accent transition-colors"
             >
-              tomades1@gmail.com
+              {t('footer.email')}
             </a>
           </div>
         </div>
@@ -59,4 +59,4 @@ export function Footer() {
       </div>
     </footer>
   );
-}
+};

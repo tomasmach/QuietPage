@@ -128,6 +128,7 @@ export interface Translations {
   footer: {
     links: string;
     contact: string;
+    email: string;
     termsOfService: string;
     privacyPolicy: string;
     copyright: string;
@@ -639,6 +640,7 @@ export const cs: Translations = {
   footer: {
     links: 'Odkazy',
     contact: 'Kontakt',
+    email: 'tomades1@gmail.com',
     termsOfService: 'Obchodní podmínky',
     privacyPolicy: 'Ochrana soukromí',
     copyright: '© 2025 Tomáš Mach. Všechna práva vyhrazena.',
