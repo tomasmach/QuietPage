@@ -22,8 +22,8 @@ export function TermsPage() {
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--color-bg-app)' }}>
       <SEO
-        title="Terms of Service"
-        description="Read the Terms of Service for QuietPage, your private mindful writing and journaling application."
+        title={t('legal.termsOfService.seoTitle')}
+        description={t('legal.termsOfService.seoDescription')}
         canonicalUrl="/terms"
       />
       {/* Fixed toggles in corners */}

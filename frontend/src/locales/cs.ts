@@ -136,6 +136,8 @@ export interface Translations {
   legal: {
     termsOfService: {
       title: string;
+      seoTitle: string;
+      seoDescription: string;
       intro: {
         title: string;
         content: string;
@@ -167,6 +169,8 @@ export interface Translations {
     };
     privacyPolicy: {
       title: string;
+      seoTitle: string;
+      seoDescription: string;
       intro: {
         title: string;
         content: string;
@@ -648,6 +652,8 @@ export const cs: Translations = {
   legal: {
     termsOfService: {
       title: 'Obchodní podmínky',
+      seoTitle: 'Obchodní podmínky - QuietPage',
+      seoDescription: 'Přečtěte si obchodní podmínky pro QuietPage, vaši soukromou aplikaci pro mindful psaní a deníkování.',
       intro: {
         title: 'Provozovatel služby',
         content: 'Tyto obchodní podmínky upravují používání služby QuietPage. Provozovatelem služby je Tomáš Mach, se sídlem Záryby 360, 27713, IČO: 22006401. Používáním služby souhlasíte s těmito podmínkami.',
@@ -679,6 +685,8 @@ export const cs: Translations = {
     },
     privacyPolicy: {
       title: 'Ochrana soukromí',
+      seoTitle: 'Ochrana soukromí - QuietPage',
+      seoDescription: 'Zjistěte, jak QuietPage chrání vaše soukromí. Vaše deníkové záznamy jsou šifrovány a vaše data nikdy nesdílíme.',
       intro: {
         title: 'Závazek k ochraně soukromí',
         content: 'Vaše soukromí bereme vážně. Tyto zásady popisují, jaké údaje shromažďujeme, jak je používáme a jak je chráníme. Zavazujeme se zpracovávat vaše osobní údaje v souladu s GDPR a dalšími platnými právními předpisy.',

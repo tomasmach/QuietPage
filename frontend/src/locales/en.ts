@@ -138,6 +138,8 @@ export const en: Translations = {
   legal: {
     termsOfService: {
       title: 'Terms of Service',
+      seoTitle: 'Terms of Service - QuietPage',
+      seoDescription: 'Read the Terms of Service for QuietPage, your private mindful writing and journaling application.',
       intro: {
         title: 'Service Operator',
         content: 'These terms of service govern your use of QuietPage. The service is operated by Tomáš Mach, located at Záryby 360, 27713, Czech Republic, ID: 22006401. By using the service, you agree to these terms.',
@@ -169,6 +171,8 @@ export const en: Translations = {
     },
     privacyPolicy: {
       title: 'Privacy Policy',
+      seoTitle: 'Privacy Policy - QuietPage',
+      seoDescription: 'Learn how QuietPage protects your privacy. Your journal entries are encrypted and your data is never shared.',
       intro: {
         title: 'Commitment to Privacy',
         content: 'We take your privacy seriously. This policy describes what data we collect, how we use it, and how we protect it. We are committed to processing your personal data in accordance with GDPR and other applicable regulations.',

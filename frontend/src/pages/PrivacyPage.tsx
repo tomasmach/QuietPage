@@ -21,8 +21,8 @@ export function PrivacyPage() {
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--color-bg-app)' }}>
       <SEO
-        title="Privacy Policy"
-        description="Learn how QuietPage protects your privacy. Your journal entries are encrypted and your data is never shared."
+        title={t('legal.privacyPolicy.seoTitle')}
+        description={t('legal.privacyPolicy.seoDescription')}
         canonicalUrl="/privacy"
       />
       {/* Fixed toggles in corners */}
