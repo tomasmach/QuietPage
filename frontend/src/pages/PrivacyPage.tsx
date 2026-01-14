@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { Footer } from '@/components/landing/Footer';
+import { SEO } from '@/components/SEO';
 
 export function PrivacyPage() {
   const { t } = useLanguage();
@@ -19,6 +20,11 @@ export function PrivacyPage() {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--color-bg-app)' }}>
+      <SEO
+        title="Privacy Policy"
+        description="Learn how QuietPage protects your privacy. Your journal entries are encrypted and your data is never shared."
+        canonicalUrl="/privacy"
+      />
       {/* Fixed toggles in corners */}
       <LanguageToggle />
       <ThemeToggle />

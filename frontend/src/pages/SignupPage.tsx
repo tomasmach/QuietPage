@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { SEO } from '@/components/SEO';
 import { parseApiError } from '@/lib/api';
 import logger from '@/utils/logger';
 
@@ -81,6 +82,11 @@ export function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ backgroundColor: 'var(--color-bg-app)' }}>
+      <SEO
+        title="Sign Up"
+        description="Create your free QuietPage account and start your mindful writing journey. Private, encrypted journaling."
+        canonicalUrl="/signup"
+      />
       {/* Fixed toggles in corners */}
       <LanguageToggle />
       <ThemeToggle />

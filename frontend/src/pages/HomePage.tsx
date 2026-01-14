@@ -11,12 +11,18 @@ import { StorytellingSection } from '@/components/landing/StorytellingSection';
 import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
 import { FAQSection } from '@/components/landing/FAQSection';
 import { Footer } from '@/components/landing/Footer';
+import { SEO } from '@/components/SEO';
+import { webApplicationStructuredData } from '@/components/seo/structuredData';
 
 export function HomePage() {
   const { t } = useLanguage();
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--color-bg-app)' }}>
+      <SEO
+        canonicalUrl="/"
+        structuredData={webApplicationStructuredData}
+      />
       {/* Fixed toggles in corners */}
       <LanguageToggle />
       <ThemeToggle />

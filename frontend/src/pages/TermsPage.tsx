@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { Footer } from '@/components/landing/Footer';
+import { SEO } from '@/components/SEO';
 
 export function TermsPage() {
   const { t } = useLanguage();
@@ -20,6 +21,11 @@ export function TermsPage() {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--color-bg-app)' }}>
+      <SEO
+        title="Terms of Service"
+        description="Read the Terms of Service for QuietPage, your private mindful writing and journaling application."
+        canonicalUrl="/terms"
+      />
       {/* Fixed toggles in corners */}
       <LanguageToggle />
       <ThemeToggle />
