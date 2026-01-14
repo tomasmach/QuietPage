@@ -24,13 +24,13 @@ export function PrivacyPage() {
       <ThemeToggle />
 
       {/* Main content container */}
-      <div className="max-w-3xl mx-auto px-6 py-16">
+      <main className="max-w-3xl mx-auto px-6 py-16">
         {/* Back link */}
         <Link
           to="/"
           className="inline-flex items-center gap-2 text-text-muted hover:text-accent transition-colors mb-12 theme-aware"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={16} aria-hidden="true" />
           <span className="text-sm uppercase tracking-wider">{t('auth.backToHome')}</span>
         </Link>
 
@@ -52,7 +52,7 @@ export function PrivacyPage() {
             </section>
           ))}
         </div>
-      </div>
+      </main>
 
       {/* Footer */}
       <Footer />
