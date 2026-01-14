@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuietPage OG Image Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #333;
+      padding: 20px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .instructions {
+      color: #fff;
+      margin-bottom: 20px;
+      text-align: center;
+      max-width: 600px;
+    }
+
+    .instructions h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .instructions p {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 5px;
+    }
+
+    .instructions code {
+      background: #1A1A1A;
+      padding: 2px 6px;
+      font-size: 12px;
+    }
+
+    /* OG Image Container - exactly 1200x630 */
+    .og-image {
+      width: 1200px;
+      height: 630px;
+      background: #1A1A1A;
+      position: relative;
+      font-family: 'IBM Plex Mono', monospace;
+      overflow: hidden;
+    }
+
+    /* Border frame */
+    .og-image::before {
+      content: '';
+      position: absolute;
+      top: 40px;
+      left: 40px;
+      right: 40px;
+      bottom: 40px;
+      border: 2px solid #F5F5F5;
+      pointer-events: none;
+    }
+
+    /* Inner frame */
+    .og-image::after {
+      content: '';
+      position: absolute;
+      top: 60px;
+      left: 60px;
+      right: 60px;
+      bottom: 60px;
+      border: 1px solid rgba(245, 245, 245, 0.3);
+      pointer-events: none;
+    }
+
+    /* Corner brackets */
+    .corner {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #F5F5F5;
+    }
+
+    .corner.top-left {
+      top: 80px;
+      left: 80px;
+      border-right: none;
+      border-bottom: none;
+    }
+
+    .corner.top-right {
+      top: 80px;
+      right: 80px;
+      border-left: none;
+      border-bottom: none;
+    }
+
+    .corner.bottom-left {
+      bottom: 80px;
+      left: 80px;
+      border-right: none;
+      border-top: none;
+    }
+
+    .corner.bottom-right {
+      bottom: 80px;
+      right: 80px;
+      border-left: none;
+      border-top: none;
+    }
+
+    /* Grid pattern */
+    .grid-pattern {
+      position: absolute;
+      top: 60px;
+      left: 60px;
+      right: 60px;
+      bottom: 60px;
+      opacity: 0.1;
+      background-image:
+        linear-gradient(to right, #F5F5F5 1px, transparent 1px),
+        linear-gradient(to bottom, #F5F5F5 1px, transparent 1px);
+      background-size: 200px 157.5px;
+      pointer-events: none;
+    }
+
+    /* Content */
+    .content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .title {
+      font-size: 72px;
+      font-weight: 700;
+      color: #F5F5F5;
+      letter-spacing: 0.2em;
+      margin-bottom: 20px;
+    }
+
+    .divider {
+      width: 400px;
+      height: 2px;
+      background: #F5F5F5;
+      margin: 0 auto 30px;
+    }
+
+    .tagline {
+      font-size: 24px;
+      font-weight: 400;
+      color: #999999;
+      letter-spacing: 0.1em;
+    }
+
+    /* Cursor element */
+    .cursor {
+      width: 20px;
+      height: 3px;
+      background: #F5F5F5;
+      opacity: 0.6;
+      margin: 60px auto 0;
+    }
+
+    /* Branding mark */
+    .branding {
+      position: absolute;
+      bottom: 90px;
+      right: 100px;
+      font-size: 12px;
+      color: #666666;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div class="instructions">
+    <h1>QuietPage OG Image Generator</h1>
+    <p>This HTML template generates the Open Graph image at 1200x630px.</p>
+    <p>To create the PNG:</p>
+    <p>1. Open this file in a browser</p>
+    <p>2. Use browser DevTools to screenshot the <code>.og-image</code> element</p>
+    <p>3. Or use a tool like Puppeteer/Playwright to capture programmatically</p>
+    <p>4. Save as <code>og-image.png</code> in the same directory</p>
+  </div>
+
+  <div class="og-image" id="og-image">
+    <div class="grid-pattern"></div>
+    <div class="corner top-left"></div>
+    <div class="corner top-right"></div>
+    <div class="corner bottom-left"></div>
+    <div class="corner bottom-right"></div>
+
+    <div class="content">
+      <div class="title">QUIETPAGE</div>
+      <div class="divider"></div>
+      <div class="tagline">Your private space for mindful writing</div>
+      <div class="cursor"></div>
+    </div>
+
+    <div class="branding">quietpage.app</div>
+  </div>
+</body>
+</html>
