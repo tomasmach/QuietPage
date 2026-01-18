@@ -224,6 +224,24 @@ export interface Translations {
     viewAll: string;
     longestStreak: string;
     totalEntries: string;
+    writingPrompt: {
+      title: string;
+      cta: string;
+    };
+    featuredEntry: {
+      title: string;
+      daysAgo: string;
+      refresh: string;
+      refreshing: string;
+    };
+    weeklyStats: {
+      streak: string;
+      streakDays: string;
+      thisWeek: string;
+      words: string;
+      bestDay: string;
+    };
+    prompts: string[];
   };
   entry: {
     titlePlaceholder: string;
@@ -512,6 +530,15 @@ export interface Translations {
       noRecords: string;
     };
   };
+  weekdays: {
+    monday: string;
+    tuesday: string;
+    wednesday: string;
+    thursday: string;
+    friday: string;
+    saturday: string;
+    sunday: string;
+  };
 }
 
 export const cs: Translations = {
@@ -740,6 +767,75 @@ export const cs: Translations = {
     viewAll: 'Zobrazit vše',
     longestStreak: 'Nejdelší',
     totalEntries: 'Celkem záznamů',
+    writingPrompt: {
+      title: 'Dnešní inspirace',
+      cta: 'Začít psát',
+    },
+    featuredEntry: {
+      title: 'Z tvé historie',
+      daysAgo: 'před {{count}} dny',
+      refresh: 'Zobrazit jiný',
+      refreshing: 'Načítám...',
+    },
+    weeklyStats: {
+      streak: 'Série',
+      streakDays: '{{count}} dní',
+      thisWeek: 'Tento týden',
+      words: '{{count}} slov',
+      bestDay: 'Nejlepší den',
+    },
+    prompts: [
+      'Co tě dnes překvapilo?',
+      'Popiš moment, kdy ses dnes cítil/a živě.',
+      'Kdybys mohl/a změnit jednu věc na dnešku, co by to bylo?',
+      'Za co jsi dnes vděčný/á?',
+      'Co tě dnes rozesmálo?',
+      'Jaká myšlenka se ti dnes pořád vrací?',
+      'Co nového ses dnes naučil/a?',
+      'Kdo ti dnes udělal radost a proč?',
+      'Jaký byl nejtěžší moment dne?',
+      'Co bys dělal/a, kdybys věděl/a, že nemůžeš selhat?',
+      'Popiš svůj ideální den.',
+      'Na co se těšíš zítra?',
+      'Co tě v poslední době trápí?',
+      'Jaký je tvůj největší sen?',
+      'Co by sis řekl/a svému mladšímu já?',
+      'Popiš místo, kde se cítíš v bezpečí.',
+      'Co tě nabíjí energií?',
+      'Jaké malé radosti si užíváš?',
+      'Co bys chtěl/a změnit na svém životě?',
+      'Popiš člověka, kterého obdivuješ.',
+      'Jaký je tvůj oblíbený způsob relaxace?',
+      'Co tě dělá šťastným/ou?',
+      'Jaký byl tvůj nejlepší zážitek tohoto roku?',
+      'Na co jsi hrdý/á?',
+      'Co tě posledně inspirovalo?',
+      'Jaké jsou tvé priority v životě?',
+      'Popiš, jak se právě teď cítíš.',
+      'Co by ses chtěl/a naučit?',
+      'Jaký je tvůj vztah k času?',
+      'Co tě v poslední době posunulo vpřed?',
+      'Popiš svůj nejlepší přátelský vztah.',
+      'Co děláš pro své zdraví?',
+      'Jak vypadá tvůj ideální víkend?',
+      'Co tě motivuje vstávat ráno?',
+      'Jaký je tvůj největší strach?',
+      'Co bys dělal/a, kdybys měl/a neomezené prostředky?',
+      'Popiš své oblíbené roční období.',
+      'Co tě na sobě překvapuje?',
+      'Jaké knihy tě ovlivnily?',
+      'Co znamená pro tebe úspěch?',
+      'Popiš místo, kam by ses chtěl/a podívat.',
+      'Co děláš, když potřebuješ uklidnit mysl?',
+      'Jaké jsou tvé hodnoty?',
+      'Co tě posledně přinutilo zamyslet se?',
+      'Popiš svůj vztah k přírodě.',
+      'Co bys poradil/a někomu, kdo začíná psát deník?',
+      'Jak se stavíš k chybám?',
+      'Co tě dělá jedinečným/ou?',
+      'Jaký je tvůj oblíbený způsob trávení volného času?',
+      'Na co se těšíš v budoucnosti?',
+    ],
   },
   entry: {
     titlePlaceholder: 'Nadpis (volitelné)',
@@ -1035,5 +1131,14 @@ export const cs: Translations = {
       entries: 'zápisů',
       noRecords: 'Začni psát a vytvoř si rekordy!',
     },
+  },
+  weekdays: {
+    monday: 'pondělí',
+    tuesday: 'úterý',
+    wednesday: 'středa',
+    thursday: 'čtvrtek',
+    friday: 'pátek',
+    saturday: 'sobota',
+    sunday: 'neděle',
   },
 };

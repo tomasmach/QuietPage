@@ -7,7 +7,7 @@ for journal entries, dashboard data, and autosave functionality.
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from rest_framework import viewsets, status
@@ -20,7 +20,7 @@ from django.db import transaction
 from django.core.cache import cache
 from django.utils import timezone
 
-from apps.journal.models import Entry
+from apps.journal.models import Entry, FeaturedEntry
 from apps.journal.utils import get_random_quote
 from apps.api.serializers import (
     EntrySerializer,
@@ -131,6 +131,110 @@ class DashboardView(APIView):
         else:  # 18-4
             return "Dobrý večer"
 
+    def get_user_today(self, user):
+        """Get today's date in user's timezone."""
+        user_tz = ZoneInfo(str(user.timezone))
+        return timezone.now().astimezone(user_tz).date()
+
+    def get_featured_entry(self, user, user_date):
+        """
+        Get or create today's featured entry for user.
+        Returns None if user has < 10 entries.
+        Excludes today's entries from selection.
+        """
+        entry_count = Entry.objects.filter(user=user).count()
+        if entry_count < 10:
+            return None
+
+        with transaction.atomic():
+            featured = FeaturedEntry.objects.filter(
+                user=user,
+                date=user_date
+            ).select_for_update().select_related('entry').first()
+
+            if featured:
+                return featured.entry
+
+            user_tz = ZoneInfo(str(user.timezone))
+            now = timezone.now().astimezone(user_tz)
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+            random_entry = Entry.objects.filter(
+                user=user
+            ).exclude(
+                created_at__gte=today_start
+            ).order_by('?').first()
+
+            if not random_entry:
+                return None
+
+            featured, created = FeaturedEntry.objects.get_or_create(
+                user=user,
+                date=user_date,
+                defaults={'entry': random_entry}
+            )
+
+            return featured.entry
+
+    def get_weekly_stats(self, user):
+        """Calculate statistics for the last 7 days."""
+        user_tz = ZoneInfo(str(user.timezone))
+        now = timezone.now().astimezone(user_tz)
+
+        week_ago = (now - timedelta(days=7)).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+
+        weekly_entries = Entry.objects.filter(
+            user=user,
+            created_at__gte=week_ago
+        ).values('created_at', 'word_count')
+
+        total_words = 0
+        daily_words = {}
+
+        for entry in weekly_entries:
+            total_words += entry['word_count']
+            entry_date = entry['created_at'].astimezone(user_tz).date()
+            daily_words[entry_date] = daily_words.get(entry_date, 0) + entry['word_count']
+
+        best_day = None
+        if daily_words:
+            best_date = max(daily_words, key=daily_words.get)
+            weekday_names = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+            best_day = {
+                'date': best_date.isoformat(),
+                'words': daily_words[best_date],
+                'weekday': weekday_names[best_date.weekday()]
+            }
+
+        return {
+            'total_words': total_words,
+            'best_day': best_day
+        }
+
+    def serialize_featured_entry(self, entry, user_date):
+        """Serialize featured entry for API response."""
+        if not entry:
+            return None
+
+        user_tz = ZoneInfo(str(self.request.user.timezone))
+        entry_date = entry.created_at.astimezone(user_tz).date()
+        days_ago = (user_date - entry_date).days
+
+        content_preview = entry.content[:200] if entry.content else ''
+        if entry.content and len(entry.content) > 200:
+            content_preview += '...'
+
+        return {
+            'id': str(entry.id),
+            'title': entry.title,
+            'content_preview': content_preview,
+            'created_at': entry.created_at.isoformat(),
+            'word_count': entry.word_count,
+            'days_ago': days_ago
+        }
+
     def get(self, request):
         """
         Get dashboard data for the current user.
@@ -183,6 +287,13 @@ class DashboardView(APIView):
         # Random inspirational quote
         quote = get_random_quote()
 
+        # Featured entry from history
+        user_date = self.get_user_today(user)
+        featured_entry = self.get_featured_entry(user, user_date)
+
+        # Weekly stats
+        weekly_stats = self.get_weekly_stats(user)
+
         return Response({
             'greeting': greeting,
             'stats': stats,
@@ -192,6 +303,82 @@ class DashboardView(APIView):
                 context={'request': request}
             ).data,
             'quote': quote,
+            'featured_entry': self.serialize_featured_entry(featured_entry, user_date),
+            'weekly_stats': weekly_stats,
+        })
+
+
+class RefreshFeaturedEntryView(APIView):
+    """
+    API endpoint to refresh the featured entry for today.
+    POST: Generates a new random featured entry (different from current).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """Refresh featured entry and return new one."""
+        user = request.user
+        user_tz = ZoneInfo(str(user.timezone))
+        user_date = timezone.now().astimezone(user_tz).date()
+
+        entry_count = Entry.objects.filter(user=user).count()
+        if entry_count < 10:
+            return Response({
+                'featured_entry': None,
+                'message': 'Not enough entries for featured entry'
+            })
+
+        with transaction.atomic():
+            current = FeaturedEntry.objects.filter(
+                user=user,
+                date=user_date
+            ).select_for_update().first()
+            exclude_ids = [current.entry_id] if current else []
+
+            now = timezone.now().astimezone(user_tz)
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+            new_entry = Entry.objects.filter(
+                user=user
+            ).exclude(
+                id__in=exclude_ids
+            ).exclude(
+                created_at__gte=today_start
+            ).order_by('?').first()
+
+            if not new_entry and exclude_ids:
+                new_entry = Entry.objects.get(id=exclude_ids[0])
+
+            if new_entry:
+                if current:
+                    current.entry = new_entry
+                    current.save()
+                else:
+                    FeaturedEntry.objects.create(
+                        user=user,
+                        date=user_date,
+                        entry=new_entry
+                    )
+
+        featured_data = None
+        if new_entry:
+            entry_date = new_entry.created_at.astimezone(user_tz).date()
+            days_ago = (user_date - entry_date).days
+            content_preview = new_entry.content[:200] if new_entry.content else ''
+            if new_entry.content and len(new_entry.content) > 200:
+                content_preview += '...'
+
+            featured_data = {
+                'id': str(new_entry.id),
+                'title': new_entry.title,
+                'content_preview': content_preview,
+                'created_at': new_entry.created_at.isoformat(),
+                'word_count': new_entry.word_count,
+                'days_ago': days_ago
+            }
+
+        return Response({
+            'featured_entry': featured_data
         })
 
 

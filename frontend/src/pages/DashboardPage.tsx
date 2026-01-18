@@ -1,29 +1,23 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Sidebar } from '../components/layout/Sidebar';
 import { ContextPanel } from '../components/layout/ContextPanel';
 import { Card } from '../components/ui/Card';
 import { Spinner } from '../components/ui/Spinner';
 import { RecentEntries } from '../components/dashboard/RecentEntries';
-import { StatsPanel } from '../components/dashboard/StatsPanel';
+import { WritingPrompt } from '../components/dashboard/WritingPrompt';
+import { FeaturedEntry } from '../components/dashboard/FeaturedEntry';
+import { WeeklyStats } from '../components/dashboard/WeeklyStats';
 import { useDashboard } from '../hooks/useDashboard';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { data, isLoading, error } = useDashboard();
-  const [selectedMood, setSelectedMood] = useState<number | null>(null);
+  const { data, isLoading, error, refreshFeaturedEntry, isRefreshingFeatured } = useDashboard();
 
   const handleNewEntry = () => {
     navigate('/write');
-  };
-
-  const handleMoodSelect = (mood: number) => {
-    setSelectedMood(mood);
-    // In a real app, this would create/update today's entry with the mood
-    // For now, just store it in local state
   };
 
   if (isLoading) {
@@ -74,11 +68,9 @@ export function DashboardPage() {
       sidebar={<Sidebar />}
       contextPanel={
         <ContextPanel>
-          <StatsPanel
-            stats={data.stats}
-            recentEntries={data.recentEntries}
-            onMoodSelect={handleMoodSelect}
-            selectedMood={selectedMood}
+          <WeeklyStats
+            weeklyStats={data.weeklyStats}
+            currentStreak={data.stats.currentStreak}
           />
         </ContextPanel>
       }
@@ -109,6 +101,18 @@ export function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Writing Prompt */}
+        <WritingPrompt onStartWriting={handleNewEntry} />
+
+        {/* Featured Entry (only shown if entry exists) */}
+        {data.featuredEntry && (
+          <FeaturedEntry
+            entry={data.featuredEntry}
+            onRefresh={refreshFeaturedEntry}
+            isRefreshing={isRefreshingFeatured}
+          />
+        )}
 
         {/* Quote or Recent Entries */}
         {!data.hasEntries && data.quote ? (
