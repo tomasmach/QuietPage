@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { SEO } from '@/components/SEO';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -33,6 +34,11 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ backgroundColor: 'var(--color-bg-app)' }}>
+      <SEO
+        title="Log In"
+        description="Log in to your QuietPage account to continue your mindful writing journey."
+        canonicalUrl="/login"
+      />
       {/* Fixed toggles in corners */}
       <LanguageToggle />
       <ThemeToggle />

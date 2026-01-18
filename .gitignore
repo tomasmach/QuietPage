@@ -1,6 +1,7 @@
 # Project-specific files
 todo
 .claude/
+.DS_Store
 .playwright-mcp/
 
 # Frontend

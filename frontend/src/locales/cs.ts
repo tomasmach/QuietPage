@@ -84,6 +84,118 @@ export interface Translations {
       encrypted: string;
       private: string;
     };
+    storytelling: {
+      headline: string;
+      p1: string;
+      p2: string;
+      p3: string;
+    };
+    howItWorks: {
+      title: string;
+      step1: {
+        title: string;
+        description: string;
+      };
+      step2: {
+        title: string;
+        description: string;
+      };
+      step3: {
+        title: string;
+        description: string;
+      };
+    };
+    faq: {
+      title: string;
+      q1: {
+        question: string;
+        answer: string;
+      };
+      q2: {
+        question: string;
+        answer: string;
+      };
+      q3: {
+        question: string;
+        answer: string;
+      };
+      q4: {
+        question: string;
+        answer: string;
+      };
+    };
+  };
+  footer: {
+    links: string;
+    contact: string;
+    email: string;
+    termsOfService: string;
+    privacyPolicy: string;
+    copyright: string;
+  };
+  legal: {
+    termsOfService: {
+      title: string;
+      seoTitle: string;
+      seoDescription: string;
+      intro: {
+        title: string;
+        content: string;
+      };
+      service: {
+        title: string;
+        content: string;
+      };
+      accounts: {
+        title: string;
+        content: string;
+      };
+      content: {
+        title: string;
+        content: string;
+      };
+      limitations: {
+        title: string;
+        content: string;
+      };
+      changes: {
+        title: string;
+        content: string;
+      };
+      contact: {
+        title: string;
+        content: string;
+      };
+    };
+    privacyPolicy: {
+      title: string;
+      seoTitle: string;
+      seoDescription: string;
+      intro: {
+        title: string;
+        content: string;
+      };
+      dataCollection: {
+        title: string;
+        content: string;
+      };
+      encryption: {
+        title: string;
+        content: string;
+      };
+      cookies: {
+        title: string;
+        content: string;
+      };
+      rights: {
+        title: string;
+        content: string;
+      };
+      contact: {
+        title: string;
+        content: string;
+      };
+    };
   };
   themes: {
     paper: string;
@@ -515,6 +627,118 @@ export const cs: Translations = {
       encrypted: 'Šifrováno',
       private: '100% Soukromé',
     },
+    storytelling: {
+      headline: 'Svět se zrychluje. Ty nemusíš.',
+      p1: 'Celý den reaguješ na ostatní - emaily, zprávy, požadavky. Hlava plná nevyřčených myšlenek, které nemají kam jít. Kdy sis naposledy udělal 15 minut jen pro sebe?',
+      p2: 'QuietPage je tvůj denní rituál. Ráno před chaosem, odpoledne na reset, nebo večer pro uzavření dne - ty si vybereš. Žádné lajky, žádní sledující, žádné soudy. Jen ty a prázdná stránka.',
+      p3: 'Psaní ti pomůže zpracovat myšlenky, které by jinak zůstaly zamotané v hlavě. Není to deník. Není to blog. Je to nástroj pro tvou mentální hygienu.',
+    },
+    howItWorks: {
+      title: 'Jak to funguje',
+      step1: {
+        title: 'Piš',
+        description: 'Otevři QuietPage a začni psát. Nastav si vlastní denní cíl - kolik slov ti vyhovuje. Žádná pravidla, žádný formát.',
+      },
+      step2: {
+        title: 'Sleduj',
+        description: 'Aplikace zaznamenává tvé nálady, série a statistiky. Vidíš, jak se ti daří a kdy jsi nejproduktivnější.',
+      },
+      step3: {
+        title: 'Růst',
+        description: 'Časem objevíš vzorce ve svém myšlení. Psaní se stane návykem, který ti pomáhá být víc v klidu.',
+      },
+    },
+    faq: {
+      title: 'Časté otázky',
+      q1: {
+        question: 'Je QuietPage zdarma?',
+        answer: 'Ano, QuietPage je zdarma. Stačí se zaregistrovat a můžeš začít psát.',
+      },
+      q2: {
+        question: 'Jsou moje zápisky v bezpečí?',
+        answer: 'Absolutně. Všechny zápisky jsou šifrovány. Nikdo kromě tebe je nemůže přečíst - ani my.',
+      },
+      q3: {
+        question: 'Proč psát každý den?',
+        answer: 'Pravidelnost vytváří návyk. Série (streak) tě motivuje pokračovat, i když se ti nechce.',
+      },
+      q4: {
+        question: 'Co když den vynechám?',
+        answer: 'Nic se neděje. Série se přeruší, ale můžeš začít novou. Žádné tresty, žádný tlak.',
+      },
+    },
+  },
+  footer: {
+    links: 'Odkazy',
+    contact: 'Kontakt',
+    email: 'tomades1@gmail.com',
+    termsOfService: 'Obchodní podmínky',
+    privacyPolicy: 'Ochrana soukromí',
+    copyright: '© {year} Tomáš Mach. Všechna práva vyhrazena.',
+  },
+  legal: {
+    termsOfService: {
+      title: 'Obchodní podmínky',
+      seoTitle: 'Obchodní podmínky - QuietPage',
+      seoDescription: 'Přečtěte si obchodní podmínky pro QuietPage, vaši soukromou aplikaci pro mindful psaní a deníkování.',
+      intro: {
+        title: 'Provozovatel služby',
+        content: 'Tyto obchodní podmínky upravují používání služby QuietPage. Provozovatelem služby je Tomáš Mach, se sídlem Záryby 360, 27713, IČO: 22006401. Používáním služby souhlasíte s těmito podmínkami.',
+      },
+      service: {
+        title: 'Popis služby',
+        content: 'QuietPage je webová aplikace pro osobní psaní a reflexi. Služba umožňuje uživatelům vytvářet šifrované záznamy, sledovat své psací návyky a emocionální stav. Služba je poskytována "tak jak je" bez záruky dostupnosti.',
+      },
+      accounts: {
+        title: 'Uživatelské účty',
+        content: 'Pro používání služby je nutná registrace. Jste odpovědní za zachování důvěrnosti svého hesla a za veškerou aktivitu pod svým účtem. Zavazujete se poskytovat pravdivé informace a nepředávat přístup k účtu třetím osobám.',
+      },
+      content: {
+        title: 'Uživatelský obsah',
+        content: 'Veškerý obsah, který vytvoříte, zůstává vaším majetkem. Váš obsah je šifrován a my k němu nemáme přístup. Jste odpovědní za obsah, který vytváříte, a zavazujete se nepoužívat službu k nezákonným účelům.',
+      },
+      limitations: {
+        title: 'Omezení odpovědnosti',
+        content: 'Služba je poskytována bez jakýchkoli záruk. Neneseme odpovědnost za ztrátu dat, přerušení služby nebo jakékoli škody vzniklé používáním služby. Maximální odpovědnost je omezena na částku zaplacenou za službu.',
+      },
+      changes: {
+        title: 'Změny podmínek',
+        content: 'Vyhrazujeme si právo tyto podmínky kdykoli změnit. O významných změnách vás budeme informovat e-mailem nebo oznámením v aplikaci. Pokračováním v používání služby po změně podmínek s nimi souhlasíte.',
+      },
+      contact: {
+        title: 'Kontakt',
+        content: 'Pro dotazy ohledně těchto podmínek nás kontaktujte na tomades1@gmail.com.',
+      },
+    },
+    privacyPolicy: {
+      title: 'Ochrana soukromí',
+      seoTitle: 'Ochrana soukromí - QuietPage',
+      seoDescription: 'Zjistěte, jak QuietPage chrání vaše soukromí. Vaše deníkové záznamy jsou šifrovány a vaše data nikdy nesdílíme.',
+      intro: {
+        title: 'Závazek k ochraně soukromí',
+        content: 'Vaše soukromí bereme vážně. Tyto zásady popisují, jaké údaje shromažďujeme, jak je používáme a jak je chráníme. Zavazujeme se zpracovávat vaše osobní údaje v souladu s GDPR a dalšími platnými právními předpisy.',
+      },
+      dataCollection: {
+        title: 'Shromažďované údaje',
+        content: 'Shromažďujeme pouze údaje nezbytné pro provoz služby: e-mailovou adresu pro přihlášení, vaše šifrované záznamy a základní údaje o používání (čas přihlášení, nastavení). Neshromažďujeme citlivé osobní údaje nad rámec toho, co nám sami poskytnete.',
+      },
+      encryption: {
+        title: 'Šifrování',
+        content: 'Vaše záznamy jsou šifrovány pomocí Fernet (AES-128-CBC s HMAC-SHA256). To znamená, že obsah vašich zápisků nemůžeme číst ani my jako provozovatel. Šifrovací klíč je odvozen způsobem, který zajišťuje, že pouze vy máte přístup ke svému obsahu.',
+      },
+      cookies: {
+        title: 'Cookies',
+        content: 'Používáme minimální množství cookies nezbytných pro fungování služby. Tyto cookies slouží k udržení vašeho přihlášení a zapamatování vašich preferencí (jazyk, motiv). Nepoužíváme sledovací cookies třetích stran ani analytické nástroje.',
+      },
+      rights: {
+        title: 'Vaše práva',
+        content: 'Podle GDPR máte právo na přístup ke svým údajům, jejich opravu, výmaz a přenositelnost. Můžete kdykoli požádat o export všech svých dat nebo o úplné smazání účtu. Pro uplatnění těchto práv nás kontaktujte e-mailem.',
+      },
+      contact: {
+        title: 'Kontakt',
+        content: 'Pro dotazy ohledně ochrany soukromí nebo uplatnění vašich práv nás kontaktujte na tomades1@gmail.com.',
+      },
+    },
   },
   themes: {
     paper: 'Paper (Světlý)',
@@ -674,7 +898,7 @@ export const cs: Translations = {
       emailNotifications: 'E-mailová oznámení',
       emailNotificationsHint: 'Dostávat e-maily o novinkách a připomínkách',
       dataPrivacy: 'Ochrana dat',
-      encryptionInfo: 'Všechny tvé záznamy jsou šifrovány pomocí AES-256 šifrování.',
+      encryptionInfo: 'Všechny tvé záznamy jsou šifrovány pomocí Fernet (AES-128-CBC s HMAC-SHA256).',
       dataUsageInfo: 'Tvá data nikdy nesdílíme s třetími stranami.',
     },
     security: {
