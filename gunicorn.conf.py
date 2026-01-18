@@ -27,7 +27,8 @@ limit_request_fields = 100
 limit_request_field_size = 8190
 
 # Application loading
-preload_app = False
+# Preload app to reduce worker startup time and memory usage (copy-on-write)
+preload_app = True
 reload = os.environ.get("DEBUG", "False").lower() == "true"
 
 # Logging

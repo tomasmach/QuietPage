@@ -172,3 +172,8 @@ CONTENT_SECURITY_POLICY = {
 CORS_ALLOW_ALL_ORIGINS = False  # Never allow all origins in production
 CORS_ALLOW_CREDENTIALS = True   # Allow cookies/credentials for same-origin requests
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+
+# Session Configuration - Use Redis for better performance
+# Database sessions with SESSION_SAVE_EVERY_REQUEST cause DB write on every request
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'  # Uses Redis cache defined in base.py

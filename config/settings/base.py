@@ -232,6 +232,7 @@ AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by user+IP combin
 AXES_RESET_ON_SUCCESS = True  # Reset failure counter on successful login
 AXES_LOCKOUT_TEMPLATE = None  # Use default lockout response (403 Forbidden)
 AXES_VERBOSE = True  # Log lockout events for debugging
+AXES_HANDLER = 'axes.handlers.cache.AxesCacheHandler'  # Use Redis cache instead of DB
 
 # Django REST Framework Configuration
 REST_FRAMEWORK = {
