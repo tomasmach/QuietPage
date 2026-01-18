@@ -63,6 +63,22 @@ class ApiClient {
           this.csrfReadyResolve();
           return;
         }
+
+        // Treat non-OK responses as failures
+        const responseBody = await response.text().catch(() => '');
+        const errorMessage = responseBody || response.statusText || 'Unknown error';
+        lastError = new Error(
+          `HTTP ${response.status}: ${errorMessage}`
+        );
+
+        if (import.meta.env.DEV) {
+          console.error(`CSRF token fetch attempt ${attempt + 1} failed:`, lastError);
+        }
+
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 100));
+        }
       } catch (error) {
         lastError = error as Error;
         if (import.meta.env.DEV) {

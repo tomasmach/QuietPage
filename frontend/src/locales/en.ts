@@ -233,6 +233,7 @@ export const en: Translations = {
     viewAll: 'View all',
     longestStreak: 'Longest',
     totalEntries: 'Total entries',
+    errorLoading: 'Error loading dashboard',
     writingPrompt: {
       title: "Today's inspiration",
       cta: 'Start writing',

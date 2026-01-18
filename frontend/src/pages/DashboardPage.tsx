@@ -36,7 +36,7 @@ export function DashboardPage() {
         <div className="p-8">
           <Card>
             <p className="text-error">
-              Chyba pri nacitani dashboardu: {error?.message || 'Neznama chyba'}
+              {t('dashboard.errorLoading')}: {error?.message || t('toast.unknownError')}
             </p>
           </Card>
         </div>

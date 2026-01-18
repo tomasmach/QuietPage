@@ -38,7 +38,9 @@ export function EntryViewPage() {
       // Only update if entry has changed to avoid cascading renders
       setContent((prev) => (prev !== entry.content ? entry.content : prev));
       setMoodRating((prev) => (prev !== entry.mood_rating ? entry.mood_rating : prev));
-      setTags((prev) => (JSON.stringify(prev) !== JSON.stringify(entry.tags) ? entry.tags : prev));
+      // Normalize tags to array (treat null/undefined/non-array as empty array)
+      const normalizedTags = Array.isArray(entry.tags) ? entry.tags : [];
+      setTags((prev) => (JSON.stringify(prev) !== JSON.stringify(normalizedTags) ? normalizedTags : prev));
     }
   }, [entry]);
 

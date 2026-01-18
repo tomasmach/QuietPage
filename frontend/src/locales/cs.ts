@@ -231,6 +231,7 @@ export interface Translations {
     viewAll: string;
     longestStreak: string;
     totalEntries: string;
+    errorLoading: string;
     writingPrompt: {
       title: string;
       cta: string;
@@ -781,6 +782,7 @@ export const cs: Translations = {
     viewAll: 'Zobrazit vše',
     longestStreak: 'Nejdelší',
     totalEntries: 'Celkem záznamů',
+    errorLoading: 'Chyba při načítání dashboardu',
     writingPrompt: {
       title: 'Dnešní inspirace',
       cta: 'Začít psát',

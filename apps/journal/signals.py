@@ -129,7 +129,7 @@ def _invalidate_statistics_cache(user):
             try:
                 cache.delete(cache_key)
                 invalidated_count += 1
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - cache backends raise varied exceptions
                 logger.warning(f"Failed to invalidate cache key {cache_key}: {e}")
     
     if old_last_entry_date != new_last_entry_date:

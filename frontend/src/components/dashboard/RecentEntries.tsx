@@ -83,7 +83,7 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
                       {entry.content_preview}
                     </p>
 
-                    <div className={cn("text-xs text-text-muted mt-2 theme-aware")}>{entry.word_count} slov</div>
+                    <div className={cn("text-xs text-text-muted mt-2 theme-aware")}>{entry.word_count} {t('meta.wordsSuffix')}</div>
                   </div>
 
                   {/* Mood indicator */}

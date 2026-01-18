@@ -22,7 +22,7 @@ const MOOD_ICONS = {
  * Card component for displaying an entry in the archive list
  */
 export function EntryCard({ entry }: EntryCardProps) {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const locale = language === 'en' ? 'en-US' : 'cs-CZ';
 
   const date = new Date(entry.created_at);
@@ -76,7 +76,7 @@ export function EntryCard({ entry }: EntryCardProps) {
 
           {/* Footer with word count and tags */}
           <div className={cn("flex items-center justify-between pt-2 border-t border-border theme-aware")}>
-            <div className={cn("text-xs text-text-muted theme-aware")}>{entry.word_count} slov</div>
+            <div className={cn("text-xs text-text-muted theme-aware")}>{entry.word_count} {t('meta.wordsSuffix')}</div>
             {entry.tags.length > 0 && (
               <div className="flex gap-1 flex-wrap">
                 {entry.tags.slice(0, 3).map((tag) => (

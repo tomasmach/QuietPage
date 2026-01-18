@@ -545,6 +545,7 @@ class TestGetRandomQuote:
 
 @pytest.mark.unit
 @pytest.mark.utils
+@pytest.mark.streak
 class TestGetTodayDateRange:
     """Test get_today_date_range function."""
 

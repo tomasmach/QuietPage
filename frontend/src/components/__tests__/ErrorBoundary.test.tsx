@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { useState } from 'react';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 // Component that throws an error when shouldThrow is true
@@ -92,34 +93,51 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('Custom error message')).toBeInTheDocument();
   });
 
-  it('calls reset handler when try again is clicked', () => {
-    const { unmount } = render(
-      <ErrorBoundary>
-        <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
-    );
+  it('resets error state when try again is clicked', () => {
+    // Track if child should throw an error
+    function TestComponent() {
+      const [shouldThrow, setShouldThrow] = useState(true);
+      const [key, setKey] = useState(0);
+
+      // When the user fixes the error source and resets the boundary
+      const handleFix = () => {
+        setShouldThrow(false);
+        setKey(k => k + 1);  // Change key to reset ErrorBoundary
+      };
+
+      return (
+        <div>
+          <button onClick={handleFix} data-testid="fix-button">
+            Fix error
+          </button>
+          <ErrorBoundary key={key}>
+            <ThrowError shouldThrow={shouldThrow} />
+          </ErrorBoundary>
+        </div>
+      );
+    }
+
+    render(<TestComponent />);
 
     // Verify error is shown
     expect(screen.getByText('Něco se pokazilo')).toBeInTheDocument();
 
-    // Get the try again button
+    // Get the try again button in the error boundary
     const tryAgainButton = screen.getByRole('button', { name: /Zkusit znovu/i });
     expect(tryAgainButton).toBeInTheDocument();
 
-    // Click try again - this should reset the error boundary internal state
+    // Click try again - this resets the ErrorBoundary's internal state
     fireEvent.click(tryAgainButton);
 
-    // Clean up
-    unmount();
+    // The error is shown again because the child still throws
+    // (this is expected behavior - the error boundary reset its state but child still has the issue)
+    expect(screen.getByText('Něco se pokazilo')).toBeInTheDocument();
 
-    // Now render with a working component
-    render(
-      <ErrorBoundary>
-        <ThrowError shouldThrow={false} />
-      </ErrorBoundary>
-    );
+    // Now fix the actual error by clicking fix button (changes shouldThrow AND resets ErrorBoundary with new key)
+    const fixButton = screen.getByTestId('fix-button');
+    fireEvent.click(fixButton);
 
-    // Component should render normally
+    // Now the ErrorBoundary should successfully show the working component
     expect(screen.getByText('No error')).toBeInTheDocument();
   });
 

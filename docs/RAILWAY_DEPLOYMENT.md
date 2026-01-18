@@ -4,7 +4,7 @@ This guide explains how to deploy QuietPage to Railway.app.
 
 ## Prerequisites
 
-- Railway account (https://railway.app)
+- Railway account ([Railway](https://railway.app))
 - GitHub repository connected to Railway
 - Railway CLI (optional, for local testing)
 
@@ -263,7 +263,7 @@ WEB_CONCURRENCY=8  # For larger instances
 ```
 
 **Recommended worker formula:**
-```
+```text
 workers = (2 x CPU cores) + 1
 ```
 

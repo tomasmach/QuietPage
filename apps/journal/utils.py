@@ -205,12 +205,16 @@ def get_random_quote():
 def get_today_date_range(user):
     """
     Get start and end datetime for today in user's timezone.
+    Handles invalid timezones gracefully with UTC fallback.
 
     Returns tuple of (today_start, today_end) as timezone-aware datetimes.
     """
-    from zoneinfo import ZoneInfo
+    try:
+        user_tz = pytz.timezone(str(user.timezone))
+    except pytz.UnknownTimeZoneError:
+        logger.error(f"Invalid timezone: {user.timezone}, using UTC fallback")
+        user_tz = pytz.UTC
 
-    user_tz = ZoneInfo(str(user.timezone))
     now = timezone.now().astimezone(user_tz)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
