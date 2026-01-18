@@ -202,6 +202,42 @@ def get_random_quote():
     return random.choice(INSPIRATIONAL_QUOTES)
 
 
+def get_today_date_range(user):
+    """
+    Get start and end datetime for today in user's timezone.
+
+    Returns tuple of (today_start, today_end) as timezone-aware datetimes.
+    """
+    from zoneinfo import ZoneInfo
+
+    user_tz = ZoneInfo(str(user.timezone))
+    now = timezone.now().astimezone(user_tz)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return today_start, today_end
+
+
+def parse_tags(tags_data):
+    """
+    Parse tags from string or list format.
+
+    Args:
+        tags_data: Either a comma-separated string or a list of tags
+
+    Returns:
+        List of tag strings, or None if tags_data is None
+    """
+    if tags_data is None:
+        return None
+
+    if isinstance(tags_data, str):
+        return [tag.strip() for tag in tags_data.split(',') if tag.strip()]
+    elif isinstance(tags_data, list):
+        return [str(tag).strip() for tag in tags_data if str(tag).strip()]
+
+    return []
+
+
 # ============================================
 # DATA EXPORT UTILITIES
 # ============================================

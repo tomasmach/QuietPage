@@ -21,7 +21,12 @@ from django.core.cache import cache
 from django.utils import timezone
 
 from apps.journal.models import Entry, FeaturedEntry
-from apps.journal.utils import get_random_quote, get_user_local_date
+from apps.journal.utils import (
+    get_random_quote,
+    get_user_local_date,
+    get_today_date_range,
+    parse_tags,
+)
 from apps.api.serializers import (
     EntrySerializer,
     EntryListSerializer,
@@ -29,21 +34,6 @@ from apps.api.serializers import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-# Inspirational quotes for dashboard
-QUOTES = [
-    {"text": "Psaní je snadné. Stačí sednout a otevřít žílu.", "author": "Red Smith"},
-    {"text": "Neexistuje nic takového jako dobré psaní, pouze dobré přepisování.", "author": "Robert Graves"},
-    {"text": "První drafty jsou vždy špatné. První verze čehokoliv jsou špatné.", "author": "Ernest Hemingway"},
-    {"text": "Chceš-li být spisovatelem, musíš dělat dvě věci: hodně číst a hodně psát.", "author": "Stephen King"},
-    {"text": "Nejlepší čas na psaní je teď.", "author": "Anaïs Nin"},
-    {"text": "Píšu, abych zjistil, co si myslím.", "author": "Joan Didion"},
-    {"text": "Začni psát, bez ohledu na to, co. Voda neteče, dokud neotočíš kohoutek.", "author": "Louis L'Amour"},
-    {"text": "Psaní je prozkoumávání. Začínáš od ničeho a učíš se cestou.", "author": "E.L. Doctorow"},
-    {"text": "Nemusíš být skvělý, abys mohl začít, ale musíš začít, abys mohl být skvělý.", "author": "Zig Ziglar"},
-    {"text": "Tvoje myšlenky si zaslouží být vyslyšeny, i kdyby to bylo jen tebou samotným.", "author": None},
-]
 
 
 class EntryViewSet(viewsets.ModelViewSet):
@@ -397,18 +387,10 @@ class TodayEntryView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
-    def get_today_date_range(self, user):
-        """Vrátí start/end datetime pro dnešek v user timezone."""
-        user_tz = ZoneInfo(str(user.timezone))
-        now = timezone.now().astimezone(user_tz)
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-        return today_start, today_end
-
     def get(self, request):
         """Vrátí dnešní záznam pokud existuje, jinak 404."""
         user = request.user
-        today_start, today_end = self.get_today_date_range(user)
+        today_start, today_end = get_today_date_range(user)
 
         try:
             entry = Entry.objects.get(
@@ -446,7 +428,7 @@ class TodayEntryView(APIView):
         # Povolit prázdný content - entry se vytvoří, ale streak se neaktualizuje
         # (to je ošetřeno v signals.py)
 
-        today_start, today_end = self.get_today_date_range(user)
+        today_start, today_end = get_today_date_range(user)
 
         with transaction.atomic():
             entry = Entry.objects.filter(
@@ -463,14 +445,8 @@ class TodayEntryView(APIView):
                 entry.save()
 
                 # Update tagů
-                tags_data = request.data.get('tags', None)
-                if tags_data is not None:
-                    if isinstance(tags_data, str):
-                        tags_list = [tag.strip() for tag in tags_data.split(',') if tag.strip()]
-                    elif isinstance(tags_data, list):
-                        tags_list = [str(tag).strip() for tag in tags_data if str(tag).strip()]
-                    else:
-                        tags_list = []
+                tags_list = parse_tags(request.data.get('tags', None))
+                if tags_list is not None:
                     entry.tags.set(tags_list)
 
                 serializer = EntrySerializer(entry, context={'request': request})
@@ -485,14 +461,8 @@ class TodayEntryView(APIView):
                 )
 
                 # Přidání tagů
-                tags_data = request.data.get('tags', None)
-                if tags_data is not None:
-                    if isinstance(tags_data, str):
-                        tags_list = [tag.strip() for tag in tags_data.split(',') if tag.strip()]
-                    elif isinstance(tags_data, list):
-                        tags_list = [str(tag).strip() for tag in tags_data if str(tag).strip()]
-                    else:
-                        tags_list = []
+                tags_list = parse_tags(request.data.get('tags', None))
+                if tags_list is not None:
                     entry.tags.set(tags_list)
 
                 serializer = EntrySerializer(entry, context={'request': request})
@@ -521,14 +491,6 @@ class AutosaveView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
-    def get_today_date_range(self, user):
-        """Return start/end datetime for today in user's timezone."""
-        user_tz = ZoneInfo(str(user.timezone))
-        now = timezone.now().astimezone(user_tz)
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-        return today_start, today_end
-
     def post(self, request):
         """
         Handle autosave request.
@@ -540,7 +502,7 @@ class AutosaveView(APIView):
             title = (request.data.get('title') or '').strip()
             content = (request.data.get('content') or '').strip()
             mood_rating = request.data.get('mood_rating', None)
-            tags_data = request.data.get('tags', None)
+            tags_list = parse_tags(request.data.get('tags', None))
             entry_id = request.data.get('entry_id', None)
 
             # Content is required for saving
@@ -564,14 +526,6 @@ class AutosaveView(APIView):
                         'status': 'error',
                         'message': 'Neplatné hodnocení nálady'
                     }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Process tags - handle both comma-separated string and list
-            tags_list = []
-            if tags_data is not None:
-                if isinstance(tags_data, str):
-                    tags_list = [tag.strip() for tag in tags_data.split(',') if tag.strip()]
-                elif isinstance(tags_data, list):
-                    tags_list = [str(tag).strip() for tag in tags_data if str(tag).strip()]
 
             # Atomic transaction to prevent data loss from concurrent updates
             with transaction.atomic():
@@ -599,7 +553,7 @@ class AutosaveView(APIView):
                         entry.save()
 
                         # Update tags
-                        if tags_data is not None:
+                        if tags_list is not None:
                             entry.tags.set(tags_list)
 
                         return Response({
@@ -623,7 +577,7 @@ class AutosaveView(APIView):
                     )
 
                     # Add tags if provided
-                    if tags_data is not None:
+                    if tags_list is not None:
                         entry.tags.set(tags_list)
 
                     return Response({

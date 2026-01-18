@@ -8,6 +8,13 @@ export const en: Translations = {
     archive: 'Archive',
     settings: 'Settings',
   },
+  archive: {
+    totalEntries: '{count} entries',
+    errorLoading: 'Error loading entries. Please try refreshing the page.',
+    page: 'Page {page}',
+    previous: '← Previous',
+    next: 'Next →',
+  },
   meta: {
     version: 'Version 0.9.1 Beta',
     wordsToday: 'Words Today',

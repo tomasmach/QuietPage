@@ -6,6 +6,13 @@ export interface Translations {
     archive: string;
     settings: string;
   };
+  archive: {
+    totalEntries: string;
+    errorLoading: string;
+    page: string;
+    previous: string;
+    next: string;
+  };
   meta: {
     version: string;
     wordsToday: string;
@@ -548,6 +555,13 @@ export const cs: Translations = {
     stats: 'Statistiky',
     archive: 'Archiv',
     settings: 'Nastavení',
+  },
+  archive: {
+    totalEntries: '{count} záznam',
+    errorLoading: 'Chyba při načítání záznamů. Zkuste obnovit stránku.',
+    page: 'Stránka {page}',
+    previous: '← Předchozí',
+    next: 'Další →',
   },
   meta: {
     version: 'Verze 0.9.1 Beta',

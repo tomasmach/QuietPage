@@ -17,6 +17,8 @@ from apps.journal.utils import (
     update_user_streak,
     recalculate_user_streak,
     get_random_quote,
+    get_today_date_range,
+    parse_tags,
     INSPIRATIONAL_QUOTES,
 )
 from apps.journal.tests.factories import EntryFactory
@@ -539,3 +541,146 @@ class TestGetRandomQuote:
             assert len(quote['text']) > 0
             # Author is None or string
             assert quote['author'] is None or isinstance(quote['author'], str)
+
+
+@pytest.mark.unit
+@pytest.mark.utils
+class TestGetTodayDateRange:
+    """Test get_today_date_range function."""
+
+    def test_returns_tuple(self):
+        """Test that function returns a tuple of two datetimes."""
+        user = UserFactory(timezone='Europe/Prague')
+
+        result = get_today_date_range(user)
+
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        assert isinstance(result[0], datetime)
+        assert isinstance(result[1], datetime)
+
+    def test_start_is_midnight(self):
+        """Test that start time is midnight in user's timezone."""
+        user = UserFactory(timezone='Europe/Prague')
+
+        today_start, _ = get_today_date_range(user)
+
+        assert today_start.hour == 0
+        assert today_start.minute == 0
+        assert today_start.second == 0
+        assert today_start.microsecond == 0
+
+    def test_end_is_before_midnight(self):
+        """Test that end time is 23:59:59.999999 in user's timezone."""
+        user = UserFactory(timezone='Europe/Prague')
+
+        _, today_end = get_today_date_range(user)
+
+        assert today_end.hour == 23
+        assert today_end.minute == 59
+        assert today_end.second == 59
+        assert today_end.microsecond == 999999
+
+    def test_respects_user_timezone(self):
+        """Test that range is calculated in user's timezone."""
+        user_prague = UserFactory(timezone='Europe/Prague')
+        user_ny = UserFactory(timezone='America/New_York')
+
+        prague_start, _ = get_today_date_range(user_prague)
+        ny_start, _ = get_today_date_range(user_ny)
+
+        # Both should be timezone-aware
+        assert prague_start.tzinfo is not None
+        assert ny_start.tzinfo is not None
+
+        # Times should be different (different timezones)
+        # Prague is typically 6 hours ahead of New York
+        # So if it's midnight in Prague, it's 6pm previous day in NY
+        time_diff = abs((prague_start - ny_start).total_seconds())
+        assert time_diff > 0  # Should be different
+
+    def test_same_date_in_user_timezone(self):
+        """Test that start and end represent the same date in user's timezone."""
+        user = UserFactory(timezone='Europe/Prague')
+
+        today_start, today_end = get_today_date_range(user)
+
+        # Convert to user timezone
+        from zoneinfo import ZoneInfo
+        user_tz = ZoneInfo(str(user.timezone))
+        start_local = today_start.astimezone(user_tz)
+        end_local = today_end.astimezone(user_tz)
+
+        # Should be the same date
+        assert start_local.date() == end_local.date()
+
+
+@pytest.mark.unit
+@pytest.mark.utils
+class TestParseTags:
+    """Test parse_tags function."""
+
+    def test_none_input(self):
+        """Test that None input returns None."""
+        result = parse_tags(None)
+        assert result is None
+
+    def test_empty_string(self):
+        """Test that empty string returns empty list."""
+        result = parse_tags('')
+        assert result == []
+
+    def test_single_tag_string(self):
+        """Test parsing single tag from string."""
+        result = parse_tags('work')
+        assert result == ['work']
+
+    def test_multiple_tags_string(self):
+        """Test parsing multiple tags from comma-separated string."""
+        result = parse_tags('work,personal,idea')
+        assert result == ['work', 'personal', 'idea']
+
+    def test_tags_with_spaces(self):
+        """Test that spaces around tags are stripped."""
+        result = parse_tags('  work  ,  personal  ,  idea  ')
+        assert result == ['work', 'personal', 'idea']
+
+    def test_empty_tags_filtered(self):
+        """Test that empty tags are filtered out."""
+        result = parse_tags('work,,personal,  ,idea')
+        assert result == ['work', 'personal', 'idea']
+
+    def test_list_input(self):
+        """Test parsing tags from list."""
+        result = parse_tags(['work', 'personal', 'idea'])
+        assert result == ['work', 'personal', 'idea']
+
+    def test_list_with_spaces(self):
+        """Test that spaces are stripped from list items."""
+        result = parse_tags(['  work  ', '  personal  ', '  idea  '])
+        assert result == ['work', 'personal', 'idea']
+
+    def test_list_with_empty_strings(self):
+        """Test that empty strings in list are filtered."""
+        result = parse_tags(['work', '', 'personal', '  ', 'idea'])
+        assert result == ['work', 'personal', 'idea']
+
+    def test_list_with_numbers(self):
+        """Test that numbers in list are converted to strings."""
+        result = parse_tags(['work', 123, 'idea'])
+        assert result == ['work', '123', 'idea']
+
+    def test_mixed_types_in_list(self):
+        """Test handling of mixed types in list."""
+        result = parse_tags(['work', 42, 'idea', True])
+        assert result == ['work', '42', 'idea', 'True']
+
+    def test_string_with_only_commas(self):
+        """Test string containing only commas."""
+        result = parse_tags(',,,')
+        assert result == []
+
+    def test_string_with_special_characters(self):
+        """Test tags with special characters are preserved."""
+        result = parse_tags('work-home,c++,#project')
+        assert result == ['work-home', 'c++', '#project']
