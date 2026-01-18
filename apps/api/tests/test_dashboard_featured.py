@@ -213,11 +213,17 @@ class TestDaysAgoTimezoneCalculation:
         assert response.status_code == 200
 
         featured = response.data['featured_entry']
-        if featured and featured['id'] == str(entry.id):
-            # Entry created at 2025-01-13 14:00 UTC = 2025-01-14 04:00 Kiritimati
-            # User's current time: 2025-01-16 02:00 Kiritimati
-            # days_ago should be 2 (2025-01-16 - 2025-01-14 = 2 days)
-            assert featured['days_ago'] == 2
+        assert featured is not None, "Featured entry should be returned with 10+ entries"
+
+        # Verify days_ago calculation is correct for the returned entry
+        from datetime import datetime
+        entry_created = datetime.fromisoformat(featured['created_at'].replace('Z', '+00:00'))
+        entry_date_kiritimati = entry_created.astimezone(ZoneInfo('Pacific/Kiritimati')).date()
+        current_date_kiritimati = timezone.now().astimezone(ZoneInfo('Pacific/Kiritimati')).date()
+        expected_days_ago = (current_date_kiritimati - entry_date_kiritimati).days
+
+        assert featured['days_ago'] == expected_days_ago, \
+            f"days_ago should be {expected_days_ago} but got {featured['days_ago']}"
 
     @override_settings(REST_FRAMEWORK={'DEFAULT_THROTTLE_CLASSES': [], 'DEFAULT_THROTTLE_RATES': {}})
     @freeze_time('2025-01-15 02:00:00', tz_offset=0)
@@ -247,11 +253,17 @@ class TestDaysAgoTimezoneCalculation:
         assert response.status_code == 200
 
         featured = response.data['featured_entry']
-        if featured and featured['id'] == str(entry.id):
-            # Entry created at 2025-01-14 01:00 UTC = 2025-01-13 13:00 UTC-12
-            # User's current time: 2025-01-14 14:00 UTC-12
-            # days_ago should be 1 (2025-01-14 - 2025-01-13 = 1 day)
-            assert featured['days_ago'] == 1
+        assert featured is not None, "Featured entry should be returned with 10+ entries"
+
+        # Verify days_ago calculation is correct for the returned entry
+        from datetime import datetime
+        entry_created = datetime.fromisoformat(featured['created_at'].replace('Z', '+00:00'))
+        entry_date_utc_minus_12 = entry_created.astimezone(ZoneInfo('Etc/GMT+12')).date()
+        current_date_utc_minus_12 = timezone.now().astimezone(ZoneInfo('Etc/GMT+12')).date()
+        expected_days_ago = (current_date_utc_minus_12 - entry_date_utc_minus_12).days
+
+        assert featured['days_ago'] == expected_days_ago, \
+            f"days_ago should be {expected_days_ago} but got {featured['days_ago']}"
 
     @override_settings(REST_FRAMEWORK={'DEFAULT_THROTTLE_CLASSES': [], 'DEFAULT_THROTTLE_RATES': {}})
     @freeze_time('2025-01-15 15:30:00', tz_offset=0)
@@ -280,11 +292,17 @@ class TestDaysAgoTimezoneCalculation:
         assert response.status_code == 200
 
         featured = response.data['featured_entry']
-        if featured and featured['id'] == str(entry.id):
-            # Entry created at 2025-01-14 15:00 UTC = 2025-01-15 00:00 Tokyo (yesterday in Tokyo time)
-            # User's current time: 2025-01-16 00:30 Tokyo
-            # days_ago should be 1 (2025-01-16 - 2025-01-15 = 1 day)
-            assert featured['days_ago'] == 1
+        assert featured is not None, "Featured entry should be returned with 10+ entries"
+
+        # Verify days_ago calculation is correct for the returned entry
+        from datetime import datetime
+        entry_created = datetime.fromisoformat(featured['created_at'].replace('Z', '+00:00'))
+        entry_date_tokyo = entry_created.astimezone(ZoneInfo('Asia/Tokyo')).date()
+        current_date_tokyo = timezone.now().astimezone(ZoneInfo('Asia/Tokyo')).date()
+        expected_days_ago = (current_date_tokyo - entry_date_tokyo).days
+
+        assert featured['days_ago'] == expected_days_ago, \
+            f"days_ago should be {expected_days_ago} but got {featured['days_ago']}"
 
     @override_settings(REST_FRAMEWORK={'DEFAULT_THROTTLE_CLASSES': [], 'DEFAULT_THROTTLE_RATES': {}})
     @freeze_time('2025-01-15 03:00:00', tz_offset=0)
