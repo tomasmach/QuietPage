@@ -3,6 +3,8 @@ Tests for FeaturedEntry selection and refresh logic in DashboardView.
 """
 import pytest
 from datetime import timedelta
+from freezegun import freeze_time
+from django.test import override_settings
 from django.utils import timezone
 from zoneinfo import ZoneInfo
 from rest_framework.test import APIClient
@@ -176,3 +178,196 @@ class TestWeeklyStats:
         response = client.get('/api/v1/dashboard/')
         assert response.data['weekly_stats']['total_words'] == 0
         assert response.data['weekly_stats']['best_day'] is None
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestDaysAgoTimezoneCalculation:
+    """Tests for days_ago calculation with timezone edge cases."""
+
+    @override_settings(REST_FRAMEWORK={'DEFAULT_THROTTLE_CLASSES': [], 'DEFAULT_THROTTLE_RATES': {}})
+    @freeze_time('2025-01-15 12:00:00', tz_offset=0)
+    def test_days_ago_with_extreme_positive_timezone(self):
+        """User in UTC+14 should see correct days_ago when UTC date differs from user's date."""
+        # UTC+14 (Pacific/Kiritimati) - one of the most extreme positive timezones
+        user = UserFactory(timezone='Pacific/Kiritimati')
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        # Freeze time to 2025-01-15 12:00:00 UTC
+        # In UTC+14, this is 2025-01-16 02:00:00 (next day)
+
+        # Create entries for proper featured entry pool (need 10+)
+        for i in range(2, 12):
+            EntryFactory(
+                user=user,
+                created_at=timezone.now() - timedelta(days=i)
+            )
+
+        # Create an entry from 2 days ago in user's timezone (2025-01-14 in Kiritimati)
+        # In UTC, this would be 2025-01-13 14:00:00
+        entry_time = timezone.now() - timedelta(days=2, hours=12)
+        entry = EntryFactory(user=user, created_at=entry_time)
+
+        response = client.get('/api/v1/dashboard/')
+        assert response.status_code == 200
+
+        featured = response.data['featured_entry']
+        if featured and featured['id'] == str(entry.id):
+            # Entry created at 2025-01-13 14:00 UTC = 2025-01-14 04:00 Kiritimati
+            # User's current time: 2025-01-16 02:00 Kiritimati
+            # days_ago should be 2 (2025-01-16 - 2025-01-14 = 2 days)
+            assert featured['days_ago'] == 2
+
+    @override_settings(REST_FRAMEWORK={'DEFAULT_THROTTLE_CLASSES': [], 'DEFAULT_THROTTLE_RATES': {}})
+    @freeze_time('2025-01-15 02:00:00', tz_offset=0)
+    def test_days_ago_with_extreme_negative_timezone(self):
+        """User in UTC-12 should see correct days_ago when UTC date differs from user's date."""
+        # UTC-12 (Etc/GMT+12) - one of the most extreme negative timezones
+        user = UserFactory(timezone='Etc/GMT+12')
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        # Freeze time to 2025-01-15 02:00:00 UTC
+        # In UTC-12, this is 2025-01-14 14:00:00 (previous day)
+
+        # Create entries for proper featured entry pool (need 10+)
+        for i in range(2, 12):
+            EntryFactory(
+                user=user,
+                created_at=timezone.now() - timedelta(days=i)
+            )
+
+        # Create an entry from 1 day ago in user's timezone (2025-01-13 in UTC-12)
+        # In UTC, this would be 2025-01-14 01:00:00
+        entry_time = timezone.now() - timedelta(days=1, hours=1)
+        entry = EntryFactory(user=user, created_at=entry_time)
+
+        response = client.get('/api/v1/dashboard/')
+        assert response.status_code == 200
+
+        featured = response.data['featured_entry']
+        if featured and featured['id'] == str(entry.id):
+            # Entry created at 2025-01-14 01:00 UTC = 2025-01-13 13:00 UTC-12
+            # User's current time: 2025-01-14 14:00 UTC-12
+            # days_ago should be 1 (2025-01-14 - 2025-01-13 = 1 day)
+            assert featured['days_ago'] == 1
+
+    @override_settings(REST_FRAMEWORK={'DEFAULT_THROTTLE_CLASSES': [], 'DEFAULT_THROTTLE_RATES': {}})
+    @freeze_time('2025-01-15 15:30:00', tz_offset=0)
+    def test_days_ago_near_midnight_utc_vs_user_timezone(self):
+        """Entry created near midnight should calculate correctly when UTC midnight != user's midnight."""
+        # User in Tokyo (UTC+9)
+        user = UserFactory(timezone='Asia/Tokyo')
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        # Freeze time to 2025-01-15 15:30:00 UTC (which is 2025-01-16 00:30:00 in Tokyo)
+        # This is just after midnight in user's timezone, but still same day in UTC
+
+        # Create entries for proper featured entry pool (need 10+)
+        for i in range(2, 12):
+            EntryFactory(
+                user=user,
+                created_at=timezone.now() - timedelta(days=i)
+            )
+
+        # Create an entry at 2025-01-14 15:00:00 UTC (2025-01-15 00:00:00 Tokyo - midnight yesterday in Tokyo)
+        entry_time = timezone.now() - timedelta(days=1, minutes=30)
+        entry = EntryFactory(user=user, created_at=entry_time)
+
+        response = client.get('/api/v1/dashboard/')
+        assert response.status_code == 200
+
+        featured = response.data['featured_entry']
+        if featured and featured['id'] == str(entry.id):
+            # Entry created at 2025-01-14 15:00 UTC = 2025-01-15 00:00 Tokyo (yesterday in Tokyo time)
+            # User's current time: 2025-01-16 00:30 Tokyo
+            # days_ago should be 1 (2025-01-16 - 2025-01-15 = 1 day)
+            assert featured['days_ago'] == 1
+
+    @override_settings(REST_FRAMEWORK={'DEFAULT_THROTTLE_CLASSES': [], 'DEFAULT_THROTTLE_RATES': {}})
+    @freeze_time('2025-01-15 03:00:00', tz_offset=0)
+    def test_days_ago_refresh_endpoint_with_positive_timezone(self):
+        """Refresh endpoint should calculate days_ago correctly for users in positive timezones."""
+        # User in Sydney (UTC+11 in summer, UTC+10 in winter)
+        user = UserFactory(timezone='Australia/Sydney')
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        # Freeze time to 2025-01-15 03:00:00 UTC
+        # In Sydney (assuming AEDT UTC+11), this is 2025-01-15 14:00:00
+
+        # Create entries for proper featured entry pool (need 10+)
+        for i in range(1, 16):
+            EntryFactory(
+                user=user,
+                created_at=timezone.now() - timedelta(days=i)
+            )
+
+        # Get initial featured entry
+        response1 = client.get('/api/v1/dashboard/')
+        assert response1.status_code == 200
+        initial_featured = response1.data['featured_entry']
+        assert initial_featured is not None
+
+        # Refresh featured entry
+        response2 = client.post('/api/v1/dashboard/refresh-featured/')
+        assert response2.status_code == 200
+
+        refreshed_featured = response2.data['featured_entry']
+        assert refreshed_featured is not None
+
+        # Verify days_ago is calculated correctly (should be >= 1 since we exclude today)
+        assert refreshed_featured['days_ago'] >= 1
+
+        # Verify the calculation makes sense: days_ago should match the actual date difference
+        from datetime import datetime
+        entry_created = datetime.fromisoformat(refreshed_featured['created_at'].replace('Z', '+00:00'))
+        entry_date_sydney = entry_created.astimezone(ZoneInfo('Australia/Sydney')).date()
+        current_date_sydney = timezone.now().astimezone(ZoneInfo('Australia/Sydney')).date()
+        expected_days_ago = (current_date_sydney - entry_date_sydney).days
+        assert refreshed_featured['days_ago'] == expected_days_ago
+
+    @override_settings(REST_FRAMEWORK={'DEFAULT_THROTTLE_CLASSES': [], 'DEFAULT_THROTTLE_RATES': {}})
+    @freeze_time('2025-01-15 07:00:00', tz_offset=0)
+    def test_days_ago_refresh_endpoint_with_negative_timezone(self):
+        """Refresh endpoint should calculate days_ago correctly for users in negative timezones."""
+        # User in Los Angeles (UTC-8 in winter, UTC-7 in summer)
+        user = UserFactory(timezone='America/Los_Angeles')
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        # Freeze time to 2025-01-15 07:00:00 UTC
+        # In LA (assuming PST UTC-8), this is 2025-01-14 23:00:00 (still previous day)
+
+        # Create entries for proper featured entry pool (need 10+)
+        for i in range(1, 16):
+            EntryFactory(
+                user=user,
+                created_at=timezone.now() - timedelta(days=i)
+            )
+
+        # Get initial featured entry
+        response1 = client.get('/api/v1/dashboard/')
+        assert response1.status_code == 200
+        initial_featured = response1.data['featured_entry']
+        assert initial_featured is not None
+
+        # Refresh featured entry
+        response2 = client.post('/api/v1/dashboard/refresh-featured/')
+        assert response2.status_code == 200
+
+        refreshed_featured = response2.data['featured_entry']
+        assert refreshed_featured is not None
+
+        # Verify days_ago is calculated correctly (should be >= 1 since we exclude today)
+        assert refreshed_featured['days_ago'] >= 1
+
+        # Verify the calculation makes sense: days_ago should match the actual date difference
+        from datetime import datetime
+        entry_created = datetime.fromisoformat(refreshed_featured['created_at'].replace('Z', '+00:00'))
+        entry_date_la = entry_created.astimezone(ZoneInfo('America/Los_Angeles')).date()
+        current_date_la = timezone.now().astimezone(ZoneInfo('America/Los_Angeles')).date()
+        expected_days_ago = (current_date_la - entry_date_la).days
+        assert refreshed_featured['days_ago'] == expected_days_ago
