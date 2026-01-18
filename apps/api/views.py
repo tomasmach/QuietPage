@@ -613,10 +613,13 @@ class HealthCheckView(APIView):
 
     def get(self, request):
         """Check application health."""
+        import time
         components = {}
+        timings = {}
         is_healthy = True
 
         # Check 1: Database connectivity
+        start = time.time()
         try:
             from django.db import connection
             with connection.cursor() as cursor:
@@ -626,8 +629,10 @@ class HealthCheckView(APIView):
             logger.error(f"Health check - Database unhealthy: {str(e)}", exc_info=True)
             components['database'] = 'unhealthy'
             is_healthy = False
+        timings['database_ms'] = int((time.time() - start) * 1000)
 
         # Check 2: Redis cache connectivity (degraded if unavailable, not critical)
+        start = time.time()
         try:
             cache.set('health_check', 'ok', timeout=10)
             if cache.get('health_check') == 'ok':
@@ -638,28 +643,17 @@ class HealthCheckView(APIView):
         except Exception as e:
             logger.warning(f"Health check - Redis degraded: {str(e)}")
             components['redis'] = 'degraded'
+        timings['redis_ms'] = int((time.time() - start) * 1000)
 
-        # Check 3: Celery - skip if Redis is degraded (Celery uses Redis as broker)
-        # The inspect.active() call blocks for 30+ seconds if Redis is unavailable
-        if components.get('redis') == 'healthy':
-            try:
-                from config.celery import app as celery_app
-                inspect = celery_app.control.inspect(timeout=1.0)
-                active_workers = inspect.active()
-
-                if active_workers and len(active_workers) > 0:
-                    components['celery'] = 'healthy'
-                else:
-                    components['celery'] = 'degraded'
-            except Exception:
-                components['celery'] = 'degraded'
-        else:
-            components['celery'] = 'unavailable'
+        # Check 3: Celery - skip entirely for health checks (not critical)
+        # The inspect.active() call is slow and Celery is optional
+        components['celery'] = 'skipped'
 
         response_data = {
             'status': 'healthy' if is_healthy else 'unhealthy',
             'timestamp': timezone.now().isoformat(),
             'components': components,
+            'timings': timings,
         }
 
         response_status = status.HTTP_200_OK if is_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
