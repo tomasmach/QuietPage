@@ -79,4 +79,4 @@ EXPOSE 8000
 
 # Set entrypoint and default command
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["sh", "-c", "gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-4} --timeout 30 --access-logfile - --error-logfile -"]
+CMD ["gunicorn"]

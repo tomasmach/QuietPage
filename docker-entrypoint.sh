@@ -37,4 +37,18 @@ fi
 
 # Execute the main command (gunicorn, celery, etc.)
 echo -e "${GREEN}Starting: $*${NC}"
-exec "$@"
+
+# If command is gunicorn, use environment variables for configuration
+if [ "$1" = "gunicorn" ]; then
+    PORT=${PORT:-8000}
+    WEB_CONCURRENCY=${WEB_CONCURRENCY:-4}
+    echo -e "${YELLOW}Starting Gunicorn on port ${PORT} with ${WEB_CONCURRENCY} workers${NC}"
+    exec gunicorn config.wsgi:application \
+        --bind "0.0.0.0:${PORT}" \
+        --workers "${WEB_CONCURRENCY}" \
+        --timeout 30 \
+        --access-logfile - \
+        --error-logfile -
+else
+    exec "$@"
+fi
