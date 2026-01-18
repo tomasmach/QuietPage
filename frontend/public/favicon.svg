@@ -1,0 +1,21 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Brutalist QuietPage Logo - Stacked Pages with Hard Shadow -->
+  <!-- Optimized for favicon at small sizes -->
+
+  <!-- Hard shadow (4px offset) -->
+  <rect x="48" y="48" width="64" height="64" fill="#F5F5F5"/>
+
+  <!-- Back page -->
+  <rect x="28" y="56" width="64" height="64" fill="#999999" stroke="#F5F5F5" stroke-width="3"/>
+
+  <!-- Middle page -->
+  <rect x="34" y="40" width="64" height="64" fill="#2D2D2D" stroke="#F5F5F5" stroke-width="3"/>
+
+  <!-- Front page (accent) -->
+  <rect x="44" y="44" width="64" height="64" fill="#F5F5F5" stroke="#F5F5F5" stroke-width="3"/>
+
+  <!-- Writing lines on front page -->
+  <line x1="56" y1="60" x2="96" y2="60" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/>
+  <line x1="56" y1="76" x2="96" y2="76" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/>
+  <line x1="56" y1="92" x2="80" y2="92" stroke="#1A1A1A" stroke-width="3" stroke-linecap="square"/>
+</svg>
