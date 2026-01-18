@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import ScopedRateThrottle
-from django.db.models import Sum
+from django.db.models import Sum, Count, Q
 from django.db import transaction
 from django.core.cache import cache
 from django.utils import timezone
@@ -249,8 +249,8 @@ class DashboardView(APIView):
         # Recent entries - limit to 5, exclude content for performance
         recent_entries = Entry.objects.filter(
             user=user
-        ).only(
-            'id', 'title', 'created_at', 'mood_rating', 'word_count'
+        ).prefetch_related('tags').only(
+            'id', 'title', 'created_at', 'updated_at', 'mood_rating', 'word_count'
         ).order_by('-created_at')[:5]
 
         # Statistics - cached for 5 minutes
@@ -264,23 +264,24 @@ class DashboardView(APIView):
             today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
 
-            today_words = Entry.objects.filter(
-                user=user,
-                created_at__gte=today_start,
-                created_at__lte=today_end
-            ).aggregate(
-                total=Sum('word_count')
-            )['total'] or 0
+            # Single aggregated query instead of 3 separate queries
+            stats_aggregation = Entry.objects.filter(user=user).aggregate(
+                total_entries=Count('id'),
+                total_words=Sum('word_count'),
+                today_words=Sum('word_count', filter=Q(
+                    created_at__gte=today_start,
+                    created_at__lte=today_end
+                ))
+            )
 
             stats = {
-                'today_words': today_words,
+                'today_words': stats_aggregation['today_words'] or 0,
                 'daily_goal': user.daily_word_goal,
-                'total_entries': Entry.objects.filter(user=user).count(),
+                'goal_progress': min(100, int((stats_aggregation['today_words'] or 0) / user.daily_word_goal * 100)) if user.daily_word_goal > 0 else 0,
                 'current_streak': user.current_streak,
                 'longest_streak': user.longest_streak,
-                'total_words': Entry.objects.filter(user=user).aggregate(
-                    total=Sum('word_count')
-                )['total'] or 0,
+                'total_entries': stats_aggregation['total_entries'] or 0,
+                'total_words': stats_aggregation['total_words'] or 0,
             }
             cache.set(cache_key, stats, 300)  # Cache for 5 minutes
 

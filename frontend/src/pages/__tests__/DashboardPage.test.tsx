@@ -13,7 +13,7 @@ import type { DashboardData } from '../../hooks/useDashboard';
 // Mock the useLanguage hook
 vi.mock('../../contexts/LanguageContext', () => ({
   useLanguage: () => ({
-    t: (key: string, params?: Record<string, unknown>) => {
+    t: (key: string) => {
       if (key === 'dashboard.featuredEntry.title') {
         return 'Featured Entry';
       }
