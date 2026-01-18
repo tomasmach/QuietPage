@@ -21,7 +21,7 @@ from django.core.cache import cache
 from django.utils import timezone
 
 from apps.journal.models import Entry, FeaturedEntry
-from apps.journal.utils import get_random_quote
+from apps.journal.utils import get_random_quote, get_user_local_date
 from apps.api.serializers import (
     EntrySerializer,
     EntryListSerializer,
@@ -486,7 +486,7 @@ class TodayEntryView(APIView):
 
                 # Přidání tagů
                 tags_data = request.data.get('tags', None)
-                if tags_data:
+                if tags_data is not None:
                     if isinstance(tags_data, str):
                         tags_list = [tag.strip() for tag in tags_data.split(',') if tag.strip()]
                     elif isinstance(tags_data, list):
@@ -567,7 +567,7 @@ class AutosaveView(APIView):
 
             # Process tags - handle both comma-separated string and list
             tags_list = []
-            if tags_data:
+            if tags_data is not None:
                 if isinstance(tags_data, str):
                     tags_list = [tag.strip() for tag in tags_data.split(',') if tag.strip()]
                 elif isinstance(tags_data, list):
@@ -585,8 +585,10 @@ class AutosaveView(APIView):
                         )
 
                         # Check if entry is from today - prevent editing past entries
-                        today_start, today_end = self.get_today_date_range(request.user)
-                        if not (today_start <= entry.created_at <= today_end):
+                        entry_date = get_user_local_date(entry.created_at, request.user.timezone)
+                        today_date = get_user_local_date(timezone.now(), request.user.timezone)
+
+                        if entry_date != today_date:
                             return Response({
                                 'status': 'error',
                                 'message': 'Cannot edit past entries'
@@ -597,7 +599,7 @@ class AutosaveView(APIView):
                         entry.save()
 
                         # Update tags
-                        if tags_list is not None:
+                        if tags_data is not None:
                             entry.tags.set(tags_list)
 
                         return Response({
@@ -621,7 +623,7 @@ class AutosaveView(APIView):
                     )
 
                     # Add tags if provided
-                    if tags_list:
+                    if tags_data is not None:
                         entry.tags.set(tags_list)
 
                     return Response({

@@ -126,8 +126,11 @@ def _invalidate_statistics_cache(user):
     for last_entry_date in dates_to_invalidate:
         for period in periods:
             cache_key = f'statistics_{user.id}_{period}_{last_entry_date}'
-            cache.delete(cache_key)
-            invalidated_count += 1
+            try:
+                cache.delete(cache_key)
+                invalidated_count += 1
+            except Exception as e:
+                logger.warning(f"Failed to invalidate cache key {cache_key}: {e}")
     
     if old_last_entry_date != new_last_entry_date:
         logger.debug(

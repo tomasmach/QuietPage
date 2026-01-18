@@ -45,27 +45,41 @@ class ApiClient {
   }
 
   /**
-   * Fetch CSRF token from Django backend
+   * Fetch CSRF token from Django backend with retry logic
    */
   private async fetchCsrfToken(): Promise<void> {
-    try {
-      const response = await fetch('/api/v1/auth/csrf/', {
-        credentials: 'include',
-      });
+    const maxRetries = 3;
+    let lastError: Error | null = null;
 
-      if (response.ok) {
-        const data = await response.json();
-        this.csrfToken = data.csrfToken;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await fetch('/api/v1/auth/csrf/', {
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          this.csrfToken = data.csrfToken;
+          this.csrfReadyResolve();
+          return;
+        }
+      } catch (error) {
+        lastError = error as Error;
+        if (import.meta.env.DEV) {
+          console.error(`CSRF token fetch attempt ${attempt + 1} failed:`, error);
+        }
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 100));
+        }
       }
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('Failed to fetch CSRF token:', error);
-      }
-    } finally {
-      // Always resolve the ready promise, even if token fetch fails
-      // This allows the app to continue (requests will use cookie fallback)
-      this.csrfReadyResolve();
     }
+
+    // All retries failed - resolve anyway, will fallback to cookie
+    if (import.meta.env.DEV && lastError) {
+      console.error('All CSRF token fetch attempts failed, falling back to cookie:', lastError);
+    }
+    this.csrfReadyResolve();
   }
 
   /**
@@ -126,49 +140,67 @@ class ApiClient {
   }
 
   /**
-   * Base request method
+   * Base request method with timeout
    */
-  private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+  private async request<T>(
+    endpoint: string,
+    options: RequestOptions = {},
+    timeout: number = 30000
+  ): Promise<T> {
     const { params, ...fetchOptions } = options;
 
     const url = this.buildUrl(endpoint, params);
     const headers = this.buildHeaders(options);
 
-    const response = await fetch(url, {
-      ...fetchOptions,
-      headers,
-      credentials: 'include',
-    });
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    // Handle HTTP errors
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+    try {
+      const response = await fetch(url, {
+        ...fetchOptions,
+        headers,
+        credentials: 'include',
+        signal: controller.signal,
+      });
 
-      // Create error with full error data preserved
-      // For register/login endpoints, the error is in errorData.errors or direct in errorData
-      const errorPayload = errorData.errors || errorData;
-      // Include status code in error message so handlers can check for specific HTTP errors (e.g., 404)
-      const error = new Error(`${response.status}: ${JSON.stringify(errorPayload)}`);
+      // Handle HTTP errors
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
 
-      // Suppress console errors for expected 403 on auth check endpoints
-      // (These are normal when user is not authenticated)
-      const isAuthCheckEndpoint = endpoint.includes('/auth/me');
-      const is403 = response.status === 403;
+        // Create error with full error data preserved
+        // For register/login endpoints, the error is in errorData.errors or direct in errorData
+        const errorPayload = errorData.errors || errorData;
+        // Include status code in error message so handlers can check for specific HTTP errors (e.g., 404)
+        const error = new Error(`${response.status}: ${JSON.stringify(errorPayload)}`);
 
-      if (isAuthCheckEndpoint && is403) {
-        // Silent error - don't log to console
+        // Suppress console errors for expected 403 on auth check endpoints
+        // (These are normal when user is not authenticated)
+        const isAuthCheckEndpoint = endpoint.includes('/auth/me');
+        const is403 = response.status === 403;
+
+        if (isAuthCheckEndpoint && is403) {
+          // Silent error - don't log to console
+          throw error;
+        }
+
         throw error;
       }
 
+      // Handle 204 No Content
+      if (response.status === 204) {
+        return {} as T;
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timeout');
+      }
       throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    // Handle 204 No Content
-    if (response.status === 204) {
-      return {} as T;
-    }
-
-    return response.json();
   }
 
   /**

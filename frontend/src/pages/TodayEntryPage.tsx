@@ -20,7 +20,7 @@ const INITIAL_RETRY_DELAY_MS = 1000;
 
 export function TodayEntryPage() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const { entry, isLoading, error, exists } = useTodayEntry();
   const { data: dashboardData } = useDashboard();
@@ -199,7 +199,8 @@ export function TodayEntryPage() {
   const greetingKey = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
 
   // Format date as "29. PROSINCE"
-  const formattedDate = date.toLocaleDateString('cs-CZ', {
+  const locale = language === 'en' ? 'en-US' : 'cs-CZ';
+  const formattedDate = date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
   }).toUpperCase();
@@ -271,7 +272,7 @@ export function TodayEntryPage() {
             {lastSaved && !isAutoSaving && (
               <p className="text-sm text-text-muted">
                 {t('entry.saved')}{' '}
-                {lastSaved.toLocaleTimeString('cs-CZ', {
+                {lastSaved.toLocaleTimeString(locale, {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}

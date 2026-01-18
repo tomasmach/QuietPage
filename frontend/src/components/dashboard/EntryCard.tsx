@@ -4,6 +4,7 @@ import type { Entry } from '../../hooks/useEntries';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { cn } from '../../lib/utils';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface EntryCardProps {
   entry: Entry;
@@ -21,14 +22,17 @@ const MOOD_ICONS = {
  * Card component for displaying an entry in the archive list
  */
 export function EntryCard({ entry }: EntryCardProps) {
+  const { language } = useLanguage();
+  const locale = language === 'en' ? 'en-US' : 'cs-CZ';
+
   const date = new Date(entry.created_at);
-  const formattedDate = date.toLocaleDateString('cs-CZ', {
+  const formattedDate = date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
 
-  const formattedTime = date.toLocaleTimeString('cs-CZ', {
+  const formattedTime = date.toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit',
   });
