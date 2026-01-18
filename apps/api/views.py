@@ -639,20 +639,22 @@ class HealthCheckView(APIView):
             logger.warning(f"Health check - Redis degraded: {str(e)}")
             components['redis'] = 'degraded'
 
-        # Check 3: Celery worker availability (basic check)
-        try:
-            from config.celery import app as celery_app
-            inspect = celery_app.control.inspect()
-            active_workers = inspect.active()
+        # Check 3: Celery - skip if Redis is degraded (Celery uses Redis as broker)
+        # The inspect.active() call blocks for 30+ seconds if Redis is unavailable
+        if components.get('redis') == 'healthy':
+            try:
+                from config.celery import app as celery_app
+                inspect = celery_app.control.inspect(timeout=1.0)
+                active_workers = inspect.active()
 
-            if active_workers and len(active_workers) > 0:
-                components['celery'] = 'healthy'
-            else:
-                logger.warning("Health check - Celery degraded: no active workers")
+                if active_workers and len(active_workers) > 0:
+                    components['celery'] = 'healthy'
+                else:
+                    components['celery'] = 'degraded'
+            except Exception:
                 components['celery'] = 'degraded'
-        except Exception as e:
-            logger.error(f"Health check - Celery degraded: {str(e)}", exc_info=True)
-            components['celery'] = 'degraded'
+        else:
+            components['celery'] = 'unavailable'
 
         response_data = {
             'status': 'healthy' if is_healthy else 'unhealthy',
