@@ -146,34 +146,35 @@ class DashboardView(APIView):
         if entry_count < 10:
             return None
 
-        featured = FeaturedEntry.objects.filter(
-            user=user,
-            date=user_date
-        ).select_related('entry').first()
+        with transaction.atomic():
+            featured = FeaturedEntry.objects.filter(
+                user=user,
+                date=user_date
+            ).select_for_update().select_related('entry').first()
 
-        if featured:
+            if featured:
+                return featured.entry
+
+            user_tz = ZoneInfo(str(user.timezone))
+            now = timezone.now().astimezone(user_tz)
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+            random_entry = Entry.objects.filter(
+                user=user
+            ).exclude(
+                created_at__gte=today_start
+            ).order_by('?').first()
+
+            if not random_entry:
+                return None
+
+            featured, created = FeaturedEntry.objects.get_or_create(
+                user=user,
+                date=user_date,
+                defaults={'entry': random_entry}
+            )
+
             return featured.entry
-
-        user_tz = ZoneInfo(str(user.timezone))
-        now = timezone.now().astimezone(user_tz)
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        random_entry = Entry.objects.filter(
-            user=user
-        ).exclude(
-            created_at__gte=today_start
-        ).order_by('?').first()
-
-        if not random_entry:
-            return None
-
-        FeaturedEntry.objects.create(
-            user=user,
-            date=user_date,
-            entry=random_entry
-        )
-
-        return random_entry
 
     def get_weekly_stats(self, user):
         """Calculate statistics for the last 7 days."""
@@ -327,31 +328,37 @@ class RefreshFeaturedEntryView(APIView):
                 'message': 'Not enough entries for featured entry'
             })
 
-        current = FeaturedEntry.objects.filter(user=user, date=user_date).first()
-        exclude_ids = [current.entry_id] if current else []
-
-        FeaturedEntry.objects.filter(user=user, date=user_date).delete()
-
-        now = timezone.now().astimezone(user_tz)
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        new_entry = Entry.objects.filter(
-            user=user
-        ).exclude(
-            id__in=exclude_ids
-        ).exclude(
-            created_at__gte=today_start
-        ).order_by('?').first()
-
-        if not new_entry and exclude_ids:
-            new_entry = Entry.objects.get(id=exclude_ids[0])
-
-        if new_entry:
-            FeaturedEntry.objects.create(
+        with transaction.atomic():
+            current = FeaturedEntry.objects.filter(
                 user=user,
-                date=user_date,
-                entry=new_entry
-            )
+                date=user_date
+            ).select_for_update().first()
+            exclude_ids = [current.entry_id] if current else []
+
+            now = timezone.now().astimezone(user_tz)
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+            new_entry = Entry.objects.filter(
+                user=user
+            ).exclude(
+                id__in=exclude_ids
+            ).exclude(
+                created_at__gte=today_start
+            ).order_by('?').first()
+
+            if not new_entry and exclude_ids:
+                new_entry = Entry.objects.get(id=exclude_ids[0])
+
+            if new_entry:
+                if current:
+                    current.entry = new_entry
+                    current.save()
+                else:
+                    FeaturedEntry.objects.create(
+                        user=user,
+                        date=user_date,
+                        entry=new_entry
+                    )
 
         featured_data = None
         if new_entry:
