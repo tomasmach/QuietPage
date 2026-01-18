@@ -12,6 +12,7 @@ from apps.journal.tests.factories import EntryFactory
 from apps.journal.models import FeaturedEntry
 
 
+@pytest.mark.integration
 @pytest.mark.django_db
 class TestFeaturedEntrySelection:
     """Tests for featured entry selection on dashboard."""
@@ -75,6 +76,7 @@ class TestFeaturedEntrySelection:
         assert response.data['featured_entry']['id'] != str(today_entry.id)
 
 
+@pytest.mark.integration
 @pytest.mark.django_db
 class TestFeaturedEntryRefresh:
     """Tests for featured entry refresh endpoint."""
@@ -125,6 +127,8 @@ class TestFeaturedEntryRefresh:
         assert response.status_code == 403
 
 
+@pytest.mark.statistics
+@pytest.mark.integration
 @pytest.mark.django_db
 class TestWeeklyStats:
     """Tests for weekly statistics in dashboard response."""
