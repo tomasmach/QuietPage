@@ -609,6 +609,7 @@ class HealthCheckView(APIView):
     """
     authentication_classes = []
     permission_classes = []
+    throttle_classes = []
 
     def get(self, request):
         """Check application health."""
@@ -626,19 +627,17 @@ class HealthCheckView(APIView):
             components['database'] = 'unhealthy'
             is_healthy = False
 
-        # Check 2: Redis cache connectivity
+        # Check 2: Redis cache connectivity (degraded if unavailable, not critical)
         try:
             cache.set('health_check', 'ok', timeout=10)
             if cache.get('health_check') == 'ok':
                 components['redis'] = 'healthy'
             else:
-                logger.error("Health check - Redis unhealthy: cache read failed")
-                components['redis'] = 'unhealthy'
-                is_healthy = False
+                logger.warning("Health check - Redis degraded: cache read failed")
+                components['redis'] = 'degraded'
         except Exception as e:
-            logger.error(f"Health check - Redis unhealthy: {str(e)}", exc_info=True)
-            components['redis'] = 'unhealthy'
-            is_healthy = False
+            logger.warning(f"Health check - Redis degraded: {str(e)}")
+            components['redis'] = 'degraded'
 
         # Check 3: Celery worker availability (basic check)
         try:
