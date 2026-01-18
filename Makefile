@@ -132,7 +132,7 @@ install-dev:
 dev:
 	@echo "Starting development server..."
 	@echo "Django: http://localhost:8000 | Vite: http://localhost:5173"
-	uv run honcho start
+	uv run honcho start -f Procfile.dev
 
 dev-full:
 	@echo "Starting full development stack..."
