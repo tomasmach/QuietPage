@@ -1,6 +1,7 @@
 # Project-specific files
 todo
 .claude/
+.playwright-mcp/
 
 # Frontend
 frontend/node_modules/
