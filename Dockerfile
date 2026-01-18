@@ -8,7 +8,7 @@ WORKDIR /frontend
 # Copy package files and install dependencies
 # NOTE: We need devDependencies for build (Vite, TypeScript, etc.)
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy frontend source and build
 COPY frontend/ ./
