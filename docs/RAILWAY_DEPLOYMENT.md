@@ -171,7 +171,7 @@ Multi-stage build:
 
 ### requirements/production.txt
 Production Python dependencies including:
-- `dj-database-url==2.3.0` - Parse Railway's DATABASE_URL
+- `dj-database-url==3.1.0` - Parse Railway's DATABASE_URL
 - `gunicorn==23.0.0` - Production WSGI server
 - `psycopg2-binary` - PostgreSQL adapter
 
