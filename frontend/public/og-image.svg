@@ -1,0 +1,69 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#1A1A1A"/>
+
+  <!-- Border frame - "analog tech" hard border style -->
+  <rect x="40" y="40" width="1120" height="550" fill="none" stroke="#F5F5F5" stroke-width="2"/>
+
+  <!-- Inner frame for depth -->
+  <rect x="60" y="60" width="1080" height="510" fill="none" stroke="#F5F5F5" stroke-width="1" opacity="0.3"/>
+
+  <!-- Decorative corner brackets - top left -->
+  <path d="M80 100 L80 80 L100 80" stroke="#F5F5F5" stroke-width="2" fill="none"/>
+
+  <!-- Decorative corner brackets - top right -->
+  <path d="M1100 80 L1120 80 L1120 100" stroke="#F5F5F5" stroke-width="2" fill="none"/>
+
+  <!-- Decorative corner brackets - bottom left -->
+  <path d="M80 530 L80 550 L100 550" stroke="#F5F5F5" stroke-width="2" fill="none"/>
+
+  <!-- Decorative corner brackets - bottom right -->
+  <path d="M1100 550 L1120 550 L1120 530" stroke="#F5F5F5" stroke-width="2" fill="none"/>
+
+  <!-- Main title: QUIETPAGE -->
+  <text x="600" y="280"
+        font-family="'IBM Plex Mono', 'Courier New', monospace"
+        font-size="72"
+        font-weight="700"
+        fill="#F5F5F5"
+        text-anchor="middle"
+        letter-spacing="0.2em">QUIETPAGE</text>
+
+  <!-- Horizontal line divider -->
+  <line x1="400" y1="320" x2="800" y2="320" stroke="#F5F5F5" stroke-width="2"/>
+
+  <!-- Tagline -->
+  <text x="600" y="380"
+        font-family="'IBM Plex Mono', 'Courier New', monospace"
+        font-size="24"
+        font-weight="400"
+        fill="#999999"
+        text-anchor="middle"
+        letter-spacing="0.1em">Your private space for mindful writing</text>
+
+  <!-- Decorative grid lines - subtle background pattern -->
+  <g stroke="#F5F5F5" stroke-width="0.5" opacity="0.1">
+    <!-- Vertical lines -->
+    <line x1="200" y1="60" x2="200" y2="570"/>
+    <line x1="400" y1="60" x2="400" y2="570"/>
+    <line x1="600" y1="60" x2="600" y2="570"/>
+    <line x1="800" y1="60" x2="800" y2="570"/>
+    <line x1="1000" y1="60" x2="1000" y2="570"/>
+    <!-- Horizontal lines -->
+    <line x1="60" y1="157.5" x2="1140" y2="157.5"/>
+    <line x1="60" y1="315" x2="1140" y2="315"/>
+    <line x1="60" y1="472.5" x2="1140" y2="472.5"/>
+  </g>
+
+  <!-- Small decorative element - cursor/caret symbol at bottom -->
+  <rect x="590" y="450" width="20" height="3" fill="#F5F5F5" opacity="0.6"/>
+
+  <!-- Version/branding mark -->
+  <text x="1100" y="540"
+        font-family="'IBM Plex Mono', 'Courier New', monospace"
+        font-size="12"
+        font-weight="400"
+        fill="#666666"
+        text-anchor="end"
+        letter-spacing="0.05em">quietpage.app</text>
+</svg>

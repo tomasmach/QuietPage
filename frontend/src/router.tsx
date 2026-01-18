@@ -10,6 +10,8 @@ import { StatsPage } from './pages/StatsPage';
 import { ArchivePage } from './pages/ArchivePage';
 import { EntryViewPage } from './pages/EntryViewPage';
 import { TodayEntryPage } from './pages/TodayEntryPage';
+import { TermsPage } from './pages/TermsPage';
+import { PrivacyPage } from './pages/PrivacyPage';
 import { SettingsLayout } from './components/layout/SettingsLayout';
 import {
   ProfileSettingsPage,
@@ -44,6 +46,14 @@ export const router = createBrowserRouter([
         <SignupPage />
       </PublicRoute>
     ),
+  },
+  {
+    path: '/terms',
+    element: <TermsPage />,
+  },
+  {
+    path: '/privacy',
+    element: <PrivacyPage />,
   },
 
   // Protected routes

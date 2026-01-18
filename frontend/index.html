@@ -14,7 +14,41 @@
     </script>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+
+    <!-- Default SEO Meta Tags (fallback for crawlers that don't execute JS) -->
+    <title>QuietPage - Your Private Space for Mindful Writing</title>
+    <meta name="description" content="Express yourself freely, track your emotional wellbeing, and build lasting writing habits. Free, encrypted, private journaling." />
+
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="QuietPage - Your Private Space for Mindful Writing" />
+    <meta property="og:description" content="Express yourself freely, track your emotional wellbeing, and build lasting writing habits. Free, encrypted, private journaling." />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="QuietPage" />
+    <meta property="og:url" content="https://quietpage.app/" />
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="QuietPage - Your Private Space for Mindful Writing" />
+    <meta name="twitter:description" content="Express yourself freely, track your emotional wellbeing, and build lasting writing habits. Free, encrypted, private journaling." />
+    <meta name="twitter:image" content="/og-image.png" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "QuietPage",
+        "description": "Private mindful writing and journaling application",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
   <body style="background-color:inherit">
     <div id="root"></div>

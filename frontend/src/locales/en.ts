@@ -86,6 +86,118 @@ export const en: Translations = {
       encrypted: 'Encrypted',
       private: '100% Private',
     },
+    storytelling: {
+      headline: "The world speeds up. You don't have to.",
+      p1: "All day you react to others - emails, messages, demands. A head full of unspoken thoughts with nowhere to go. When did you last take 15 minutes just for yourself?",
+      p2: "QuietPage is your daily ritual. Morning before the chaos, afternoon for a reset, or evening to close the day - you choose. No likes, no followers, no judgment. Just you and a blank page.",
+      p3: "Writing helps you process thoughts that would otherwise stay tangled. It's not a diary. It's not a blog. It's a tool for your mental hygiene.",
+    },
+    howItWorks: {
+      title: 'How it works',
+      step1: {
+        title: 'Write',
+        description: 'Open QuietPage and start writing. Set your own daily goal - whatever word count works for you. No rules, no format.',
+      },
+      step2: {
+        title: 'Track',
+        description: "The app records your moods, streaks, and stats. See how you're doing and when you're most productive.",
+      },
+      step3: {
+        title: 'Grow',
+        description: "Over time, you'll discover patterns in your thinking. Writing becomes a habit that helps you stay calm.",
+      },
+    },
+    faq: {
+      title: 'Frequently asked questions',
+      q1: {
+        question: 'Is QuietPage free?',
+        answer: 'Yes, QuietPage is free. Just sign up and start writing.',
+      },
+      q2: {
+        question: 'Are my entries secure?',
+        answer: 'Absolutely. All entries are encrypted. No one can read them except you - not even us.',
+      },
+      q3: {
+        question: 'Why write every day?',
+        answer: "Consistency builds habit. Streaks motivate you to keep going, even when you don't feel like it.",
+      },
+      q4: {
+        question: 'What if I skip a day?',
+        answer: 'Nothing happens. Your streak resets, but you can start a new one. No penalties, no pressure.',
+      },
+    },
+  },
+  footer: {
+    links: 'Links',
+    contact: 'Contact',
+    email: 'tomades1@gmail.com',
+    termsOfService: 'Terms of Service',
+    privacyPolicy: 'Privacy Policy',
+    copyright: '© {year} Tomáš Mach. All rights reserved.',
+  },
+  legal: {
+    termsOfService: {
+      title: 'Terms of Service',
+      seoTitle: 'Terms of Service - QuietPage',
+      seoDescription: 'Read the Terms of Service for QuietPage, your private mindful writing and journaling application.',
+      intro: {
+        title: 'Service Operator',
+        content: 'These terms of service govern your use of QuietPage. The service is operated by Tomáš Mach, located at Záryby 360, 27713, Czech Republic, ID: 22006401. By using the service, you agree to these terms.',
+      },
+      service: {
+        title: 'Service Description',
+        content: 'QuietPage is a web application for personal writing and reflection. The service allows users to create encrypted entries, track their writing habits and emotional state. The service is provided "as is" without any guarantee of availability.',
+      },
+      accounts: {
+        title: 'User Accounts',
+        content: 'Registration is required to use the service. You are responsible for maintaining the confidentiality of your password and for all activity under your account. You agree to provide accurate information and not to share account access with third parties.',
+      },
+      content: {
+        title: 'User Content',
+        content: 'All content you create remains your property. Your content is encrypted and we cannot access it. You are responsible for the content you create and agree not to use the service for illegal purposes.',
+      },
+      limitations: {
+        title: 'Limitation of Liability',
+        content: 'The service is provided without any warranties. We are not liable for data loss, service interruption, or any damages arising from use of the service. Maximum liability is limited to the amount paid for the service.',
+      },
+      changes: {
+        title: 'Changes to Terms',
+        content: 'We reserve the right to change these terms at any time. We will notify you of significant changes via email or in-app notification. By continuing to use the service after changes, you agree to the updated terms.',
+      },
+      contact: {
+        title: 'Contact',
+        content: 'For questions about these terms, contact us at tomades1@gmail.com.',
+      },
+    },
+    privacyPolicy: {
+      title: 'Privacy Policy',
+      seoTitle: 'Privacy Policy - QuietPage',
+      seoDescription: 'Learn how QuietPage protects your privacy. Your journal entries are encrypted and your data is never shared.',
+      intro: {
+        title: 'Commitment to Privacy',
+        content: 'We take your privacy seriously. This policy describes what data we collect, how we use it, and how we protect it. We are committed to processing your personal data in accordance with GDPR and other applicable regulations.',
+      },
+      dataCollection: {
+        title: 'Data Collection',
+        content: 'We only collect data necessary for operating the service: email address for login, your encrypted entries, and basic usage data (login time, settings). We do not collect sensitive personal data beyond what you voluntarily provide.',
+      },
+      encryption: {
+        title: 'Encryption',
+        content: 'Your entries are encrypted using Fernet (AES-128-CBC with HMAC-SHA256). This means that even we, as the operator, cannot read the content of your entries. The encryption key is derived in a way that ensures only you have access to your content.',
+      },
+      cookies: {
+        title: 'Cookies',
+        content: 'We use a minimal amount of cookies necessary for the service to function. These cookies are used to keep you logged in and remember your preferences (language, theme). We do not use third-party tracking cookies or analytics tools.',
+      },
+      rights: {
+        title: 'Your Rights',
+        content: 'Under GDPR, you have the right to access, rectify, delete, and port your data. You can request an export of all your data or complete deletion of your account at any time. To exercise these rights, contact us via email.',
+      },
+      contact: {
+        title: 'Contact',
+        content: 'For questions about privacy or to exercise your rights, contact us at tomades1@gmail.com.',
+      },
+    },
   },
   themes: {
     paper: 'Paper (Light)',
@@ -176,7 +288,7 @@ export const en: Translations = {
       emailNotifications: 'Email Notifications',
       emailNotificationsHint: 'Receive emails about updates and reminders',
       dataPrivacy: 'Data Privacy',
-      encryptionInfo: 'All your entries are encrypted using AES-256 encryption.',
+      encryptionInfo: 'All your entries are encrypted using Fernet (AES-128-CBC with HMAC-SHA256).',
       dataUsageInfo: 'We never share your data with third parties.',
     },
     security: {

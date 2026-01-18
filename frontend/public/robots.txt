@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /write
+Disallow: /entries
+Disallow: /stats
+Disallow: /settings
+Disallow: /onboarding
+
+Sitemap: https://quietpage.app/sitemap.xml
