@@ -10,6 +10,9 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}=== QuietPage Docker Entrypoint ===${NC}"
+echo -e "${YELLOW}Environment: DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}${NC}"
+echo -e "${YELLOW}Environment: PORT=${PORT:-8000}${NC}"
+echo -e "${YELLOW}Environment: WEB_CONCURRENCY=${WEB_CONCURRENCY:-4}${NC}"
 
 # Substitute environment variables in nginx config if they exist
 if [ -n "$SSL_CERT_PATH" ] && [ -n "$SSL_KEY_PATH" ]; then
