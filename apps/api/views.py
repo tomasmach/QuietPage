@@ -217,7 +217,8 @@ class DashboardView(APIView):
         if not entry:
             return None
 
-        entry_date = entry.created_at.date()
+        user_tz = ZoneInfo(str(self.request.user.timezone))
+        entry_date = entry.created_at.astimezone(user_tz).date()
         days_ago = (user_date - entry_date).days
 
         content_preview = entry.content[:200] if entry.content else ''
@@ -354,7 +355,8 @@ class RefreshFeaturedEntryView(APIView):
 
         featured_data = None
         if new_entry:
-            days_ago = (user_date - new_entry.created_at.date()).days
+            entry_date = new_entry.created_at.astimezone(user_tz).date()
+            days_ago = (user_date - entry_date).days
             content_preview = new_entry.content[:200] if new_entry.content else ''
             if new_entry.content and len(new_entry.content) > 200:
                 content_preview += '...'
