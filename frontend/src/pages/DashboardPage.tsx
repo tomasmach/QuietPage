@@ -106,11 +106,13 @@ export function DashboardPage() {
         <WritingPrompt onStartWriting={handleNewEntry} />
 
         {/* Featured Entry (only shown if entry exists) */}
-        <FeaturedEntry
-          entry={data.featuredEntry}
-          onRefresh={refreshFeaturedEntry}
-          isRefreshing={isRefreshingFeatured}
-        />
+        {data.featuredEntry && (
+          <FeaturedEntry
+            entry={data.featuredEntry}
+            onRefresh={refreshFeaturedEntry}
+            isRefreshing={isRefreshingFeatured}
+          />
+        )}
 
         {/* Quote or Recent Entries */}
         {!data.hasEntries && data.quote ? (
