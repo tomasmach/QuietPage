@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Flame } from 'lucide-react';
@@ -26,16 +27,20 @@ export function EntryViewPage() {
 
   const { entry, isLoading, error } = useEntry(id);
   const { data: dashboardData } = useDashboard();
-  const [content, setContent] = useState('');
-  const [moodRating, setMoodRating] = useState<number | null>(null);
-  const [tags, setTags] = useState<string[]>([]);
+  const [content, setContent] = useState(entry?.content || '');
+  const [moodRating, setMoodRating] = useState<number | null>(entry?.mood_rating || null);
+  const [tags, setTags] = useState<string[]>(entry?.tags || []);
 
-  // Initialize form from entry data
+  // Sync form state when entry changes (e.g., after save/update)
+  // Legitimate use case: synchronizing form state with external data from API
   useEffect(() => {
     if (entry) {
-      setContent(entry.content);
-      setMoodRating(entry.mood_rating);
-      setTags(entry.tags);
+      // Only update if entry has changed to avoid cascading renders
+      setContent((prev) => (prev !== entry.content ? entry.content : prev));
+      setMoodRating((prev) => (prev !== entry.mood_rating ? entry.mood_rating : prev));
+      // Normalize tags to array (treat null/undefined/non-array as empty array)
+      const normalizedTags = Array.isArray(entry.tags) ? entry.tags : [];
+      setTags((prev) => (JSON.stringify(prev) !== JSON.stringify(normalizedTags) ? normalizedTags : prev));
     }
   }, [entry]);
 

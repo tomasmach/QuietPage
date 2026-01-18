@@ -23,7 +23,7 @@ const MOOD_ICONS = {
  * Component for displaying recent entries on the dashboard
  */
 export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   if (entries.length === 0) {
     return (
@@ -33,6 +33,8 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
       </Card>
     );
   }
+
+  const locale = language === 'en' ? 'en-US' : 'cs-CZ';
 
   return (
     <div className="space-y-4">
@@ -46,12 +48,12 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
       <div className="space-y-3">
         {entries.map((entry) => {
           const date = new Date(entry.created_at);
-          const formattedDate = date.toLocaleDateString('cs-CZ', {
+          const formattedDate = date.toLocaleDateString(locale, {
             day: 'numeric',
             month: 'short',
           });
 
-          const formattedTime = date.toLocaleTimeString('cs-CZ', {
+          const formattedTime = date.toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit',
           });
@@ -81,7 +83,7 @@ export function RecentEntries({ entries, onNewEntry }: RecentEntriesProps) {
                       {entry.content_preview}
                     </p>
 
-                    <div className={cn("text-xs text-text-muted mt-2 theme-aware")}>{entry.word_count} slov</div>
+                    <div className={cn("text-xs text-text-muted mt-2 theme-aware")}>{entry.word_count} {t('meta.wordsSuffix')}</div>
                   </div>
 
                   {/* Mood indicator */}

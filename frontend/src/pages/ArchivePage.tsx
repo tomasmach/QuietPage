@@ -39,11 +39,11 @@ export function ArchivePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8 border-b-2 border-border pb-4 border-dashed">
           <div>
-            <div className="text-xs font-bold uppercase text-text-text-muted mb-1">
+            <div className="text-xs font-bold uppercase text-text-muted mb-1">
               {t('nav.archive')}
             </div>
             <h1 className="text-3xl font-bold uppercase text-text-main">
-              {totalCount} {totalCount === 1 ? 'záznam' : 'záznamů'}
+              {t('archive.totalEntries', { count: totalCount })}
             </h1>
           </div>
           <Button onClick={handleNewEntry}>{t('dashboard.newEntry')}</Button>
@@ -60,7 +60,7 @@ export function ArchivePage() {
         {error && !isLoading && (
           <Card>
             <p className="text-error">
-              Chyba při načítání záznamů. Zkuste obnovit stránku.
+              {t('archive.errorLoading')}
             </p>
           </Card>
         )}
@@ -90,17 +90,17 @@ export function ArchivePage() {
                   disabled={page === 1}
                   variant="secondary"
                 >
-                  ← Předchozí
+                  {t('archive.previous')}
                 </Button>
                 <span className="text-text-muted">
-                  Stránka {page}
+                  {t('archive.page', { page })}
                 </span>
                 <Button
                   onClick={handleNextPage}
                   disabled={!hasMore}
                   variant="secondary"
                 >
-                  Další →
+                  {t('archive.next')}
                 </Button>
               </div>
             )}

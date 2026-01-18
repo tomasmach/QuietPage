@@ -9,6 +9,7 @@ These settings are optimized for production deployment.
 """
 
 import os
+import dj_database_url
 
 from .base import *
 from django.core.exceptions import ImproperlyConfigured
@@ -28,18 +29,26 @@ if not ALLOWED_HOSTS:
         'Example: export ALLOWED_HOSTS="example.com,www.example.com"'
     )
 
-# Database - PostgreSQL for production
+# Database - support both DATABASE_URL (Railway/Heroku style) and individual env vars
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600, conn_health_checks=True)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+            'CONN_MAX_AGE': 600,
+            'CONN_HEALTH_CHECKS': True,
+        }
+    }
 
 # Security Settings
 # https://docs.djangoproject.com/en/5.2/topics/security/
@@ -68,6 +77,7 @@ CSRF_COOKIE_SAMESITE = 'Lax'  # CSRF protection
 
 # CSRF trusted origins - required for Django 4.0+ when using HTTPS
 # Parse from environment variable, or derive from ALLOWED_HOSTS with https:// prefix
+# For Railway: Set CSRF_TRUSTED_ORIGINS=https://your-app.up.railway.app in environment
 _csrf_origins_env = os.getenv('CSRF_TRUSTED_ORIGINS', '').strip()
 if _csrf_origins_env:
     CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_origins_env.split(',') if origin.strip()]

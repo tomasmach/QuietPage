@@ -15,13 +15,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import ScopedRateThrottle
-from django.db.models import Sum
+from django.db.models import Sum, Count, Q
 from django.db import transaction
 from django.core.cache import cache
 from django.utils import timezone
 
 from apps.journal.models import Entry, FeaturedEntry
-from apps.journal.utils import get_random_quote
+from apps.journal.utils import (
+    get_random_quote,
+    get_user_local_date,
+    get_today_date_range,
+    parse_tags,
+)
 from apps.api.serializers import (
     EntrySerializer,
     EntryListSerializer,
@@ -29,21 +34,6 @@ from apps.api.serializers import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-# Inspirational quotes for dashboard
-QUOTES = [
-    {"text": "Psaní je snadné. Stačí sednout a otevřít žílu.", "author": "Red Smith"},
-    {"text": "Neexistuje nic takového jako dobré psaní, pouze dobré přepisování.", "author": "Robert Graves"},
-    {"text": "První drafty jsou vždy špatné. První verze čehokoliv jsou špatné.", "author": "Ernest Hemingway"},
-    {"text": "Chceš-li být spisovatelem, musíš dělat dvě věci: hodně číst a hodně psát.", "author": "Stephen King"},
-    {"text": "Nejlepší čas na psaní je teď.", "author": "Anaïs Nin"},
-    {"text": "Píšu, abych zjistil, co si myslím.", "author": "Joan Didion"},
-    {"text": "Začni psát, bez ohledu na to, co. Voda neteče, dokud neotočíš kohoutek.", "author": "Louis L'Amour"},
-    {"text": "Psaní je prozkoumávání. Začínáš od ničeho a učíš se cestou.", "author": "E.L. Doctorow"},
-    {"text": "Nemusíš být skvělý, abys mohl začít, ale musíš začít, abys mohl být skvělý.", "author": "Zig Ziglar"},
-    {"text": "Tvoje myšlenky si zaslouží být vyslyšeny, i kdyby to bylo jen tebou samotným.", "author": None},
-]
 
 
 class EntryViewSet(viewsets.ModelViewSet):
@@ -249,8 +239,8 @@ class DashboardView(APIView):
         # Recent entries - limit to 5, exclude content for performance
         recent_entries = Entry.objects.filter(
             user=user
-        ).only(
-            'id', 'title', 'created_at', 'mood_rating', 'word_count'
+        ).prefetch_related('tags').only(
+            'id', 'title', 'created_at', 'updated_at', 'mood_rating', 'word_count'
         ).order_by('-created_at')[:5]
 
         # Statistics - cached for 5 minutes
@@ -264,23 +254,24 @@ class DashboardView(APIView):
             today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
 
-            today_words = Entry.objects.filter(
-                user=user,
-                created_at__gte=today_start,
-                created_at__lte=today_end
-            ).aggregate(
-                total=Sum('word_count')
-            )['total'] or 0
+            # Single aggregated query instead of 3 separate queries
+            stats_aggregation = Entry.objects.filter(user=user).aggregate(
+                total_entries=Count('id'),
+                total_words=Sum('word_count'),
+                today_words=Sum('word_count', filter=Q(
+                    created_at__gte=today_start,
+                    created_at__lte=today_end
+                ))
+            )
 
             stats = {
-                'today_words': today_words,
+                'today_words': stats_aggregation['today_words'] or 0,
                 'daily_goal': user.daily_word_goal,
-                'total_entries': Entry.objects.filter(user=user).count(),
+                'goal_progress': min(100, int((stats_aggregation['today_words'] or 0) / user.daily_word_goal * 100)) if user.daily_word_goal > 0 else 0,
                 'current_streak': user.current_streak,
                 'longest_streak': user.longest_streak,
-                'total_words': Entry.objects.filter(user=user).aggregate(
-                    total=Sum('word_count')
-                )['total'] or 0,
+                'total_entries': stats_aggregation['total_entries'] or 0,
+                'total_words': stats_aggregation['total_words'] or 0,
             }
             cache.set(cache_key, stats, 300)  # Cache for 5 minutes
 
@@ -396,18 +387,10 @@ class TodayEntryView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
-    def get_today_date_range(self, user):
-        """Vrátí start/end datetime pro dnešek v user timezone."""
-        user_tz = ZoneInfo(str(user.timezone))
-        now = timezone.now().astimezone(user_tz)
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-        return today_start, today_end
-
     def get(self, request):
         """Vrátí dnešní záznam pokud existuje, jinak 404."""
         user = request.user
-        today_start, today_end = self.get_today_date_range(user)
+        today_start, today_end = get_today_date_range(user)
 
         try:
             entry = Entry.objects.get(
@@ -445,7 +428,7 @@ class TodayEntryView(APIView):
         # Povolit prázdný content - entry se vytvoří, ale streak se neaktualizuje
         # (to je ošetřeno v signals.py)
 
-        today_start, today_end = self.get_today_date_range(user)
+        today_start, today_end = get_today_date_range(user)
 
         with transaction.atomic():
             entry = Entry.objects.filter(
@@ -462,14 +445,8 @@ class TodayEntryView(APIView):
                 entry.save()
 
                 # Update tagů
-                tags_data = request.data.get('tags', None)
-                if tags_data is not None:
-                    if isinstance(tags_data, str):
-                        tags_list = [tag.strip() for tag in tags_data.split(',') if tag.strip()]
-                    elif isinstance(tags_data, list):
-                        tags_list = [str(tag).strip() for tag in tags_data if str(tag).strip()]
-                    else:
-                        tags_list = []
+                tags_list = parse_tags(request.data.get('tags', None))
+                if tags_list is not None:
                     entry.tags.set(tags_list)
 
                 serializer = EntrySerializer(entry, context={'request': request})
@@ -484,14 +461,8 @@ class TodayEntryView(APIView):
                 )
 
                 # Přidání tagů
-                tags_data = request.data.get('tags', None)
-                if tags_data:
-                    if isinstance(tags_data, str):
-                        tags_list = [tag.strip() for tag in tags_data.split(',') if tag.strip()]
-                    elif isinstance(tags_data, list):
-                        tags_list = [str(tag).strip() for tag in tags_data if str(tag).strip()]
-                    else:
-                        tags_list = []
+                tags_list = parse_tags(request.data.get('tags', None))
+                if tags_list is not None:
                     entry.tags.set(tags_list)
 
                 serializer = EntrySerializer(entry, context={'request': request})
@@ -520,14 +491,6 @@ class AutosaveView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
-    def get_today_date_range(self, user):
-        """Return start/end datetime for today in user's timezone."""
-        user_tz = ZoneInfo(str(user.timezone))
-        now = timezone.now().astimezone(user_tz)
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-        return today_start, today_end
-
     def post(self, request):
         """
         Handle autosave request.
@@ -539,7 +502,7 @@ class AutosaveView(APIView):
             title = (request.data.get('title') or '').strip()
             content = (request.data.get('content') or '').strip()
             mood_rating = request.data.get('mood_rating', None)
-            tags_data = request.data.get('tags', None)
+            tags_list = parse_tags(request.data.get('tags', None))
             entry_id = request.data.get('entry_id', None)
 
             # Content is required for saving
@@ -564,14 +527,6 @@ class AutosaveView(APIView):
                         'message': 'Neplatné hodnocení nálady'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Process tags - handle both comma-separated string and list
-            tags_list = []
-            if tags_data:
-                if isinstance(tags_data, str):
-                    tags_list = [tag.strip() for tag in tags_data.split(',') if tag.strip()]
-                elif isinstance(tags_data, list):
-                    tags_list = [str(tag).strip() for tag in tags_data if str(tag).strip()]
-
             # Atomic transaction to prevent data loss from concurrent updates
             with transaction.atomic():
                 if entry_id:
@@ -584,8 +539,10 @@ class AutosaveView(APIView):
                         )
 
                         # Check if entry is from today - prevent editing past entries
-                        today_start, today_end = self.get_today_date_range(request.user)
-                        if not (today_start <= entry.created_at <= today_end):
+                        entry_date = get_user_local_date(entry.created_at, request.user.timezone)
+                        today_date = get_user_local_date(timezone.now(), request.user.timezone)
+
+                        if entry_date != today_date:
                             return Response({
                                 'status': 'error',
                                 'message': 'Cannot edit past entries'
@@ -620,7 +577,7 @@ class AutosaveView(APIView):
                     )
 
                     # Add tags if provided
-                    if tags_list:
+                    if tags_list is not None:
                         entry.tags.set(tags_list)
 
                     return Response({

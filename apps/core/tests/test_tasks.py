@@ -340,15 +340,19 @@ class TestHealthCheck:
 
         Why: Validates complete health check flow with all services up.
         """
-        with patch('apps.core.tasks.Redis') as mock_redis_class:
-            mock_redis = Mock()
-            mock_redis.ping.return_value = True
-            mock_redis_class.from_url.return_value = mock_redis
+        with patch('apps.core.tasks.settings') as mock_settings:
+            mock_settings.REDIS_URL = 'redis://localhost:6379/0'
+            mock_settings.BASE_DIR = settings.BASE_DIR
 
-            with patch('apps.core.tasks.shutil.disk_usage') as mock_disk:
-                mock_disk.return_value = Mock(free=5 * 1024**3)  # 5 GB free
+            with patch('apps.core.tasks.Redis') as mock_redis_class:
+                mock_redis = Mock()
+                mock_redis.ping.return_value = True
+                mock_redis_class.from_url.return_value = mock_redis
 
-                result = health_check()
+                with patch('apps.core.tasks.shutil.disk_usage') as mock_disk:
+                    mock_disk.return_value = Mock(free=5 * 1024**3)  # 5 GB free
+
+                    result = health_check()
 
         assert result['database'] is True
         assert result['redis'] is True
@@ -364,15 +368,19 @@ class TestHealthCheck:
         with patch('apps.core.tasks.connection.cursor') as mock_cursor:
             mock_cursor.side_effect = Exception("Connection refused")
 
-            with patch('apps.core.tasks.Redis') as mock_redis_class:
-                mock_redis = Mock()
-                mock_redis.ping.return_value = True
-                mock_redis_class.from_url.return_value = mock_redis
+            with patch('apps.core.tasks.settings') as mock_settings:
+                mock_settings.REDIS_URL = 'redis://localhost:6379/0'
+                mock_settings.BASE_DIR = settings.BASE_DIR
 
-                with patch('apps.core.tasks.shutil.disk_usage') as mock_disk:
-                    mock_disk.return_value = Mock(free=5 * 1024**3)
+                with patch('apps.core.tasks.Redis') as mock_redis_class:
+                    mock_redis = Mock()
+                    mock_redis.ping.return_value = True
+                    mock_redis_class.from_url.return_value = mock_redis
 
-                    result = health_check()
+                    with patch('apps.core.tasks.shutil.disk_usage') as mock_disk:
+                        mock_disk.return_value = Mock(free=5 * 1024**3)
+
+                        result = health_check()
 
         assert result['database'] is False
         assert result['redis'] is True

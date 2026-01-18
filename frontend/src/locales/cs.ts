@@ -6,6 +6,13 @@ export interface Translations {
     archive: string;
     settings: string;
   };
+  archive: {
+    totalEntries: string;
+    errorLoading: string;
+    page: string;
+    previous: string;
+    next: string;
+  };
   meta: {
     version: string;
     wordsToday: string;
@@ -224,6 +231,7 @@ export interface Translations {
     viewAll: string;
     longestStreak: string;
     totalEntries: string;
+    errorLoading: string;
     writingPrompt: {
       title: string;
       cta: string;
@@ -549,6 +557,13 @@ export const cs: Translations = {
     archive: 'Archiv',
     settings: 'Nastavení',
   },
+  archive: {
+    totalEntries: '{count} záznam',
+    errorLoading: 'Chyba při načítání záznamů. Zkuste obnovit stránku.',
+    page: 'Stránka {page}',
+    previous: '← Předchozí',
+    next: 'Další →',
+  },
   meta: {
     version: 'Verze 0.9.1 Beta',
     wordsToday: 'Slov dnes',
@@ -767,6 +782,7 @@ export const cs: Translations = {
     viewAll: 'Zobrazit vše',
     longestStreak: 'Nejdelší',
     totalEntries: 'Celkem záznamů',
+    errorLoading: 'Chyba při načítání dashboardu',
     writingPrompt: {
       title: 'Dnešní inspirace',
       cta: 'Začít psát',

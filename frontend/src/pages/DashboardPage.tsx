@@ -13,7 +13,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { data, isLoading, error, refreshFeaturedEntry, isRefreshingFeatured } = useDashboard();
 
   const handleNewEntry = () => {
@@ -36,7 +36,7 @@ export function DashboardPage() {
         <div className="p-8">
           <Card>
             <p className="text-error">
-              Chyba pri nacitani dashboardu: {error?.message || 'Neznama chyba'}
+              {t('dashboard.errorLoading')}: {error?.message || t('toast.unknownError')}
             </p>
           </Card>
         </div>
@@ -46,7 +46,8 @@ export function DashboardPage() {
 
   // Get current date info
   const today = new Date();
-  const formattedDate = today.toLocaleDateString('cs-CZ', {
+  const locale = language === 'en' ? 'en-US' : 'cs-CZ';
+  const formattedDate = today.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
   });

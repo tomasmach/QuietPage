@@ -191,12 +191,19 @@ def cleanup_old_backups(self, days=30):
                 file_time = datetime.fromtimestamp(backup_file.stat().st_mtime)
 
                 if file_time < cutoff_date:
-                    backup_file.unlink()
-                    deleted += 1
-                    logger.info(f"Deleted old backup: {backup_file.name}")
+                    try:
+                        backup_file.unlink()
+                        deleted += 1
+                        logger.info(f"Deleted old backup: {backup_file.name}")
+                    except PermissionError as e:
+                        logger.error(f"Permission denied deleting backup {backup_file.name}: {e}")
+                        errors += 1
+                    except Exception as e:
+                        logger.error(f"Failed to delete backup {backup_file.name}: {e}")
+                        errors += 1
 
             except Exception as e:
-                logger.error(f"Failed to delete backup {backup_file.name}: {e}")
+                logger.error(f"Failed to process backup {backup_file.name}: {e}")
                 errors += 1
 
         logger.info(f"Backup cleanup complete: {deleted} deleted, {errors} errors")
@@ -241,6 +248,7 @@ def health_check(self):
 
     # Check Redis connection
     if REDIS_AVAILABLE:
+        redis_client = None
         try:
             # Use dedicated Redis URL if available
             redis_url = getattr(settings, 'REDIS_URL', None) or getattr(settings, 'CACHE_REDIS_URL', None)
@@ -264,6 +272,12 @@ def health_check(self):
         except Exception as e:
             logger.error(f"Redis health check failed: {e}")
             health_status['redis'] = False
+        finally:
+            if redis_client:
+                try:
+                    redis_client.close()
+                except Exception as e:
+                    logger.warning(f"Failed to close Redis connection: {e}")
     else:
         logger.debug("Redis health check: Skipped (Redis not available)")
 

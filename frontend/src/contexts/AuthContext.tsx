@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { api } from '../lib/api';
 import { useTheme } from './ThemeContext';
@@ -64,17 +64,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const isAuthenticated = user !== null;
 
+  // Use refs for sync functions to avoid dependency changes in checkAuth
+  const syncThemeRef = useRef(syncTheme);
+  const syncLanguageRef = useRef(syncLanguage);
+
+  // Keep refs up to date
+  syncThemeRef.current = syncTheme;
+  syncLanguageRef.current = syncLanguage;
+
   /**
    * Sync theme and language preferences from user data
+   * Uses refs to avoid callback instability
    */
   const syncPreferences = useCallback((userData: User) => {
     if (userData.preferred_theme) {
-      syncTheme(userData.preferred_theme);
+      syncThemeRef.current(userData.preferred_theme);
     }
     if (userData.preferred_language) {
-      syncLanguage(userData.preferred_language);
+      syncLanguageRef.current(userData.preferred_language);
     }
-  }, [syncTheme, syncLanguage]);
+  }, []);
 
   /**
    * Fetch current user from API
