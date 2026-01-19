@@ -155,7 +155,7 @@ LOGGING = {
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": [SELF],
-        "script-src": [SELF],  # Removed unsafe-inline - React/Vite builds to external files
+        "script-src": [SELF, "'sha256-lm31Rz5DC/M6iKgYulCtkdFX5SiKyVZ2z+qUMMQdbNM='"],  # Allow theme init script to prevent FOUC
         "style-src": [SELF, "'unsafe-inline'", "https://fonts.googleapis.com"],  # unsafe-inline required for Tailwind CSS
         "img-src": [SELF, "data:", "https:"],     # Allow data URIs and HTTPS images
         "font-src": [SELF, "https://fonts.gstatic.com"],  # Google Fonts files
