@@ -205,3 +205,80 @@ class EmailChangeRequest(models.Model):
     def __str__(self):
         status = "verified" if self.is_verified else "pending"
         return f"{self.user.username} → {self.new_email} ({status})"
+
+
+class PasswordResetToken(models.Model):
+    """
+    Model for password reset tokens.
+
+    When a user requests a password reset, a token is generated and stored here.
+    The token is sent via email and can be used once within the expiration window.
+    """
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='password_reset_tokens',
+        help_text="User requesting the password reset"
+    )
+
+    token = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+        help_text="Unique token for password reset"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="When the reset was requested"
+    )
+
+    expires_at = models.DateTimeField(
+        help_text="When this token expires (default: 1 hour)"
+    )
+
+    is_used = models.BooleanField(
+        default=False,
+        help_text="Whether the token has been used"
+    )
+
+    used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the token was used"
+    )
+
+    class Meta:
+        verbose_name = 'Password Reset Token'
+        verbose_name_plural = 'Password Reset Tokens'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['token', 'is_used', 'expires_at']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+
+    def save(self, *args, **kwargs):
+        """Set expiry time on creation if not provided."""
+        if not self.pk and not self.expires_at:
+            # Default expiration: 1 hour from now
+            self.expires_at = timezone.now() + timedelta(hours=1)
+        super().save(*args, **kwargs)
+
+    def is_valid(self):
+        """Check if this token is valid (not expired and not used)."""
+        if self.is_used:
+            return False
+        if timezone.now() > self.expires_at:
+            return False
+        return True
+
+    def mark_as_used(self):
+        """Mark this token as used."""
+        self.is_used = True
+        self.used_at = timezone.now()
+        self.save(update_fields=['is_used', 'used_at'])
+
+    def __str__(self):
+        status = "used" if self.is_used else "active"
+        return f"{self.user.username} - {status} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
