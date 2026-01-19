@@ -129,7 +129,8 @@ class ApiClient {
     }
 
     // Add CSRF token to ALL requests (DRF SessionAuthentication requires it)
-    const token = this.csrfToken || this.getCsrfTokenFromCookie();
+    // Always prefer cookie token (current) over cached token (may be stale after login)
+    const token = this.getCsrfTokenFromCookie() || this.csrfToken;
     if (token) {
       headers['X-CSRFToken'] = token;
     }
