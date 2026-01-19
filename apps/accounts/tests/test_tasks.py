@@ -658,6 +658,35 @@ class TestPasswordChangedEmail:
 
 
 @pytest.mark.unit
+@pytest.mark.django_db
+class TestEmailChangedNotification:
+    """Test email changed notification task."""
+
+    @patch('apps.accounts.tasks.send_mail')
+    def test_send_email_changed_notification(self, mock_send_mail):
+        """Test sending email changed notification to old address."""
+        from apps.accounts.tasks import send_email_changed_notification_async
+
+        user = UserFactory()
+        old_email = 'old@example.com'
+        new_email = 'new@example.com'
+
+        result = send_email_changed_notification_async(
+            user_id=user.id,
+            old_email=old_email,
+            new_email=new_email
+        )
+
+        assert result is True
+        mock_send_mail.assert_called_once()
+
+        # Verify sent to old email
+        call_args = mock_send_mail.call_args
+        assert old_email in call_args[1]['recipient_list']
+        assert 'Email Address Changed' in call_args[1]['subject']
+
+
+@pytest.mark.unit
 @pytest.mark.celery
 class TestAccountDeletedEmail:
     """Test suite for send_account_deleted_email_async task."""
