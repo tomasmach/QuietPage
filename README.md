@@ -33,6 +33,7 @@ For detailed setup instructions, see [LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPME
 - **📊 Comprehensive Analytics**: Heatmaps, mood charts, word count trends, writing patterns, and personal records
 - **🔥 Streak Tracking**: Timezone-aware consecutive writing day tracking with goal achievements
 - **🏷️ Tag System**: Flexible tagging with usage analytics and mood correlations
+- **📧 Email Notifications**: Transactional emails via Resend (welcome, password reset, security notifications)
 - **🌙 Dual Themes**: Midnight (dark) and Paper (light) with "analog tech" aesthetic
 - **🌍 Internationalization**: Czech and English language support
 - **📱 Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
@@ -223,6 +224,7 @@ QuietPage includes comprehensive documentation for developers:
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Complete system architecture overview
 - **[API.md](docs/API.md)** - REST API endpoints documentation
 - **[DATABASE.md](docs/DATABASE.md)** - Database schema and relationships
+- **[EMAIL_BACKEND.md](docs/EMAIL_BACKEND.md)** - Email backend configuration and usage
 - **[LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md)** - Development environment setup
 - **[DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md)** - Self-hosted Docker deployment
 - **[RAILWAY_DEPLOYMENT.md](docs/RAILWAY_DEPLOYMENT.md)** - Railway PaaS deployment
