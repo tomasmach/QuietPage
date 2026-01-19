@@ -1,7 +1,7 @@
 QuietPage - Email Address Changed
 ==================================
 
-Hello {{ user.first_name|default:user.username }},
+Hello {{ user.username }},
 
 Your account email address was successfully changed.
 
