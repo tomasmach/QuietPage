@@ -82,3 +82,6 @@ CACHES = {
         }
     }
 }
+
+# Ensure email_change throttle is available for tests (Django Rest Framework caches throttle rates early)
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['email_change'] = '3/hour'

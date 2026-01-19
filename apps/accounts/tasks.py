@@ -120,6 +120,120 @@ def send_verification_email_async(self, user_id, new_email, verification_url):
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_email_change_verification_async(self, user_id, new_email, verification_url):
+    """
+    Send email change verification link to new email address.
+
+    This task is called when a user changes their email address.
+    It sends a plain text verification email to the NEW email address.
+
+    Args:
+        user_id (int): User ID requesting the change
+        new_email (str): New email address to verify
+        verification_url (str): Full verification URL with token
+
+    Returns:
+        bool: True if email sent successfully
+
+    Raises:
+        Exception: If email sending fails after retries
+    """
+    try:
+        user = User.objects.get(pk=user_id)
+
+        # Prepare email context
+        context = {
+            'user': user,
+            'new_email': new_email,
+            'verification_url': verification_url,
+            'expiry_hours': 24,
+        }
+
+        # Render email template
+        plain_message = render_to_string('accounts/emails/email_verification.txt', context)
+
+        subject = 'QuietPage - Email Verification'
+        from_email = settings.DEFAULT_FROM_EMAIL
+
+        # Send email to NEW address
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=from_email,
+            recipient_list=[new_email],
+            fail_silently=False
+        )
+
+        logger.info(f"Email change verification sent for user_id={user_id} to {new_email}")
+        return True
+
+    except User.DoesNotExist:
+        logger.error(f"User {user_id} not found, cannot send email change verification")
+        return False
+
+    except Exception as e:
+        logger.error(f"Failed to send email change verification for user_id={user_id}: {e}", exc_info=True)
+        raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_email_changed_notification_async(self, user_id, old_email, new_email):
+    """
+    Send notification to old email address after successful email change.
+
+    This is a security notification sent to the OLD email address
+    to inform the user that their account email has been changed.
+
+    Args:
+        user_id (int): User ID whose email was changed
+        old_email (str): Previous email address (where to send notification)
+        new_email (str): New email address (for reference in notification)
+
+    Returns:
+        bool: True if email sent successfully
+
+    Raises:
+        Exception: If email sending fails after retries
+    """
+    try:
+        user = User.objects.get(pk=user_id)
+
+        # Prepare email context
+        context = {
+            'user': user,
+            'old_email': old_email,
+            'new_email': new_email,
+            'timestamp': timezone.now().strftime('%Y-%m-%d %H:%M:%S UTC'),
+        }
+
+        # Render email template
+        plain_message = render_to_string('accounts/emails/email_changed_notification.txt', context)
+
+        subject = 'QuietPage - Email Address Changed'
+        from_email = settings.DEFAULT_FROM_EMAIL
+
+        # Send email to OLD address (security notification)
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=from_email,
+            recipient_list=[old_email],
+            fail_silently=False
+        )
+
+        logger.info(f"Email changed notification sent for user_id={user_id} to old address {old_email}")
+        return True
+
+    except User.DoesNotExist:
+        logger.error(f"User {user_id} not found, cannot send email changed notification")
+        return False
+
+    except Exception as e:
+        logger.error(f"Failed to send email changed notification for user_id={user_id}: {e}", exc_info=True)
+        raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def send_password_reset_email_async(self, user_id, reset_url):
     """
     Send password reset email to user.

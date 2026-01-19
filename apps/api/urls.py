@@ -25,6 +25,7 @@ from apps.api.views import (
 from apps.api.statistics_views import (
     StatisticsView,
 )
+from apps.api import settings_views
 from apps.api.settings_views import (
     ProfileSettingsView,
     GoalsSettingsView,
@@ -54,6 +55,9 @@ urlpatterns = [
     # Password reset endpoints
     path('auth/password-reset/request/', password_reset_views.PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('auth/password-reset/confirm/', password_reset_views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+
+    # Email verification
+    path('auth/email-change/verify/<int:token>/', settings_views.EmailChangeVerifyView.as_view(), name='email-change-verify'),
 
     # Dashboard endpoint
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
