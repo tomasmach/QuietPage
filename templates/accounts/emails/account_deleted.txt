@@ -1,0 +1,16 @@
+QuietPage - Account Deleted
+============================
+
+Hello {{ username }},
+
+Your QuietPage account has been successfully deleted.
+
+All your data, including journal entries, has been permanently removed from our servers.
+
+We're sorry to see you go. If you change your mind, you can always create a new account.
+
+Thank you for using QuietPage.
+
+---
+QuietPage - Your safe space for writing
+This email was sent from an automated system.

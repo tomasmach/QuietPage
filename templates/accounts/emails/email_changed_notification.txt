@@ -1,0 +1,18 @@
+QuietPage - Email Address Changed
+==================================
+
+Hello {{ user.first_name|default:user.username }},
+
+Your account email address was successfully changed.
+
+Old email: {{ old_email }}
+New email: {{ new_email }}
+Time: {{ timestamp }}
+
+If you made this change, no action is needed.
+
+If you did NOT change your email address, please contact support immediately.
+
+---
+QuietPage - Your safe space for writing
+This email was sent to your old email address as a security notification.

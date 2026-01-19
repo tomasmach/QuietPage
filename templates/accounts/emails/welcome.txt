@@ -1,0 +1,23 @@
+QuietPage - Welcome!
+====================
+
+Hello {{ user.first_name|default:user.username }},
+
+Welcome to QuietPage - your safe space for writing and reflection.
+
+Your account has been successfully created. You can now:
+- Write daily journal entries
+- Track your writing streak
+- Analyze your mood patterns
+- Export your data anytime
+
+Start writing: {{ dashboard_url }}
+
+Tips for getting started:
+- Set your daily word goal in Settings
+- Enable writing reminders to build a habit
+- Use tags to organize your thoughts
+
+---
+QuietPage - Your safe space for writing
+This email was sent from an automated system.
