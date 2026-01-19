@@ -22,6 +22,7 @@ from apps.accounts.tasks import (
     send_verification_email_async,
     send_reminder_emails,
     send_welcome_email_async,
+    send_password_reset_email_async,
     send_password_changed_email_async,
     send_account_deleted_email_async,
 )
@@ -507,6 +508,61 @@ class TestWelcomeEmail:
         # Template uses first_name with fallback to username
         assert "John" in email_body or "johndoe" in email_body
         assert settings.SITE_URL in email_body
+
+
+@pytest.mark.unit
+@pytest.mark.celery
+class TestPasswordResetEmail:
+    """Test password reset email task."""
+
+    @patch('apps.accounts.tasks.send_mail')
+    def test_send_password_reset_email_success(self, mock_send_mail):
+        """Test sending password reset email."""
+        from apps.accounts.tasks import send_password_reset_email_async
+
+        user = UserFactory(email='test@example.com')
+        reset_url = 'https://example.com/reset?token=abc123'
+
+        result = send_password_reset_email_async(
+            user_id=user.id,
+            reset_url=reset_url
+        )
+
+        assert result is True
+        mock_send_mail.assert_called_once()
+
+        # Verify email content
+        call_args = mock_send_mail.call_args
+        assert call_args[1]['subject'] == 'QuietPage - Password Reset'
+        assert user.email in call_args[1]['recipient_list']
+        assert reset_url in call_args[1]['message']
+
+    @patch('apps.accounts.tasks.send_mail')
+    def test_send_password_reset_email_user_not_found(self, mock_send_mail):
+        """Test password reset email with non-existent user."""
+        from apps.accounts.tasks import send_password_reset_email_async
+
+        result = send_password_reset_email_async(
+            user_id=99999,
+            reset_url='https://example.com/reset?token=abc123'
+        )
+
+        assert result is False
+        mock_send_mail.assert_not_called()
+
+    @patch('apps.accounts.tasks.send_mail')
+    def test_send_password_reset_email_retry_on_error(self, mock_send_mail):
+        """Test password reset email retries on error."""
+        from apps.accounts.tasks import send_password_reset_email_async
+
+        user = UserFactory()
+        mock_send_mail.side_effect = Exception('Email service error')
+
+        with pytest.raises(Exception):
+            send_password_reset_email_async(
+                user_id=user.id,
+                reset_url='https://example.com/reset'
+            )
 
 
 @pytest.mark.unit
