@@ -5,7 +5,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
