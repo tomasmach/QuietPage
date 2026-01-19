@@ -67,6 +67,10 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 
+# Static files - Add frontend/public/ for development (favicons, og-image, etc.)
+# In production, these files are copied to dist/ by Vite build
+STATICFILES_DIRS = list(STATICFILES_DIRS) + [BASE_DIR / 'frontend' / 'public']
+
 # Cache Configuration - Use local memory for development (no Redis needed)
 # https://docs.djangoproject.com/en/5.2/topics/cache/
 CACHES = {
