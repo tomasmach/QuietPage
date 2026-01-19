@@ -326,23 +326,33 @@ class TestChangePasswordAPIView:
 
     def test_change_password_success(self, client):
         """User can change password successfully."""
+        from unittest.mock import patch
+
         user = UserFactory()
         client.force_login(user)
 
-        response = client.post(
-            reverse('api:settings-change-password'),
-            data=json.dumps({
-                'current_password': 'testpass123',
-                'new_password': 'NewPass123!',
-                'new_password_confirm': 'NewPass123!'
-            }),
-            content_type='application/json'
-        )
+        with patch('apps.accounts.tasks.send_password_changed_email_async.delay') as mock_email:
+            response = client.post(
+                reverse('api:settings-change-password'),
+                data=json.dumps({
+                    'current_password': 'testpass123',
+                    'new_password': 'NewPass123!',
+                    'new_password_confirm': 'NewPass123!'
+                }),
+                content_type='application/json'
+            )
 
         assert response.status_code == 200
         data = response.json()
         assert 'message' in data
         assert 'uspesne zmeneno' in data['message'].lower()
+
+        # Verify notification email was sent
+        mock_email.assert_called_once()
+        # Verify it was called with correct arguments
+        call_kwargs = mock_email.call_args.kwargs
+        assert call_kwargs['user_id'] == user.id
+        assert 'ip_address' in call_kwargs
 
     def test_change_password_wrong_current(self, client):
         """Cannot change password with wrong current password."""

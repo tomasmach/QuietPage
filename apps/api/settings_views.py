@@ -207,6 +207,14 @@ class ChangePasswordView(APIView):
         # Log security event
         log_security_event('PASSWORD_CHANGE', user, request)
 
+        # Send password changed notification email
+        from apps.accounts.tasks import send_password_changed_email_async
+        ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+        send_password_changed_email_async.delay(
+            user_id=user.id,
+            ip_address=ip_address
+        )
+
         return Response(
             {'message': 'Heslo bylo uspesne zmeneno.'},
             status=status.HTTP_200_OK
