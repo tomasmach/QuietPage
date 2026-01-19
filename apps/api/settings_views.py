@@ -393,8 +393,19 @@ class DeleteAccountView(APIView):
         # Log security event before deletion
         log_security_event('ACCOUNT_DELETION', request.user, request)
 
+        # Store email and username before deletion
+        user_email = request.user.email
+        username = request.user.username
+
         # Delete the account
         serializer.save()
+
+        # Send account deletion confirmation email
+        from apps.accounts.tasks import send_account_deleted_email_async
+        send_account_deleted_email_async.delay(
+            email=user_email,
+            username=username
+        )
 
         # Logout the user (clear session)
         logout(request)

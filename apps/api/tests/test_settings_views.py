@@ -28,19 +28,25 @@ class TestDeleteAccountAPIView:
 
     def test_delete_account_success_with_SMAZAT(self, client):
         """User can delete account with correct password and 'SMAZAT' confirmation."""
+        from unittest.mock import patch
+
         user = UserFactory()
         client.force_login(user)
 
-        response = client.post(
-            reverse('api:settings-delete-account'),
-            data=json.dumps({'password': 'testpass123', 'confirmation_text': 'SMAZAT'}),
-            content_type='application/json'
-        )
+        with patch('apps.accounts.tasks.send_account_deleted_email_async.delay') as mock_email:
+            response = client.post(
+                reverse('api:settings-delete-account'),
+                data=json.dumps({'password': 'testpass123', 'confirmation_text': 'SMAZAT'}),
+                content_type='application/json'
+            )
 
         assert response.status_code == 200
         data = response.json()
         assert 'message' in data
         assert 'uspesne smazan' in data['message'].lower()
+
+        # Verify confirmation email was sent
+        mock_email.assert_called_once()
 
     def test_delete_account_success_with_DELETE(self, client):
         """User can delete account with correct password and 'DELETE' confirmation."""
