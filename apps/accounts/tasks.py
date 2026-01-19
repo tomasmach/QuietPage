@@ -315,9 +315,9 @@ def send_password_reset_email_async(self, user_id, reset_url):
         }
 
         # Render email template
-        plain_message = render_to_string('accounts/emails/password_reset.txt', context)
+        plain_message = render_to_string('accounts/emails/password_reset_request.txt', context)
 
-        subject = 'QuietPage - Password Reset Request'
+        subject = 'QuietPage - Password Reset'
         from_email = settings.DEFAULT_FROM_EMAIL
 
         # Send email
