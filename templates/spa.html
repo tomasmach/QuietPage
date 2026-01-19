@@ -5,13 +5,13 @@
     <script>
       // Prevent flash of wrong theme - runs BEFORE any CSS loads
       (function() {
-        var isDark = false; // Default to light theme
+        var isDark = true; // Default to dark theme
         try {
           var theme = localStorage.getItem('quietpage-theme');
           isDark = theme !== 'paper';
         } catch (e) {
           // localStorage access may throw SecurityError in restricted contexts
-          // Fall back to light theme (isDark=false)
+          // Fall back to dark theme (isDark=true)
         }
         var bgColor = isDark ? '#1A1A1A' : '#FFFCF5';
         document.documentElement.style.backgroundColor = bgColor;
