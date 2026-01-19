@@ -19,7 +19,7 @@ from .models import User
 
 class ProfileUpdateForm(forms.ModelForm):
     """
-    Form for updating user profile information (name, bio, avatar).
+    Form for updating user profile information (bio, avatar).
     """
     
     class Meta:
