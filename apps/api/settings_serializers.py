@@ -24,7 +24,7 @@ class ProfileSettingsSerializer(serializers.ModelSerializer):
     """
     Serializer for profile settings (GET/PATCH).
 
-    Handles: first_name, last_name, bio, avatar
+    Handles: bio, avatar
     Avatar upload is handled with automatic resize to 512x512.
     """
     avatar = serializers.SerializerMethodField(read_only=True)
@@ -38,8 +38,6 @@ class ProfileSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'first_name',
-            'last_name',
             'bio',
             'avatar',
             'avatar_upload',

@@ -62,16 +62,16 @@ class TestDeleteOldAvatarOnUpdate:
     def test_does_not_delete_when_avatar_unchanged(self, sample_avatar, temp_media_dir):
         """Test that avatar is not deleted when it hasn't changed."""
         user = UserFactory()
-        
+
         # Upload avatar
         user.avatar = sample_avatar
         user.save()
-        
+
         # Update other field without changing avatar
         with patch.object(user.avatar, 'delete') as mock_delete:
-            user.first_name = 'Updated'
+            user.bio = 'Updated bio'
             user.save()
-            
+
             # Delete should not be called
             mock_delete.assert_not_called()
 

@@ -142,8 +142,6 @@ def export_user_data(self, user_id):
             'user': {
                 'username': user.username,
                 'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
                 'bio': user.bio,
                 'date_joined': user.date_joined.isoformat(),
                 'timezone': str(user.timezone),

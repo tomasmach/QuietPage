@@ -98,14 +98,8 @@ X_FRAME_OPTIONS = 'DENY'
 # Referrer policy
 SECURE_REFERRER_POLICY = 'same-origin'
 
-# Email configuration (configure based on your email provider)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@quietpage.com')
+# Email configuration inherited from base.py (Resend backend)
+# No override needed - uses ResendEmailBackend from base.py
 
 # Logging configuration
 # Ensure logs directory exists
@@ -155,7 +149,7 @@ LOGGING = {
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": [SELF],
-        "script-src": [SELF],  # Removed unsafe-inline - React/Vite builds to external files
+        "script-src": [SELF, "'sha256-qk97d7wP333km7/9rt0U6+Nm7Z5PAango3p+tkLPHo8='"],  # Allow theme init script to prevent FOUC
         "style-src": [SELF, "'unsafe-inline'", "https://fonts.googleapis.com"],  # unsafe-inline required for Tailwind CSS
         "img-src": [SELF, "data:", "https:"],     # Allow data URIs and HTTPS images
         "font-src": [SELF, "https://fonts.gstatic.com"],  # Google Fonts files

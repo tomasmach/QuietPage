@@ -37,24 +37,20 @@ class TestProfileUpdateForm:
     def test_profile_form_fields(self):
         """
         Test that profile form includes correct fields.
-        
-        Why: Users should be able to update their name, bio, and avatar.
+
+        Why: Users should be able to update their bio and avatar.
         """
         form = ProfileUpdateForm()
-        assert 'first_name' in form.fields
-        assert 'last_name' in form.fields
         assert 'bio' in form.fields
         assert 'avatar' in form.fields
 
     def test_profile_form_field_labels(self):
         """
         Test that profile form has Czech labels.
-        
+
         Why: Ensures proper localization for Czech users.
         """
         form = ProfileUpdateForm()
-        assert form.fields['first_name'].label == 'Jméno'
-        assert form.fields['last_name'].label == 'Příjmení'
         assert form.fields['bio'].label == 'O mně'
         assert form.fields['avatar'].label == 'Profilový obrázek'
 
@@ -80,51 +76,49 @@ class TestProfileUpdateForm:
     def test_profile_form_valid_data(self, sample_avatar):
         """
         Test that form validates with correct data including avatar.
-        
+
         Why: Ensures valid profile updates are accepted.
         """
         user = UserFactory()
         form = ProfileUpdateForm(
             data={
-                'first_name': 'Jan',
-                'last_name': 'Novák',
                 'bio': 'Miluji psaní.',
             },
             files={'avatar': sample_avatar},
             instance=user
         )
-        
+
         assert form.is_valid(), form.errors
 
     def test_profile_form_avatar_size_validation_pass(self, sample_avatar):
         """
         Test that small avatars pass validation.
-        
+
         Why: Valid images under 2MB should be accepted.
         """
         user = UserFactory()
         form = ProfileUpdateForm(
-            data={'first_name': 'Jan'},
+            data={'bio': 'Test bio'},
             files={'avatar': sample_avatar},
             instance=user
         )
-        
+
         assert form.is_valid()
 
     def test_profile_form_avatar_size_validation_fail(self, large_avatar):
         """
         Test that avatars over 2MB are rejected.
-        
+
         Why: Prevents excessive storage usage and ensures reasonable
         file sizes for web display.
         """
         user = UserFactory()
         form = ProfileUpdateForm(
-            data={'first_name': 'Jan'},
+            data={'bio': 'Test bio'},
             files={'avatar': large_avatar},
             instance=user
         )
-        
+
         assert not form.is_valid()
         assert 'avatar' in form.errors
         assert 'příliš velký' in str(form.errors['avatar']).lower()
@@ -146,7 +140,7 @@ class TestProfileUpdateForm:
         )
         
         form = ProfileUpdateForm(
-            data={'first_name': 'Jan'},
+            data={'bio': 'Test bio'},
             files={'avatar': invalid_file},
             instance=user
         )
@@ -185,7 +179,7 @@ class TestProfileUpdateForm:
             
             image_file = SimpleUploadedFile(filename, jpeg_data, content_type=content_type)
             form = ProfileUpdateForm(
-                data={'first_name': 'Jan'},
+                data={'bio': 'Test bio'},
                 files={'avatar': image_file},
                 instance=user
             )
@@ -195,20 +189,18 @@ class TestProfileUpdateForm:
     def test_profile_form_no_avatar_is_valid(self):
         """
         Test that form is valid without avatar upload.
-        
+
         Why: Avatar should be optional - users can update profile
         without changing their avatar.
         """
         user = UserFactory()
         form = ProfileUpdateForm(
             data={
-                'first_name': 'Jan',
-                'last_name': 'Novák',
                 'bio': 'Updated bio',
             },
             instance=user
         )
-        
+
         assert form.is_valid()
 
 

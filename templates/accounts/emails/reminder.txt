@@ -1,7 +1,7 @@
 QuietPage - Writing Reminder
 =============================
 
-Time to write, {{ user.first_name|default:user.username }}!
+Time to write, {{ user.username }}!
 
 Have you captured your thoughts today?
 

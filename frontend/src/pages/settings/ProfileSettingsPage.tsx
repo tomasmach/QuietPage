@@ -5,7 +5,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
@@ -20,8 +19,6 @@ export function ProfileSettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    first_name: user?.first_name || '',
-    last_name: user?.last_name || '',
     bio: user?.bio || '',
   });
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar || null);
@@ -30,8 +27,6 @@ export function ProfileSettingsPage() {
     e.preventDefault();
     clearMessages();
     const result = await updateProfile({
-      first_name: formData.first_name,
-      last_name: formData.last_name,
       bio: formData.bio,
     });
     if (result) {
@@ -115,22 +110,6 @@ export function ProfileSettingsPage() {
             accept="image/*"
             onChange={handleAvatarChange}
             className="hidden"
-          />
-        </div>
-
-        {/* Name Fields */}
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label={t('settings.profile.firstName')}
-            value={formData.first_name}
-            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-            disabled={isLoading}
-          />
-          <Input
-            label={t('settings.profile.lastName')}
-            value={formData.last_name}
-            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-            disabled={isLoading}
           />
         </div>
 

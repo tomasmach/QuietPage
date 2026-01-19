@@ -19,21 +19,13 @@ from .models import User
 
 class ProfileUpdateForm(forms.ModelForm):
     """
-    Form for updating user profile information (name, bio, avatar).
+    Form for updating user profile information (bio, avatar).
     """
     
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'bio', 'avatar']
+        fields = ['bio', 'avatar']
         widgets = {
-            'first_name': forms.TextInput(attrs={
-                'class': 'form-input',
-                'placeholder': 'Vaše jméno',
-            }),
-            'last_name': forms.TextInput(attrs={
-                'class': 'form-input',
-                'placeholder': 'Vaše příjmení',
-            }),
             'bio': forms.Textarea(attrs={
                 'class': 'form-input',
                 'placeholder': 'Krátký text o vás...',
@@ -46,14 +38,10 @@ class ProfileUpdateForm(forms.ModelForm):
             }),
         }
         labels = {
-            'first_name': 'Jméno',
-            'last_name': 'Příjmení',
             'bio': 'O mně',
             'avatar': 'Profilový obrázek',
         }
         help_texts = {
-            'first_name': 'Volitelné',
-            'last_name': 'Volitelné',
             'bio': 'Maximálně 500 znaků',
             'avatar': 'Max 2MB, doporučeno 512x512px (JPG, PNG)',
         }
