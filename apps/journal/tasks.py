@@ -170,7 +170,7 @@ def export_user_data(self, user_id):
             entry_data = {
                 'id': str(entry.id),
                 'title': entry.title,
-                'content': entry.content,  # EncryptedTextField auto-decrypts
+                'content': entry.get_content(),  # Decrypted with per-user key
                 'word_count': entry.word_count,
                 'mood_rating': entry.mood_rating,
                 'tags': [tag.name for tag in entry.tags.all()],
