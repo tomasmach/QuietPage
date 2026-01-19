@@ -40,7 +40,7 @@ urlpatterns = [
     # Catch-all pattern for React SPA - MUST be last
     # Excludes: API routes, admin panel (with or without trailing slash), and debug toolbar
     # Serves React app on root and all other routes
-    re_path(rf'^(?!api/|{admin_pattern.rstrip("/")}/?|__debug__/).*$', views.SPAView.as_view(), name='spa'),
+    re_path(rf'^(?!api/|{admin_pattern.rstrip("/")}(?:/|$)|__debug__/).*$', views.SPAView.as_view(), name='spa'),
 ]
 
 # Django Debug Toolbar URLs (only in development)
