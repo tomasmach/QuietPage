@@ -1,9 +1,23 @@
+# Default build configuration
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
+# Default deploy configuration (applies to web service)
 [deploy]
 healthcheckPath = "/api/health/"
 healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Celery Worker - no HTTP healthcheck (background process)
+[services.celery-worker.deploy]
+healthcheckPath = ""
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Celery Beat - no HTTP healthcheck (scheduler process)
+[services.celery-beat.deploy]
+healthcheckPath = ""
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
