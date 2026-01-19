@@ -43,10 +43,10 @@ class ProfileSettingsView(APIView):
     API endpoint for profile settings.
 
     GET /api/v1/settings/profile/
-    - Returns: first_name, last_name, bio, avatar (URL)
+    - Returns: bio, avatar (URL), preferred_language, preferred_theme
 
     PATCH /api/v1/settings/profile/
-    - Updates: first_name, last_name, bio, avatar_upload (file)
+    - Updates: bio, avatar_upload (file), preferred_language, preferred_theme
     - Avatar is automatically resized to 512x512
 
     Requires authentication.
