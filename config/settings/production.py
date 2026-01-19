@@ -149,7 +149,11 @@ LOGGING = {
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": [SELF],
-        "script-src": [SELF, "'sha256-qk97d7wP333km7/9rt0U6+Nm7Z5PAango3p+tkLPHo8='"],  # Allow theme init script to prevent FOUC
+        "script-src": [
+            SELF,
+            "'sha256-wPzJ1ntu94lCWwrtL6bm6YLIjfEqzKlgmLgSb7L79LM='",  # Theme init script (prevents FOUC)
+            "'sha256-OnVNgZ2p65353QPKl99OWJqpTrkrj4MpECVllEafnzk='",  # JSON-LD structured data
+        ],
         "style-src": [SELF, "'unsafe-inline'", "https://fonts.googleapis.com"],  # unsafe-inline required for Tailwind CSS
         "img-src": [SELF, "data:", "https:"],     # Allow data URIs and HTTPS images
         "font-src": [SELF, "https://fonts.gstatic.com"],  # Google Fonts files
