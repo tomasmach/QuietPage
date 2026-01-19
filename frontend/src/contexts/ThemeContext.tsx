@@ -21,9 +21,9 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    // Get theme from localStorage or default to 'midnight'
+    // Get theme from localStorage or default to 'paper'
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return (stored === 'midnight' || stored === 'paper') ? stored : 'midnight';
+    return (stored === 'midnight' || stored === 'paper') ? stored : 'paper';
   });
 
   useEffect(() => {
