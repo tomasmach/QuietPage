@@ -26,9 +26,9 @@ interface LanguageProviderProps {
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<Language>(() => {
-    // Get language from localStorage or default to 'cs'
+    // Get language from localStorage or default to 'en'
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    return (stored === 'cs' || stored === 'en') ? stored : 'cs';
+    return (stored === 'cs' || stored === 'en') ? stored : 'en';
   });
 
   /**
