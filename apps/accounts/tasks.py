@@ -119,6 +119,61 @@ def send_verification_email_async(self, user_id, new_email, verification_url):
         raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
 
 
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_password_reset_email_async(self, user_id, reset_url):
+    """
+    Send password reset email to user.
+
+    This task is called when a user requests a password reset.
+    It sends a plain text email with the reset link.
+
+    Args:
+        user_id (int): User ID requesting the reset
+        reset_url (str): Full password reset URL with token
+
+    Returns:
+        bool: True if email sent successfully
+
+    Raises:
+        Exception: If email sending fails after retries
+    """
+    try:
+        user = User.objects.get(pk=user_id)
+
+        # Prepare email context
+        context = {
+            'user': user,
+            'reset_url': reset_url,
+            'expiry_hours': 1,
+        }
+
+        # Render email template
+        plain_message = render_to_string('accounts/emails/password_reset.txt', context)
+
+        subject = 'QuietPage - Password Reset Request'
+        from_email = settings.DEFAULT_FROM_EMAIL
+
+        # Send email
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=from_email,
+            recipient_list=[user.email],
+            fail_silently=False
+        )
+
+        logger.info(f"Password reset email sent for user_id={user_id}")
+        return True
+
+    except User.DoesNotExist:
+        logger.error(f"User {user_id} not found, cannot send password reset email")
+        return False
+
+    except Exception as e:
+        logger.error(f"Failed to send password reset email for user_id={user_id}: {e}", exc_info=True)
+        raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+
+
 @shared_task(bind=True, ignore_result=True)
 def send_reminder_emails(self):
     """

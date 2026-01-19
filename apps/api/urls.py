@@ -14,6 +14,7 @@ from apps.api.auth_views import (
     CurrentUserView,
     CSRFTokenView,
 )
+from apps.api import password_reset_views
 from apps.api.views import (
     EntryViewSet,
     DashboardView,
@@ -49,6 +50,10 @@ urlpatterns = [
     path('auth/register/', RegisterView.as_view(), name='register'),
     path('auth/me/', CurrentUserView.as_view(), name='current-user'),
     path('auth/csrf/', CSRFTokenView.as_view(), name='csrf-token'),
+
+    # Password reset endpoints
+    path('auth/password-reset/request/', password_reset_views.PasswordResetRequestView.as_view(), name='password-reset-request'),
+    path('auth/password-reset/confirm/', password_reset_views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
 
     # Dashboard endpoint
     path('dashboard/', DashboardView.as_view(), name='dashboard'),

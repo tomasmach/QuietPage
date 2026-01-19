@@ -198,6 +198,7 @@ def disable_throttling_for_tests(request, settings):
         'avatar_upload': '10000/hour',
         'statistics': '10000/hour',
         'export_download': '10000/hour',
+        'password_reset': '10000/hour',
     }
 
 

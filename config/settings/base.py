@@ -263,6 +263,7 @@ REST_FRAMEWORK = {
         'avatar_upload': '10/hour',
         'statistics': '100/hour',  # Expensive queries - limit to prevent database exhaustion
         'export_download': '5/hour',  # Limit export downloads to prevent abuse
+        'password_reset': '5/hour',  # Limit password reset requests to prevent abuse
     },
 }
 
