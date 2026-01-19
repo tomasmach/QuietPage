@@ -252,8 +252,6 @@ class TestExportUserData:
         user = UserFactory(
             username="testuser",
             email="test@example.com",
-            first_name="John",
-            last_name="Doe",
             bio="Test bio",
             daily_word_goal=1000,
         )

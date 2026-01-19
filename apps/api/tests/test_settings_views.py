@@ -160,36 +160,18 @@ class TestProfileSettingsAPIView:
 
     def test_get_profile_settings(self, client):
         """User can retrieve their profile settings."""
-        user = UserFactory(first_name='Jan', last_name='Novak', bio='Test bio')
+        user = UserFactory(bio='Test bio')
         client.force_login(user)
 
         response = client.get(reverse('api:settings-profile'))
 
         assert response.status_code == 200
         data = response.json()
-        assert data['first_name'] == 'Jan'
-        assert data['last_name'] == 'Novak'
         assert data['bio'] == 'Test bio'
 
     def test_patch_profile_update(self, client):
         """User can update their profile settings."""
-        user = UserFactory(first_name='Old', last_name='Name')
-        client.force_login(user)
-
-        response = client.patch(
-            reverse('api:settings-profile'),
-            data=json.dumps({'first_name': 'New', 'last_name': 'Name'}),
-            content_type='application/json'
-        )
-
-        assert response.status_code == 200
-        user.refresh_from_db()
-        assert user.first_name == 'New'
-        assert user.last_name == 'Name'
-
-    def test_patch_profile_update_partial(self, client):
-        """User can update partial profile fields."""
-        user = UserFactory(first_name='Jan', last_name='Novak')
+        user = UserFactory()
         client.force_login(user)
 
         response = client.patch(
@@ -200,8 +182,21 @@ class TestProfileSettingsAPIView:
 
         assert response.status_code == 200
         user.refresh_from_db()
-        assert user.first_name == 'Jan'
-        assert user.last_name == 'Novak'
+        assert user.bio == 'New bio'
+
+    def test_patch_profile_update_partial(self, client):
+        """User can update partial profile fields."""
+        user = UserFactory()
+        client.force_login(user)
+
+        response = client.patch(
+            reverse('api:settings-profile'),
+            data=json.dumps({'bio': 'New bio'}),
+            content_type='application/json'
+        )
+
+        assert response.status_code == 200
+        user.refresh_from_db()
         assert user.bio == 'New bio'
 
     def test_profile_requires_auth(self, client):
@@ -211,7 +206,7 @@ class TestProfileSettingsAPIView:
 
         response = client.patch(
             reverse('api:settings-profile'),
-            data=json.dumps({'first_name': 'Test'}),
+            data=json.dumps({'bio': 'Test'}),
             content_type='application/json'
         )
         assert response.status_code == 403

@@ -121,7 +121,7 @@ class TestSendVerificationEmailAsync:
         Why: Validates that verification emails are sent with correct
         template and context.
         """
-        user = UserFactory(username="testuser", first_name="")
+        user = UserFactory(username="testuser")
         new_email = "newemail@example.com"
         verification_url = "https://example.com/verify?token=abc123"
 
@@ -132,8 +132,8 @@ class TestSendVerificationEmailAsync:
         assert mail.outbox[0].subject == "QuietPage - Email Verification"
         assert mail.outbox[0].to == [new_email]
         assert verification_url in mail.outbox[0].body
-        # Template uses first_name with fallback to username
-        assert "testuser" in mail.outbox[0].body or user.first_name in mail.outbox[0].body
+        # Template uses username only
+        assert "testuser" in mail.outbox[0].body
 
     def test_send_verification_email_user_not_found(self):
         """
@@ -171,15 +171,15 @@ class TestSendVerificationEmailAsync:
         Why: Template should have access to user, new_email, verification_url,
         and expiry_hours for proper email formatting.
         """
-        user = UserFactory(username="johndoe", first_name="John")
+        user = UserFactory(username="johndoe")
         new_email = "john.new@example.com"
         verification_url = "https://example.com/verify?token=xyz789"
 
         send_verification_email_async(user.id, new_email, verification_url)
 
         email_body = mail.outbox[0].body
-        # Template uses first_name with fallback to username
-        assert "John" in email_body or "johndoe" in email_body
+        # Template uses username only
+        assert "johndoe" in email_body
         assert new_email in email_body
         assert verification_url in email_body
         assert "24" in email_body  # expiry_hours
@@ -357,7 +357,6 @@ class TestSendReminderEmails:
         import pytz
         user = UserFactory(
             username="testuser",
-            first_name="Test",
             reminder_enabled=True,
             email_notifications=True,
             reminder_time=time(8, 0),
@@ -369,8 +368,8 @@ class TestSendReminderEmails:
 
         assert len(mail.outbox) == 1
         email_body = mail.outbox[0].body
-        # Template uses first_name with fallback to username
-        assert user.first_name in email_body or user.username in email_body
+        # Template uses username only
+        assert user.username in email_body
         assert settings.SITE_URL in email_body
 
     @freeze_time("2025-01-15 08:00:00")
@@ -458,7 +457,7 @@ class TestWelcomeEmail:
         Why: Validates that welcome emails are sent with correct
         template and context after user registration.
         """
-        user = UserFactory(username="newuser", first_name="New")
+        user = UserFactory(username="newuser")
 
         result = send_welcome_email_async(user_id=user.id)
 
@@ -466,8 +465,8 @@ class TestWelcomeEmail:
         assert len(mail.outbox) == 1
         assert "Welcome" in mail.outbox[0].subject
         assert mail.outbox[0].to == [user.email]
-        # Template uses first_name with fallback to username
-        assert "New" in mail.outbox[0].body or "newuser" in mail.outbox[0].body
+        # Template uses username only
+        assert "newuser" in mail.outbox[0].body
 
     def test_send_welcome_email_user_not_found(self):
         """
@@ -500,13 +499,13 @@ class TestWelcomeEmail:
 
         Why: Template should have access to user and dashboard_url.
         """
-        user = UserFactory(username="johndoe", first_name="John")
+        user = UserFactory(username="johndoe")
 
         send_welcome_email_async(user_id=user.id)
 
         email_body = mail.outbox[0].body
-        # Template uses first_name with fallback to username
-        assert "John" in email_body or "johndoe" in email_body
+        # Template uses username only
+        assert "johndoe" in email_body
         assert settings.SITE_URL in email_body
 
 
@@ -642,14 +641,14 @@ class TestPasswordChangedEmail:
 
         Why: Template should have access to user, timestamp, ip_address, and reset_url.
         """
-        user = UserFactory(username="johndoe", first_name="John")
+        user = UserFactory(username="johndoe")
         ip_address = "10.0.0.1"
 
         send_password_changed_email_async(user_id=user.id, ip_address=ip_address)
 
         email_body = mail.outbox[0].body
-        # Template uses first_name with fallback to username
-        assert "John" in email_body or "johndoe" in email_body
+        # Template uses username only
+        assert "johndoe" in email_body
         assert ip_address in email_body
         # Should contain timestamp (current time)
         assert "UTC" in email_body

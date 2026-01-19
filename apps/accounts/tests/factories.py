@@ -37,8 +37,8 @@ class UserFactory(DjangoModelFactory):
     password = factory.PostGenerationMethodCall('set_password', 'testpass123')
     
     # Profile fields
-    first_name = factory.Faker('first_name', locale='cs_CZ')
-    last_name = factory.Faker('last_name', locale='cs_CZ')
+    # first_name = factory.Faker('first_name', locale='cs_CZ')
+    # last_name = factory.Faker('last_name', locale='cs_CZ')
     bio = factory.Faker('text', max_nb_chars=200, locale='cs_CZ')
     
     # Settings
