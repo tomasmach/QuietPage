@@ -1,9 +1,80 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en" style="background-color:#1A1A1A">
 <head>
     <meta charset="UTF-8">
+    <script>
+      // Prevent flash of wrong theme - runs BEFORE any CSS loads
+      (function() {
+        var isDark = true; // Default to dark theme
+        try {
+          var theme = localStorage.getItem('quietpage-theme');
+          isDark = theme !== 'paper';
+        } catch (e) {
+          // localStorage access may throw SecurityError in restricted contexts
+          // Fall back to dark theme (isDark=true)
+        }
+        var bgColor = isDark ? '#1A1A1A' : '#FFFCF5';
+        document.documentElement.style.backgroundColor = bgColor;
+        document.documentElement.setAttribute('data-theme', isDark ? 'midnight' : 'paper');
+      })();
+
+      // Set language attribute from localStorage
+      (function() {
+        var lang = 'en'; // Default to English
+        try {
+          var storedLang = localStorage.getItem('quietpage-language');
+          if (storedLang) {
+            lang = storedLang;
+          }
+        } catch (e) {
+          // localStorage access may throw SecurityError in restricted contexts
+          // Fall back to English (lang='en')
+        }
+        document.documentElement.lang = lang;
+      })();
+    </script>
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuietPage</title>
+
+    <!-- Default SEO Meta Tags (fallback for crawlers that don't execute JS) -->
+    <title>QuietPage - Your Private Space for Mindful Writing</title>
+    <meta name="description" content="Express yourself freely, track your emotional wellbeing, and build lasting writing habits. Free, encrypted, private journaling." />
+
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="QuietPage - Your Private Space for Mindful Writing" />
+    <meta property="og:description" content="Express yourself freely, track your emotional wellbeing, and build lasting writing habits. Free, encrypted, private journaling." />
+    <meta property="og:image" content="https://www.quietpage.app/og-image.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="QuietPage" />
+    <meta property="og:url" content="https://www.quietpage.app/" />
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="QuietPage - Your Private Space for Mindful Writing" />
+    <meta name="twitter:description" content="Express yourself freely, track your emotional wellbeing, and build lasting writing habits. Free, encrypted, private journaling." />
+    <meta name="twitter:image" content="https://www.quietpage.app/og-image.png" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "QuietPage",
+        "description": "Private mindful writing and journaling application",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
 
     {% if not debug %}
     {# Production: Load built CSS from Vite manifest #}
@@ -12,7 +83,7 @@
     {% endfor %}
     {% endif %}
 </head>
-<body>
+<body style="background-color:inherit">
     <div id="root"></div>
 
     {% if debug %}
