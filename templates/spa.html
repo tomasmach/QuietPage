@@ -20,7 +20,16 @@
 
       // Set language attribute from localStorage
       (function() {
-        var lang = localStorage.getItem('quietpage-language') || 'en';
+        var lang = 'en'; // Default to English
+        try {
+          var storedLang = localStorage.getItem('quietpage-language');
+          if (storedLang) {
+            lang = storedLang;
+          }
+        } catch (e) {
+          // localStorage access may throw SecurityError in restricted contexts
+          // Fall back to English (lang='en')
+        }
         document.documentElement.lang = lang;
       })();
     </script>
