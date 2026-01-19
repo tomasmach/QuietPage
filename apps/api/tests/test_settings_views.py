@@ -28,19 +28,25 @@ class TestDeleteAccountAPIView:
 
     def test_delete_account_success_with_SMAZAT(self, client):
         """User can delete account with correct password and 'SMAZAT' confirmation."""
+        from unittest.mock import patch
+
         user = UserFactory()
         client.force_login(user)
 
-        response = client.post(
-            reverse('api:settings-delete-account'),
-            data=json.dumps({'password': 'testpass123', 'confirmation_text': 'SMAZAT'}),
-            content_type='application/json'
-        )
+        with patch('apps.accounts.tasks.send_account_deleted_email_async.delay') as mock_email:
+            response = client.post(
+                reverse('api:settings-delete-account'),
+                data=json.dumps({'password': 'testpass123', 'confirmation_text': 'SMAZAT'}),
+                content_type='application/json'
+            )
 
         assert response.status_code == 200
         data = response.json()
         assert 'message' in data
         assert 'uspesne smazan' in data['message'].lower()
+
+        # Verify confirmation email was sent
+        mock_email.assert_called_once()
 
     def test_delete_account_success_with_DELETE(self, client):
         """User can delete account with correct password and 'DELETE' confirmation."""
@@ -326,23 +332,33 @@ class TestChangePasswordAPIView:
 
     def test_change_password_success(self, client):
         """User can change password successfully."""
+        from unittest.mock import patch
+
         user = UserFactory()
         client.force_login(user)
 
-        response = client.post(
-            reverse('api:settings-change-password'),
-            data=json.dumps({
-                'current_password': 'testpass123',
-                'new_password': 'NewPass123!',
-                'new_password_confirm': 'NewPass123!'
-            }),
-            content_type='application/json'
-        )
+        with patch('apps.accounts.tasks.send_password_changed_email_async.delay') as mock_email:
+            response = client.post(
+                reverse('api:settings-change-password'),
+                data=json.dumps({
+                    'current_password': 'testpass123',
+                    'new_password': 'NewPass123!',
+                    'new_password_confirm': 'NewPass123!'
+                }),
+                content_type='application/json'
+            )
 
         assert response.status_code == 200
         data = response.json()
         assert 'message' in data
         assert 'uspesne zmeneno' in data['message'].lower()
+
+        # Verify notification email was sent
+        mock_email.assert_called_once()
+        # Verify it was called with correct arguments
+        call_kwargs = mock_email.call_args.kwargs
+        assert call_kwargs['user_id'] == user.id
+        assert 'ip_address' in call_kwargs
 
     def test_change_password_wrong_current(self, client):
         """Cannot change password with wrong current password."""
@@ -385,31 +401,50 @@ class TestChangePasswordAPIView:
 
 @pytest.mark.views
 @pytest.mark.unit
+@pytest.mark.django_db
 class TestChangeEmailAPIView:
     """Test ChangeEmailView for email change."""
 
-    def test_change_email_success(self, client):
-        """User can change email successfully."""
+    def test_change_email_success(self, client, settings):
+        """User can request email change successfully."""
+        from apps.accounts.models import EmailChangeRequest
+        from unittest.mock import patch
+
+        # Ensure throttle rate is set for this test
+        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['email_change'] = '3/hour'
+
         user = UserFactory(email='old@example.com')
         client.force_login(user)
 
-        response = client.post(
-            reverse('api:settings-change-email'),
-            data=json.dumps({
-                'new_email': 'new@example.com',
-                'password': 'testpass123'
-            }),
-            content_type='application/json'
-        )
+        with patch('apps.accounts.tasks.send_email_change_verification_async.delay'):
+            response = client.post(
+                reverse('api:settings-change-email'),
+                data=json.dumps({
+                    'new_email': 'new@example.com',
+                    'password': 'testpass123'
+                }),
+                content_type='application/json'
+            )
 
         assert response.status_code == 200
         data = response.json()
         assert 'message' in data
-        user.refresh_from_db()
-        assert user.email == 'new@example.com'
+        assert 'Verification email sent' in data['message']
 
-    def test_change_email_already_taken(self, client):
+        # Email should NOT be changed yet (requires verification)
+        user.refresh_from_db()
+        assert user.email == 'old@example.com'
+
+        # Verify EmailChangeRequest was created
+        email_request = EmailChangeRequest.objects.filter(user=user, new_email='new@example.com').first()
+        assert email_request is not None
+        assert email_request.is_verified is False
+
+    def test_change_email_already_taken(self, client, settings):
         """Cannot change email to one already taken by another user."""
+        # Ensure throttle rate is set for this test
+        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['email_change'] = '3/hour'
+
         user1 = UserFactory(email='user1@example.com')
         user2 = UserFactory(email='user2@example.com')
         client.force_login(user1)
@@ -427,8 +462,11 @@ class TestChangeEmailAPIView:
         data = response.json()
         assert 'errors' in data
 
-    def test_change_email_same_as_current(self, client):
+    def test_change_email_same_as_current(self, client, settings):
         """Cannot change email to the same email."""
+        # Ensure throttle rate is set for this test
+        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['email_change'] = '3/hour'
+
         user = UserFactory(email='test@example.com')
         client.force_login(user)
 
@@ -719,3 +757,88 @@ class TestExportDownloadAPIView:
         # Verify they are version 4 UUIDs (random)
         assert uuid1.version == 4
         assert uuid2.version == 4
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestEmailChangeVerifyView:
+    """Test email change verification endpoint."""
+
+    def test_verify_valid_token(self, client):
+        """Test verifying email change with valid token."""
+        from apps.accounts.models import EmailChangeRequest
+        from apps.accounts.tests.factories import UserFactory
+        from django.utils import timezone
+        from datetime import timedelta
+        from unittest.mock import patch
+
+        user = UserFactory(email='old@example.com')
+        client.force_login(user)
+
+        # Create email change request
+        request = EmailChangeRequest.objects.create(
+            user=user,
+            new_email='new@example.com',
+            expires_at=timezone.now() + timedelta(hours=24)
+        )
+
+        url = reverse('api:email-change-verify', kwargs={'token': str(request.pk)})
+
+        with patch('apps.accounts.tasks.send_email_changed_notification_async.delay'):
+            response = client.get(url)
+
+        assert response.status_code == 200
+
+        # Verify email was updated
+        user.refresh_from_db()
+        assert user.email == 'new@example.com'
+
+        # Verify request was marked as verified
+        request.refresh_from_db()
+        assert request.is_verified is True
+
+    def test_verify_expired_token(self, client):
+        """Test verifying email change with expired token."""
+        from apps.accounts.models import EmailChangeRequest
+        from apps.accounts.tests.factories import UserFactory
+        from django.utils import timezone
+        from datetime import timedelta
+
+        user = UserFactory(email='old@example.com')
+        client.force_login(user)
+
+        # Create expired request
+        request = EmailChangeRequest.objects.create(
+            user=user,
+            new_email='new@example.com',
+            expires_at=timezone.now() - timedelta(hours=1)
+        )
+
+        url = reverse('api:email-change-verify', kwargs={'token': str(request.pk)})
+        response = client.get(url)
+
+        assert response.status_code == 400
+
+    def test_verify_already_verified_token(self, client):
+        """Test verifying already verified email change."""
+        from apps.accounts.models import EmailChangeRequest
+        from apps.accounts.tests.factories import UserFactory
+        from django.utils import timezone
+        from datetime import timedelta
+
+        user = UserFactory(email='old@example.com')
+        client.force_login(user)
+
+        # Create already verified request
+        request = EmailChangeRequest.objects.create(
+            user=user,
+            new_email='new@example.com',
+            expires_at=timezone.now() + timedelta(hours=24),
+            is_verified=True,
+            verified_at=timezone.now()
+        )
+
+        url = reverse('api:email-change-verify', kwargs={'token': str(request.pk)})
+        response = client.get(url)
+
+        assert response.status_code == 400

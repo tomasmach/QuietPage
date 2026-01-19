@@ -566,3 +566,101 @@ class TestEmailChangeRequestModel:
         # Additional performance indexes from code-fixes:
         assert ('user', 'is_verified', '-created_at') in index_fields
         assert ('is_verified', 'expires_at') in index_fields
+
+
+# ============================================
+# PASSWORD RESET TOKEN MODEL TESTS
+# ============================================
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+class TestPasswordResetToken:
+    """Test PasswordResetToken model."""
+
+    def test_create_reset_token(self):
+        """Test creating a password reset token."""
+        from apps.accounts.models import PasswordResetToken
+
+        user = UserFactory()
+        token = PasswordResetToken.objects.create(
+            user=user,
+            token='test_token_123'
+        )
+
+        assert token.user == user
+        assert token.token == 'test_token_123'
+        assert token.is_used is False
+        assert token.used_at is None
+        assert token.expires_at > timezone.now()
+
+    def test_token_expires_in_one_hour(self):
+        """Test token expiration is set to 1 hour."""
+        from apps.accounts.models import PasswordResetToken
+
+        user = UserFactory()
+        before = timezone.now() + timedelta(hours=1)
+
+        token = PasswordResetToken.objects.create(
+            user=user,
+            token='test_token'
+        )
+
+        after = timezone.now() + timedelta(hours=1)
+
+        assert before <= token.expires_at <= after
+
+    def test_is_valid_with_valid_token(self):
+        """Test is_valid returns True for valid token."""
+        from apps.accounts.models import PasswordResetToken
+
+        user = UserFactory()
+        token = PasswordResetToken.objects.create(
+            user=user,
+            token='test_token'
+        )
+
+        assert token.is_valid() is True
+
+    def test_is_valid_with_expired_token(self):
+        """Test is_valid returns False for expired token."""
+        from apps.accounts.models import PasswordResetToken
+
+        user = UserFactory()
+        token = PasswordResetToken.objects.create(
+            user=user,
+            token='test_token',
+            expires_at=timezone.now() - timedelta(hours=1)
+        )
+
+        assert token.is_valid() is False
+
+    def test_is_valid_with_used_token(self):
+        """Test is_valid returns False for used token."""
+        from apps.accounts.models import PasswordResetToken
+
+        user = UserFactory()
+        token = PasswordResetToken.objects.create(
+            user=user,
+            token='test_token',
+            is_used=True,
+            used_at=timezone.now()
+        )
+
+        assert token.is_valid() is False
+
+    def test_mark_as_used(self):
+        """Test marking token as used."""
+        from apps.accounts.models import PasswordResetToken
+
+        user = UserFactory()
+        token = PasswordResetToken.objects.create(
+            user=user,
+            token='test_token'
+        )
+
+        token.mark_as_used()
+
+        assert token.is_used is True
+        assert token.used_at is not None
+        assert token.is_valid() is False

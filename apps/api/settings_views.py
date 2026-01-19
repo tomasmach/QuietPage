@@ -207,6 +207,14 @@ class ChangePasswordView(APIView):
         # Log security event
         log_security_event('PASSWORD_CHANGE', user, request)
 
+        # Send password changed notification email
+        from apps.accounts.tasks import send_password_changed_email_async
+        ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+        send_password_changed_email_async.delay(
+            user_id=user.id,
+            ip_address=ip_address
+        )
+
         return Response(
             {'message': 'Heslo bylo uspesne zmeneno.'},
             status=status.HTTP_200_OK
@@ -221,14 +229,17 @@ class ChangeEmailView(APIView):
     - Request: {"new_email": "...", "password": "..."}
     - Validates password
     - Checks email uniqueness
-    - MVP: Updates email directly without verification
+    - Creates EmailChangeRequest and sends verification email
+    - Email is updated only after verification
 
     Requires authentication.
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'email_change'
 
     def post(self, request):
-        """Change user email."""
+        """Request email change with verification."""
         serializer = ChangeEmailSerializer(
             data=request.data,
             context={'request': request}
@@ -240,21 +251,115 @@ class ChangeEmailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        old_email = request.user.email
-        serializer.save()
+        new_email = serializer.validated_data['new_email']
 
-        # Log security event
-        log_security_event(
-            'EMAIL_CHANGE',
-            request.user,
-            request,
-            details={'old_email': old_email, 'new_email': request.user.email}
+        # Create email change request
+        from apps.accounts.models import EmailChangeRequest
+        from datetime import timedelta
+        from django.utils import timezone
+
+        email_request = EmailChangeRequest.objects.create(
+            user=request.user,
+            new_email=new_email,
+            expires_at=timezone.now() + timedelta(hours=24)
+        )
+
+        # Build verification URL
+        from django.conf import settings
+        verification_url = f"{settings.SITE_URL}/verify-email?token={email_request.pk}"
+
+        # Send verification email asynchronously
+        from apps.accounts.tasks import send_email_change_verification_async
+        send_email_change_verification_async.delay(
+            user_id=request.user.id,
+            new_email=new_email,
+            verification_url=verification_url
         )
 
         return Response(
-            {'message': 'Email byl uspesne zmenen.'},
+            {'message': f'Verification email sent to {new_email}. Please check your inbox.'},
             status=status.HTTP_200_OK
         )
+
+
+class EmailChangeVerifyView(APIView):
+    """
+    API endpoint for email change verification.
+
+    GET /api/v1/auth/email-change/verify/<token>/
+    - Validates token (EmailChangeRequest ID)
+    - Checks token hasn't expired
+    - Updates user email
+    - Sends notification to old email
+
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, token):
+        """Verify email change token and update user email."""
+        try:
+            from apps.accounts.models import EmailChangeRequest
+            from django.utils import timezone
+
+            # Find email change request
+            email_request = EmailChangeRequest.objects.get(
+                pk=token,
+                user=request.user
+            )
+
+            # Check if already verified
+            if email_request.is_verified:
+                return Response(
+                    {'error': 'This email has already been verified.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Check if expired
+            if email_request.is_expired():
+                return Response(
+                    {'error': 'This verification link has expired.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Store old email for notification
+            old_email = request.user.email
+
+            # Update user email
+            request.user.email = email_request.new_email
+            request.user.save(update_fields=['email'])
+
+            # Mark request as verified
+            email_request.is_verified = True
+            email_request.verified_at = timezone.now()
+            email_request.save(update_fields=['is_verified', 'verified_at'])
+
+            # Log security event
+            log_security_event(
+                'EMAIL_CHANGE',
+                request.user,
+                request,
+                details={'old_email': old_email, 'new_email': email_request.new_email}
+            )
+
+            # Send notification to old email
+            from apps.accounts.tasks import send_email_changed_notification_async
+            send_email_changed_notification_async.delay(
+                user_id=request.user.id,
+                old_email=old_email,
+                new_email=email_request.new_email
+            )
+
+            return Response(
+                {'message': 'Email address updated successfully.'},
+                status=status.HTTP_200_OK
+            )
+
+        except EmailChangeRequest.DoesNotExist:
+            return Response(
+                {'error': 'Invalid verification link.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class DeleteAccountView(APIView):
@@ -288,8 +393,19 @@ class DeleteAccountView(APIView):
         # Log security event before deletion
         log_security_event('ACCOUNT_DELETION', request.user, request)
 
+        # Store email and username before deletion
+        user_email = request.user.email
+        username = request.user.username
+
         # Delete the account
         serializer.save()
+
+        # Send account deletion confirmation email
+        from apps.accounts.tasks import send_account_deleted_email_async
+        send_account_deleted_email_async.delay(
+            email=user_email,
+            username=username
+        )
 
         # Logout the user (clear session)
         logout(request)

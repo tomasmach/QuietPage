@@ -7,7 +7,7 @@ in the Django admin interface.
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, EmailChangeRequest
+from .models import User, EmailChangeRequest, PasswordResetToken
 
 
 @admin.register(User)
@@ -117,4 +117,30 @@ class EmailChangeRequestAdmin(admin.ModelAdmin):
     
     def has_change_permission(self, request, obj=None):
         """Make all fields read-only."""
+        return False
+
+
+@admin.register(PasswordResetToken)
+class PasswordResetTokenAdmin(admin.ModelAdmin):
+    """Admin interface for password reset tokens."""
+
+    list_display = ['user', 'created_at', 'expires_at', 'is_used', 'used_at']
+    list_filter = ['is_used', 'created_at', 'expires_at']
+    search_fields = ['user__username', 'user__email', 'token']
+    readonly_fields = ['token', 'created_at', 'used_at']
+
+    fieldsets = (
+        ('User Information', {
+            'fields': ('user',)
+        }),
+        ('Token Details', {
+            'fields': ('token', 'created_at', 'expires_at')
+        }),
+        ('Status', {
+            'fields': ('is_used', 'used_at')
+        }),
+    )
+
+    def has_add_permission(self, request):
+        """Disable manual creation of tokens."""
         return False
