@@ -133,20 +133,21 @@ class TestEncryptedTextField:
 @pytest.mark.unit
 @pytest.mark.encryption
 class TestEncryptionDecryption:
-    """Test encryption and decryption round-trip."""
-    
+    """Test encryption and decryption round-trip with per-user encryption."""
+
     def test_simple_text_round_trip(self):
         """Test encrypting and decrypting simple text."""
         user = UserFactory()
         original_text = "This is a simple test."
-        
+
         entry = Entry.objects.create(user=user, content=original_text)
         entry.refresh_from_db()
-        
-        assert entry.content == original_text
-    
+
+        # Content is encrypted, use get_content() for plaintext
+        assert entry.get_content() == original_text
+
     def test_empty_string_handling(self):
-        """Test that empty string is not encrypted."""
+        """Test that empty string is handled correctly."""
         user = UserFactory()
 
         # Create with valid content first, then update to empty
@@ -156,40 +157,40 @@ class TestEncryptionDecryption:
         entry.save(skip_validation=True)
         entry.refresh_from_db()
 
-        assert entry.content == ""
-    
+        assert entry.get_content() == ""
+
     def test_none_value_handling(self):
-        """Test that None value passes through."""
+        """Test that None value passes through in EncryptedTextField."""
         field = EncryptedTextField()
-        
+
         # get_prep_value should return None for None input
         result = field.get_prep_value(None)
         assert result is None
-        
+
         # from_db_value should return None for None input
         result = field.from_db_value(None, None, None)
         assert result is None
-    
+
     def test_unicode_text_round_trip(self):
         """Test encrypting and decrypting Unicode text."""
         user = UserFactory()
         czech_text = "Příliš žluťoučký kůň úpěl ďábelské ódy. 🇨🇿"
-        
+
         entry = Entry.objects.create(user=user, content=czech_text)
         entry.refresh_from_db()
-        
-        assert entry.content == czech_text
-    
+
+        assert entry.get_content() == czech_text
+
     def test_special_characters_round_trip(self):
         """Test encrypting and decrypting special characters."""
         user = UserFactory()
         special_text = "Special: @#$%^&*(){}[]|\\:;\"'<>,.?/~`"
-        
+
         entry = Entry.objects.create(user=user, content=special_text)
         entry.refresh_from_db()
-        
-        assert entry.content == special_text
-    
+
+        assert entry.get_content() == special_text
+
     def test_multiline_text_round_trip(self):
         """Test encrypting and decrypting multiline text."""
         user = UserFactory()
@@ -198,41 +199,41 @@ Line 2
 Line 3
 
 Line 5 with blank line before"""
-        
+
         entry = Entry.objects.create(user=user, content=multiline_text)
         entry.refresh_from_db()
-        
-        assert entry.content == multiline_text
-    
+
+        assert entry.get_content() == multiline_text
+
     def test_emojis_round_trip(self):
         """Test encrypting and decrypting emojis."""
         user = UserFactory()
         emoji_text = "Happy 😊 Sad 😢 Love ❤️ Star ⭐ Fire 🔥"
-        
+
         entry = Entry.objects.create(user=user, content=emoji_text)
         entry.refresh_from_db()
-        
-        assert entry.content == emoji_text
-    
+
+        assert entry.get_content() == emoji_text
+
     def test_long_text_round_trip(self):
         """Test encrypting and decrypting long text."""
         user = UserFactory()
         long_text = "A" * 10000  # 10k characters
-        
+
         entry = Entry.objects.create(user=user, content=long_text)
         entry.refresh_from_db()
-        
-        assert entry.content == long_text
-        assert len(entry.content) == 10000
-    
+
+        assert entry.get_content() == long_text
+        assert len(entry.get_content()) == 10000
+
     def test_non_string_value_converted_to_string(self):
-        """Test that non-string values are converted to string."""
+        """Test that non-string values are converted to string in EncryptedTextField."""
         field = EncryptedTextField()
-        
+
         # Test with integer
         encrypted = field.get_prep_value(123)
         assert encrypted is not None
-        
+
         # The value should be encrypted as "123"
         f = field.get_fernet()
         decrypted = f.decrypt(encrypted.encode('utf-8')).decode('utf-8')
@@ -243,30 +244,23 @@ Line 5 with blank line before"""
 @pytest.mark.encryption
 class TestEncryptionErrors:
     """Test encryption error handling."""
-    
-    def test_invalid_token_raises_decryption_error(self, settings):
-        """Test that invalid encrypted data raises DecryptionError."""
+
+    def test_invalid_token_raises_decryption_error(self):
+        """Test that invalid encrypted data raises InvalidToken on decryption."""
         user = UserFactory()
-        
-        # Create entry with one key
-        original_key = Fernet.generate_key()
-        settings.FIELD_ENCRYPTION_KEY = original_key
+
+        # Create entry with valid content
         entry = Entry.objects.create(user=user, content="Secret data")
-        entry_id = entry.id
-        
-        # Change encryption key
-        new_key = Fernet.generate_key()
-        settings.FIELD_ENCRYPTION_KEY = new_key
-        
-        # Try to read entry with different key
-        with pytest.raises(DecryptionError) as exc_info:
-            entry = Entry.objects.get(id=entry_id)
-            _ = entry.content  # Access content to trigger decryption
-        
-        assert 'Failed to decrypt' in str(exc_info.value)
-        
-        # Restore original key
-        settings.FIELD_ENCRYPTION_KEY = original_key
+
+        # Manually corrupt the encrypted content in the database
+        Entry.objects.filter(id=entry.id).update(content="gAAAAA_invalid_token_data")
+
+        # Refresh from database
+        entry.refresh_from_db()
+
+        # Try to decrypt corrupted data
+        with pytest.raises(InvalidToken):
+            entry.get_content()
     
     def test_corrupted_data_raises_decryption_error(self):
         """Test that corrupted encrypted data raises DecryptionError."""
@@ -370,84 +364,84 @@ class TestEncryptionSecurity:
 @pytest.mark.unit
 @pytest.mark.encryption
 class TestUnicodeSupport:
-    """Test Unicode character support in encryption."""
-    
+    """Test Unicode character support in per-user encryption."""
+
     def test_czech_characters(self):
         """Test Czech characters."""
         user = UserFactory()
         text = "Žluťoučký kůň úpěl ďábelské ódy"
-        
+
         entry = Entry.objects.create(user=user, content=text)
         entry.refresh_from_db()
-        
-        assert entry.content == text
-    
+
+        assert entry.get_content() == text
+
     def test_mixed_czech_and_english(self):
         """Test mixed Czech and English text."""
         user = UserFactory()
         text = "Today jsem měl great den! 🎉"
-        
+
         entry = Entry.objects.create(user=user, content=text)
         entry.refresh_from_db()
-        
-        assert entry.content == text
-    
+
+        assert entry.get_content() == text
+
     def test_various_emojis(self):
         """Test various emojis."""
         user = UserFactory()
         text = "😀😃😄😁😆😅🤣😂🙂🙃😉😊😇"
-        
+
         entry = Entry.objects.create(user=user, content=text)
         entry.refresh_from_db()
-        
-        assert entry.content == text
-    
+
+        assert entry.get_content() == text
+
     def test_emoji_with_skin_tone(self):
         """Test emojis with skin tone modifiers."""
         user = UserFactory()
         text = "👋👋🏻👋🏼👋🏽👋🏾👋🏿"
-        
+
         entry = Entry.objects.create(user=user, content=text)
         entry.refresh_from_db()
-        
-        assert entry.content == text
-    
+
+        assert entry.get_content() == text
+
     def test_combined_diacritics(self):
         """Test combined diacritical marks."""
         user = UserFactory()
         text = "Café naïve résumé"
-        
+
         entry = Entry.objects.create(user=user, content=text)
         entry.refresh_from_db()
-        
-        assert entry.content == text
-    
+
+        assert entry.get_content() == text
+
     def test_cyrillic_characters(self):
         """Test Cyrillic characters."""
         user = UserFactory()
         text = "Привет мир"
-        
+
         entry = Entry.objects.create(user=user, content=text)
         entry.refresh_from_db()
-        
-        assert entry.content == text
-    
+
+        assert entry.get_content() == text
+
     def test_chinese_characters(self):
         """Test Chinese characters."""
         user = UserFactory()
         text = "你好世界"
-        
+
         entry = Entry.objects.create(user=user, content=text)
         entry.refresh_from_db()
-        
-        assert entry.content == text
-    
+
+        assert entry.get_content() == text
+
     def test_mixed_unicode_scripts(self):
         """Test mixed Unicode scripts."""
         user = UserFactory()
         text = "Hello Привет 你好 مرحبا שלום Γειά σου"
-        
+
         entry = Entry.objects.create(user=user, content=text)
         entry.refresh_from_db()
-        
-        assert entry.content == text
+
+        assert entry.get_content() == text

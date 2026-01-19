@@ -33,11 +33,12 @@ class TestEntryModel:
             title="Test Entry",
             content="This is my private journal content."
         )
-        
+
         assert entry.id is not None
         assert isinstance(entry.id, uuid.UUID)
         assert entry.title == "Test Entry"
-        assert entry.content == "This is my private journal content."
+        # Content is encrypted, use get_content() to retrieve plaintext
+        assert entry.get_content() == "This is my private journal content."
         assert entry.user == user
     
     def test_uuid_primary_key_is_auto_generated(self):
@@ -417,35 +418,36 @@ class TestEntryRelationships:
 @pytest.mark.encryption
 class TestEntryEncryption:
     """Test that entry content is properly encrypted."""
-    
+
     def test_content_encryption_round_trip(self):
         """Test that content can be saved and retrieved correctly."""
         original_content = "This is my secret journal entry! 🔒"
         entry = EntryFactory(content=original_content)
-        
+
         # Refresh from database
         entry.refresh_from_db()
-        
-        assert entry.content == original_content
-    
+
+        # Content is encrypted, use get_content() to retrieve plaintext
+        assert entry.get_content() == original_content
+
     def test_content_with_special_characters(self):
         """Test encryption with special characters."""
         special_content = "Special chars: @#$%^&*(){}[]|\\:;\"'<>,.?/~`"
         entry = EntryFactory(content=special_content)
-        
+
         entry.refresh_from_db()
-        
-        assert entry.content == special_content
-    
+
+        assert entry.get_content() == special_content
+
     def test_content_with_unicode(self):
         """Test encryption with Unicode (Czech) characters."""
         czech_content = "Příliš žluťoučký kůň úpěl ďábelské ódy. 🇨🇿"
         entry = EntryFactory(content=czech_content)
-        
+
         entry.refresh_from_db()
-        
-        assert entry.content == czech_content
-    
+
+        assert entry.get_content() == czech_content
+
     def test_content_with_multiline(self):
         """Test encryption with multiline content."""
         multiline_content = """Line 1
@@ -454,7 +456,93 @@ Line 3
 
 Line 5 (with blank line before)"""
         entry = EntryFactory(content=multiline_content)
-        
+
         entry.refresh_from_db()
-        
-        assert entry.content == multiline_content
+
+        assert entry.get_content() == multiline_content
+
+
+@pytest.mark.unit
+@pytest.mark.encryption
+class TestEntryPerUserEncryption:
+    """Test per-user encryption for Entry content."""
+
+    def test_entry_encrypted_with_user_key(self):
+        """Test that entry content is encrypted with user's key."""
+        user = UserFactory()
+        entry = Entry(user=user, title="Test")
+        entry.set_content("Secret journal content")
+        entry.save()
+
+        # Verify key_version is set
+        assert entry.key_version == user.encryption_key.version
+
+        # Content should decrypt correctly via get_content()
+        assert entry.get_content() == "Secret journal content"
+
+    def test_different_users_have_different_encryption(self):
+        """Test that same content encrypts differently for different users."""
+        user1 = UserFactory()
+        user2 = UserFactory()
+
+        content = "Same content for both"
+
+        entry1 = Entry(user=user1, title="Test1")
+        entry1.set_content(content)
+        entry1.save()
+
+        entry2 = Entry(user=user2, title="Test2")
+        entry2.set_content(content)
+        entry2.save()
+
+        # Both should decrypt to same content
+        assert entry1.get_content() == content
+        assert entry2.get_content() == content
+
+        # Raw encrypted values should differ
+        assert entry1.content != entry2.content
+
+    def test_word_count_calculated_from_plaintext(self):
+        """Test word count is calculated before encryption."""
+        user = UserFactory()
+        entry = Entry(user=user, title="Test")
+        entry.set_content("One two three four five")
+        entry.save()
+
+        assert entry.word_count == 5
+
+    def test_empty_content_handled(self):
+        """Test empty content doesn't break encryption."""
+        user = UserFactory()
+        entry = Entry(user=user, title="Test")
+        entry.set_content("")
+        entry.save()
+
+        assert entry.word_count == 0
+        assert entry.get_content() == ""
+
+    def test_content_set_directly_is_encrypted(self):
+        """Test content set directly (not via set_content) is also encrypted."""
+        user = UserFactory()
+        entry = Entry(user=user, title="Test", content="Direct content")
+        entry.save()
+
+        # Should be encrypted
+        assert entry.key_version == user.encryption_key.version
+        assert entry.content.startswith('gAAAAA')
+        assert entry.get_content() == "Direct content"
+
+    def test_encrypted_content_not_re_encrypted(self):
+        """Test already encrypted content is not re-encrypted on save."""
+        user = UserFactory()
+        entry = Entry(user=user, title="Test")
+        entry.set_content("Original content")
+        entry.save()
+
+        original_encrypted = entry.content
+
+        # Save again without changes
+        entry.save()
+
+        # Content should be unchanged
+        assert entry.content == original_encrypted
