@@ -344,6 +344,24 @@ CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 SITE_URL = os.getenv('SITE_URL', 'http://localhost:5173')
 
 # ============================================
+# EMAIL CONFIGURATION
+# ============================================
+# Email backend (Resend for production, console for development)
+EMAIL_BACKEND = 'apps.core.backends.resend_backend.ResendEmailBackend'
+
+# Resend API configuration
+RESEND_API_KEY = os.getenv('RESEND_API_KEY')
+if not RESEND_API_KEY:
+    raise ImproperlyConfigured(
+        'RESEND_API_KEY environment variable is required.\n'
+        'Get your API key from: https://resend.com/api-keys'
+    )
+
+# Email sender configuration
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'info@quietpage.app')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# ============================================
 # BACKUPS CONFIGURATION
 # ============================================
 # Directory for database backups

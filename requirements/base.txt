@@ -40,3 +40,6 @@ redis==6.4.0  # Latest 6.x (kombu requires redis<6.5; no CVEs in 6.x)
 django-redis==6.0.0  # Redis cache backend for Django
 # NOTE: django-celery-beat excluded - waiting for Django 6.0 support
 # Using file-based beat scheduler (celerybeat-schedule) instead
+
+# Email service
+resend==2.5.1
