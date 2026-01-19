@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { AlertTriangle } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 const CONFIRMATION_TEXT = 'SMAZAT';
 
@@ -40,8 +41,10 @@ export function DeleteAccountPage() {
   };
 
   return (
-    <Card className="border-red-700" style={{ borderColor: '#dc2626' }}>
-      {/* Warning Header */}
+    <>
+      <SEO title="Delete Account" description="Permanently delete your account and all associated data." />
+      <Card className="border-red-700" style={{ borderColor: '#dc2626' }}>
+        {/* Warning Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 dark:bg-red-950/50 border-2" style={{ borderColor: '#dc2626', backgroundColor: '#dc2626' }}>
           <AlertTriangle className="w-6 h-6" style={{ color: '#ffffff' }} />
@@ -105,6 +108,7 @@ export function DeleteAccountPage() {
           </Button>
         </div>
       </form>
-    </Card>
+      </Card>
+    </>
   );
 }

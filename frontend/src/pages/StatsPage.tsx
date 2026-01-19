@@ -3,6 +3,7 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { Sidebar } from '../components/layout/Sidebar';
 import { ContextPanel } from '../components/layout/ContextPanel';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
+import { SEO } from '../components/SEO';
 import { useStatistics } from '../hooks/useStatistics';
 import { TimeRangeSelector } from '../components/statistics/TimeRangeSelector';
 import { StatsSummaryCards } from '../components/statistics/StatsSummaryCards';
@@ -46,7 +47,12 @@ export function StatsPage() {
   const { t } = useLanguage();
 
   return (
-    <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
+    <>
+      <SEO
+        title="Statistics"
+        description="View your writing statistics, mood analytics, streaks, and patterns over time."
+      />
+      <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
       <div className="p-8 space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -128,5 +134,6 @@ export function StatsPage() {
       </div>
       <ThemeToggle />
     </AppLayout>
+    </>
   );
 }

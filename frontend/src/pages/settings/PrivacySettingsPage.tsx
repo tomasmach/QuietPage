@@ -5,6 +5,7 @@ import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { SEO } from '@/components/SEO';
 
 export function PrivacySettingsPage() {
   const { user } = useAuth();
@@ -28,9 +29,11 @@ export function PrivacySettingsPage() {
   };
 
   return (
-    <Card>
-      <h2 className="text-2xl font-bold text-text-main mb-6 font-mono uppercase tracking-wider">
-        {t('settings.privacy.title')}
+    <>
+      <SEO title="Privacy Settings" description="Control your privacy and data settings." />
+      <Card>
+        <h2 className="text-2xl font-bold text-text-main mb-6 font-mono uppercase tracking-wider">
+          {t('settings.privacy.title')}
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -83,6 +86,7 @@ export function PrivacySettingsPage() {
           </Button>
         </div>
       </form>
-    </Card>
+      </Card>
+    </>
   );
 }

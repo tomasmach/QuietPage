@@ -6,6 +6,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { SEO } from '@/components/SEO';
 
 // Common timezones
 const TIMEZONES = [
@@ -52,9 +53,11 @@ export function GoalsSettingsPage() {
   };
 
   return (
-    <Card>
-      <h2 className="text-2xl font-bold text-text-main mb-6 font-mono uppercase tracking-wider">
-        {t('settings.goals.title')}
+    <>
+      <SEO title="Goals Settings" description="Set your daily writing goals and preferred writing times." />
+      <Card>
+        <h2 className="text-2xl font-bold text-text-main mb-6 font-mono uppercase tracking-wider">
+          {t('settings.goals.title')}
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -181,6 +184,7 @@ export function GoalsSettingsPage() {
           </Button>
         </div>
       </form>
-    </Card>
+      </Card>
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { useLanguage, type Language } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { SEO } from '@/components/SEO';
 import { api } from '@/lib/api';
 
 interface OnboardingData {
@@ -125,8 +126,13 @@ export function OnboardingPage({ onSkip }: OnboardingPageProps) {
   const isStep2Valid = formData.daily_word_goal > 0;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--color-bg-app)' }}>
-      <div className="w-full max-w-2xl">
+    <>
+      <SEO
+        title="Welcome"
+        description="Welcome to QuietPage - set up your personalized mindful writing experience."
+      />
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--color-bg-app)' }}>
+        <div className="w-full max-w-2xl">
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-3">
@@ -374,7 +380,8 @@ export function OnboardingPage({ onSkip }: OnboardingPageProps) {
             </Card>
           )}
         </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

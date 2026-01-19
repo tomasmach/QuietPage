@@ -8,6 +8,7 @@ import { ContextPanel } from '../components/layout/ContextPanel';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { Card } from '../components/ui/Card';
+import { SEO } from '../components/SEO';
 import { useEntry } from '../hooks/useEntry';
 import { useDashboard } from '../hooks/useDashboard';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -53,29 +54,41 @@ export function EntryViewPage() {
 
   if (isLoading && id) {
     return (
-      <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
-        <div className="p-8 flex items-center justify-center min-h-[50vh]">
-          <Spinner size="lg" />
-        </div>
-      </AppLayout>
+      <>
+        <SEO
+          title="View Entry"
+          description="Reading a journal entry from your archive."
+        />
+        <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
+          <div className="p-8 flex items-center justify-center min-h-[50vh]">
+            <Spinner size="lg" />
+          </div>
+        </AppLayout>
+      </>
     );
   }
 
   if (error && id) {
     return (
-      <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
-        <div className="p-8">
-          <Card>
-            <p className="text-error">
-              {t('entry.loadError')}
-            </p>
-            <Button onClick={handleBackToArchive} className="mt-4">
-              <ArrowLeft size={16} className="mr-2" />
-              {t('common.cancel')}
-            </Button>
-          </Card>
-        </div>
-      </AppLayout>
+      <>
+        <SEO
+          title="View Entry"
+          description="Reading a journal entry from your archive."
+        />
+        <AppLayout sidebar={<Sidebar />} contextPanel={<ContextPanel />}>
+          <div className="p-8">
+            <Card>
+              <p className="text-error">
+                {t('entry.loadError')}
+              </p>
+              <Button onClick={handleBackToArchive} className="mt-4">
+                <ArrowLeft size={16} className="mr-2" />
+                {t('common.cancel')}
+              </Button>
+            </Card>
+          </div>
+        </AppLayout>
+      </>
     );
   }
 
@@ -93,11 +106,16 @@ export function EntryViewPage() {
   }).toUpperCase();
 
   return (
-    <AppLayout
-      sidebar={<Sidebar />}
-      contextPanel={
-        <ContextPanel>
-          <div className="space-y-6">
+    <>
+      <SEO
+        title="View Entry"
+        description="Reading a journal entry from your archive."
+      />
+      <AppLayout
+        sidebar={<Sidebar />}
+        contextPanel={
+          <ContextPanel>
+            <div className="space-y-6">
             {/* Streak Badge */}
             {dashboardData && (
               <div className="border-2 border-border p-3 bg-bg-panel shadow-hard">
@@ -188,5 +206,6 @@ export function EntryViewPage() {
         </div>
       </div>
     </AppLayout>
+    </>
   );
 }

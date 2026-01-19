@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { Upload, Moon, Sun } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 export function ProfileSettingsPage() {
   const { user } = useAuth();
@@ -70,6 +71,7 @@ export function ProfileSettingsPage() {
 
   return (
     <>
+      <SEO title="Profile Settings" description="Manage your profile preferences and account information." />
     <Card>
       <h2 className="text-2xl font-bold text-text-main mb-6 font-mono uppercase tracking-wider">
         {t('settings.profile.title')}

@@ -6,6 +6,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { SEO } from '@/components/SEO';
 
 export function SecuritySettingsPage() {
   const { user } = useAuth();
@@ -80,9 +81,11 @@ export function SecuritySettingsPage() {
     : undefined;
 
   return (
-    <div className="space-y-6">
-      {/* Change Password Section */}
-      <Card>
+    <>
+      <SEO title="Security Settings" description="Manage your account security and authentication." />
+      <div className="space-y-6">
+        {/* Change Password Section */}
+        <Card>
         <h2 className="text-2xl font-bold text-text-main mb-6 font-mono uppercase tracking-wider">
           {t('settings.security.changePassword')}
         </h2>
@@ -182,7 +185,8 @@ export function SecuritySettingsPage() {
             </Button>
           </div>
         </form>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </>
   );
 }
