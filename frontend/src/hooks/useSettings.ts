@@ -5,8 +5,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 // Types for settings data
 export interface ProfileSettings {
-  first_name: string;
-  last_name: string;
   bio: string;
   avatar?: string;
 }
@@ -110,7 +108,7 @@ export function useSettings(): UseSettingsReturn {
   }, [t]);
 
   /**
-   * Update profile settings (first_name, last_name, bio)
+   * Update profile settings (bio)
    */
   const updateProfile = useCallback(async (data: ProfileSettings): Promise<boolean> => {
     const result = await handleRequest(
