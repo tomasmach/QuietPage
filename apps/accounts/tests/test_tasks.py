@@ -21,6 +21,9 @@ from apps.accounts.tasks import (
     send_email_async,
     send_verification_email_async,
     send_reminder_emails,
+    send_welcome_email_async,
+    send_password_changed_email_async,
+    send_account_deleted_email_async,
 )
 from apps.accounts.tests.factories import UserFactory
 
@@ -440,3 +443,215 @@ class TestSendReminderEmails:
 
         # Should be skipped because it's not 8 AM in user's timezone
         assert user.username in [u.username for u in result] if isinstance(result, list) else True
+
+
+@pytest.mark.unit
+@pytest.mark.celery
+class TestWelcomeEmail:
+    """Test suite for send_welcome_email_async task."""
+
+    def test_send_welcome_email_success(self):
+        """
+        Test successful welcome email sending.
+
+        Why: Validates that welcome emails are sent with correct
+        template and context after user registration.
+        """
+        user = UserFactory(username="newuser", first_name="New")
+
+        result = send_welcome_email_async(user_id=user.id)
+
+        assert result is True
+        assert len(mail.outbox) == 1
+        assert "Welcome" in mail.outbox[0].subject
+        assert mail.outbox[0].to == [user.email]
+        # Template uses first_name with fallback to username
+        assert "New" in mail.outbox[0].body or "newuser" in mail.outbox[0].body
+
+    def test_send_welcome_email_user_not_found(self):
+        """
+        Test handling of non-existent user.
+
+        Why: Task should gracefully handle cases where user was deleted
+        before task execution.
+        """
+        result = send_welcome_email_async(user_id=99999)
+
+        assert result is False
+        assert len(mail.outbox) == 0
+
+    @patch('apps.accounts.tasks.send_mail')
+    def test_send_welcome_email_retry_on_failure(self, mock_send_mail):
+        """
+        Test that task raises exception when email sending fails.
+
+        Why: Ensures welcome emails raise exceptions for Celery retry logic.
+        """
+        user = UserFactory()
+        mock_send_mail.side_effect = Exception("SMTP error")
+
+        with pytest.raises(Exception):
+            send_welcome_email_async(user_id=user.id)
+
+    def test_send_welcome_email_template_context(self):
+        """
+        Test that email template receives correct context variables.
+
+        Why: Template should have access to user and dashboard_url.
+        """
+        user = UserFactory(username="johndoe", first_name="John")
+
+        send_welcome_email_async(user_id=user.id)
+
+        email_body = mail.outbox[0].body
+        # Template uses first_name with fallback to username
+        assert "John" in email_body or "johndoe" in email_body
+        assert settings.SITE_URL in email_body
+
+
+@pytest.mark.unit
+@pytest.mark.celery
+class TestPasswordChangedEmail:
+    """Test suite for send_password_changed_email_async task."""
+
+    def test_send_password_changed_email_success(self):
+        """
+        Test successful password changed notification sending.
+
+        Why: Validates that security notifications are sent after
+        password changes with correct context.
+        """
+        user = UserFactory(email="test@example.com")
+        ip_address = "192.168.1.1"
+
+        result = send_password_changed_email_async(
+            user_id=user.id,
+            ip_address=ip_address
+        )
+
+        assert result is True
+        assert len(mail.outbox) == 1
+        assert "Password Changed" in mail.outbox[0].subject
+        assert mail.outbox[0].to == [user.email]
+        assert ip_address in mail.outbox[0].body
+
+    def test_send_password_changed_email_default_ip(self):
+        """
+        Test password changed email with default IP address.
+
+        Why: Should handle cases where IP address is not provided.
+        """
+        user = UserFactory()
+
+        result = send_password_changed_email_async(user_id=user.id)
+
+        assert result is True
+        assert len(mail.outbox) == 1
+        assert "unknown" in mail.outbox[0].body
+
+    def test_send_password_changed_email_user_not_found(self):
+        """
+        Test handling of non-existent user.
+
+        Why: Task should gracefully handle cases where user was deleted
+        before task execution.
+        """
+        result = send_password_changed_email_async(
+            user_id=99999,
+            ip_address="192.168.1.1"
+        )
+
+        assert result is False
+        assert len(mail.outbox) == 0
+
+    @patch('apps.accounts.tasks.send_mail')
+    def test_send_password_changed_email_retry_on_failure(self, mock_send_mail):
+        """
+        Test that task raises exception when email sending fails.
+
+        Why: Ensures password changed emails raise exceptions for Celery retry logic.
+        """
+        user = UserFactory()
+        mock_send_mail.side_effect = Exception("SMTP error")
+
+        with pytest.raises(Exception):
+            send_password_changed_email_async(
+                user_id=user.id,
+                ip_address="192.168.1.1"
+            )
+
+    def test_send_password_changed_email_template_context(self):
+        """
+        Test that email template receives correct context variables.
+
+        Why: Template should have access to user, timestamp, ip_address, and reset_url.
+        """
+        user = UserFactory(username="johndoe", first_name="John")
+        ip_address = "10.0.0.1"
+
+        send_password_changed_email_async(user_id=user.id, ip_address=ip_address)
+
+        email_body = mail.outbox[0].body
+        # Template uses first_name with fallback to username
+        assert "John" in email_body or "johndoe" in email_body
+        assert ip_address in email_body
+        # Should contain timestamp (current time)
+        assert "UTC" in email_body
+        # Should contain reset URL for security
+        assert "/reset-password" in email_body or settings.SITE_URL in email_body
+
+
+@pytest.mark.unit
+@pytest.mark.celery
+class TestAccountDeletedEmail:
+    """Test suite for send_account_deleted_email_async task."""
+
+    def test_send_account_deleted_email_success(self):
+        """
+        Test successful account deletion confirmation sending.
+
+        Why: Validates that deletion confirmations are sent with
+        correct information to the user's email.
+        """
+        email = "deleted@example.com"
+        username = "testuser"
+
+        result = send_account_deleted_email_async(
+            email=email,
+            username=username
+        )
+
+        assert result is True
+        assert len(mail.outbox) == 1
+        assert "Account Deleted" in mail.outbox[0].subject
+        assert mail.outbox[0].to == [email]
+        assert username in mail.outbox[0].body
+
+    @patch('apps.accounts.tasks.send_mail')
+    def test_send_account_deleted_email_retry_on_failure(self, mock_send_mail):
+        """
+        Test that task raises exception when email sending fails.
+
+        Why: Ensures account deleted emails raise exceptions for Celery retry logic.
+        """
+        mock_send_mail.side_effect = Exception("SMTP error")
+
+        with pytest.raises(Exception):
+            send_account_deleted_email_async(
+                email="deleted@example.com",
+                username="testuser"
+            )
+
+    def test_send_account_deleted_email_template_context(self):
+        """
+        Test that email template receives correct context variables.
+
+        Why: Template should have access to username for personalization.
+        """
+        email = "deleted@example.com"
+        username = "johndoe"
+
+        send_account_deleted_email_async(email=email, username=username)
+
+        email_body = mail.outbox[0].body
+        assert username in email_body
