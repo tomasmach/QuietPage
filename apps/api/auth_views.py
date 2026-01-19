@@ -152,6 +152,10 @@ class RegisterView(APIView):
         # Automatically log in the new user (specify backend due to multiple backends)
         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
+        # Send welcome email asynchronously
+        from apps.accounts.tasks import send_welcome_email_async
+        send_welcome_email_async.delay(user_id=user.id)
+
         # Return user data
         user_serializer = UserSerializer(user, context={'request': request})
         return Response(
