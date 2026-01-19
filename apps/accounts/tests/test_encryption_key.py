@@ -2,6 +2,9 @@
 Tests for EncryptionKey model.
 
 Tests encryption key generation, storage, and retrieval.
+
+Note: EncryptionKey is auto-created by signal when a User is created.
+These tests verify the model functionality using the auto-created keys.
 """
 
 import pytest
@@ -16,9 +19,10 @@ class TestEncryptionKeyModel:
     """Test EncryptionKey model functionality."""
 
     def test_encryption_key_creation(self):
-        """Test creating an encryption key for a user."""
+        """Test that encryption key is auto-created when user is created."""
         user = UserFactory()
-        key = EncryptionKey.objects.create(user=user)
+        # Key is auto-created by signal
+        key = user.encryption_key
 
         assert key.id is not None
         assert key.user == user
@@ -30,7 +34,7 @@ class TestEncryptionKeyModel:
     def test_encryption_key_is_unique_per_user(self):
         """Test that each user can only have one encryption key."""
         user = UserFactory()
-        EncryptionKey.objects.create(user=user)
+        # Key already exists from signal, attempting to create another should fail
 
         with pytest.raises(IntegrityError):
             EncryptionKey.objects.create(user=user)
@@ -40,7 +44,8 @@ class TestEncryptionKeyModel:
         from cryptography.fernet import Fernet
 
         user = UserFactory()
-        enc_key = EncryptionKey.objects.create(user=user)
+        # Key is auto-created by signal
+        enc_key = user.encryption_key
 
         decrypted = enc_key.get_decrypted_key()
         # Should not raise - valid Fernet key
@@ -54,10 +59,9 @@ class TestEncryptionKeyModel:
 
     def test_key_is_stored_encrypted(self):
         """Test that the key stored in DB is not the raw Fernet key."""
-        from cryptography.fernet import Fernet
-
         user = UserFactory()
-        enc_key = EncryptionKey.objects.create(user=user)
+        # Key is auto-created by signal
+        enc_key = user.encryption_key
 
         # Raw DB value should not be a valid Fernet key directly
         raw_value = enc_key.key
