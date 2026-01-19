@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="cs" style="background-color:#1A1A1A">
+<html lang="en" style="background-color:#1A1A1A">
 <head>
     <meta charset="UTF-8">
     <script>
@@ -10,6 +10,12 @@
         var bgColor = isDark ? '#1A1A1A' : '#FFFCF5';
         document.documentElement.style.backgroundColor = bgColor;
         document.documentElement.setAttribute('data-theme', isDark ? 'midnight' : 'paper');
+      })();
+
+      // Set language attribute from localStorage
+      (function() {
+        var lang = localStorage.getItem('quietpage-language') || 'en';
+        document.documentElement.lang = lang;
       })();
     </script>
 
