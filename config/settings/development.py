@@ -56,8 +56,12 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Email backend - print emails to console
+# Use console backend instead of Resend to avoid API costs during development
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'QuietPage <noreply@quietpage.com>'
+
+# Override Resend requirement for development
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', 'dev_key_not_required')
 
 # CORS Configuration for Development (React frontend)
 CORS_ALLOWED_ORIGINS = [
