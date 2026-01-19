@@ -6,6 +6,7 @@ It includes additional fields specific to the QuietPage application such as
 timezone support for accurate date/time display and privacy settings.
 """
 
+import uuid
 from datetime import time, timedelta
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -282,3 +283,73 @@ class PasswordResetToken(models.Model):
     def __str__(self):
         status = "used" if self.is_used else "active"
         return f"{self.user.username} - {status} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+
+class EncryptionKey(models.Model):
+    """
+    Per-user encryption key for journal entry content.
+
+    Each user has their own Fernet key for encrypting their journal entries.
+    The key itself is encrypted with the global master key before storage,
+    providing defense-in-depth security.
+
+    Key rotation support: version field tracks which key version encrypted
+    each entry, allowing gradual re-encryption when keys are rotated.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='encryption_key',
+        help_text="User this encryption key belongs to"
+    )
+    key = models.CharField(
+        max_length=500,
+        help_text="Fernet key (encrypted with master key)"
+    )
+    version = models.IntegerField(
+        default=1,
+        help_text="Key version for rotation tracking"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this is the active key for new encryptions"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    rotated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When this key was last rotated"
+    )
+
+    class Meta:
+        verbose_name = 'Encryption Key'
+        verbose_name_plural = 'Encryption Keys'
+
+    def save(self, *args, **kwargs):
+        """Generate and encrypt key on first save."""
+        if not self.key:
+            # Generate new Fernet key
+            from cryptography.fernet import Fernet
+            from apps.journal.fields import get_fernet_key
+            raw_key = Fernet.generate_key()
+            # Encrypt it with master key before storage
+            master_fernet = Fernet(get_fernet_key())
+            self.key = master_fernet.encrypt(raw_key).decode('utf-8')
+        super().save(*args, **kwargs)
+
+    def get_decrypted_key(self):
+        """
+        Decrypt and return the raw Fernet key.
+
+        Returns:
+            bytes: The decrypted Fernet key ready for use
+        """
+        from cryptography.fernet import Fernet
+        from apps.journal.fields import get_fernet_key
+        master_fernet = Fernet(get_fernet_key())
+        return master_fernet.decrypt(self.key.encode('utf-8'))
+
+    def __str__(self):
+        return f"EncryptionKey for {self.user.username} (v{self.version})"
