@@ -106,11 +106,11 @@ class Entry(models.Model):
         from django.core.exceptions import RelatedObjectDoesNotExist
         try:
             encryption_key = self.user.encryption_key.get_decrypted_key()
-        except RelatedObjectDoesNotExist:
+        except RelatedObjectDoesNotExist as exc:
             raise RuntimeError(
                 f"No encryption key found for user {self.user.id}. "
                 f"Please create an EncryptionKey for this user."
-            )
+            ) from exc
         fernet = Fernet(encryption_key)
         return fernet.encrypt(plaintext.encode('utf-8')).decode('utf-8')
 
@@ -122,11 +122,11 @@ class Entry(models.Model):
         from django.core.exceptions import RelatedObjectDoesNotExist
         try:
             encryption_key = self.user.encryption_key.get_decrypted_key()
-        except RelatedObjectDoesNotExist:
+        except RelatedObjectDoesNotExist as exc:
             raise RuntimeError(
                 f"No encryption key found for user {self.user.id}. "
                 f"Please create an EncryptionKey for this user."
-            )
+            ) from exc
         fernet = Fernet(encryption_key)
         return fernet.decrypt(ciphertext.encode('utf-8')).decode('utf-8')
 
