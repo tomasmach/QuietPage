@@ -68,8 +68,10 @@ For detailed setup instructions and troubleshooting, reference `docs/LOCAL_DEVEL
 - `config/` - Django settings (base, development, production)
 
 Key patterns:
-- Custom `EncryptedTextField` in `apps/journal/fields.py` using Fernet encryption (AES-128-CBC + HMAC-SHA256)
-- Signal handlers for auto word-count and encryption (`apps/journal/signals.py`)
+- **Per-user encryption**: Each user has unique encryption key in `EncryptionKey` model. Entry content encrypted/decrypted in `Entry.save()` and `Entry.get_content()` using user's personal key (Fernet: AES-128-CBC + HMAC-SHA256)
+- **Master key encryption**: User encryption keys are themselves encrypted with master key (`FIELD_ENCRYPTION_KEY`) before storage
+- **Word counting**: Calculated in `Entry.save()` before encryption (must access plaintext)
+- Signal handlers for user encryption key creation (`apps/accounts/signals.py`) and streak updates (`apps/journal/signals.py`)
 - Factory fixtures for testing (`conftest.py`)
 - Celery tasks for async operations (requires Redis in full mode)
 
@@ -112,9 +114,9 @@ Frontend: Vitest with React Testing Library
 
 ## Key Domain Concepts
 
-- **Entry encryption**: Server-side Fernet encryption via custom `EncryptedTextField`. Cannot filter/order by encrypted fields. Encryption key set via `FERNET_KEY_PRIMARY` env var.
+- **Entry encryption**: Server-side per-user Fernet encryption. Each user has unique encryption key stored in `EncryptionKey` model (encrypted with master key). Entry content encrypted in `Entry.save()` and decrypted via `Entry.get_content()`. Cannot filter/order by encrypted fields. Master key set via `FIELD_ENCRYPTION_KEY` env var.
 - **Goal streaks**: Consecutive days meeting word count goal (default 750 words). Calculated and cached on entry save.
-- **Word counting**: Automatic via Django signal on entry save. Counts words in entry content.
+- **Word counting**: Calculated in `Entry.save()` before encryption (requires plaintext access). Counts words in entry content.
 - **Statistics**: Heatmaps (calendar view), mood charts (over time), tag analytics (frequency/usage), personal records (longest streak, most words, etc.)
 - **Cache**: Development uses LocMemCache (in-memory, no setup). Production uses Redis. No database cache table needed.
 - **Celery tasks**: Background jobs for backups, cleanup, and reminders. Require Redis and run via `make dev-full` or Docker.
@@ -124,7 +126,7 @@ Frontend: Vitest with React Testing Library
 Required for development:
 ```bash
 cp .env.example .env
-# Edit .env with required values (SECRET_KEY, FERNET_KEY_PRIMARY)
+# Edit .env with required values (SECRET_KEY, FIELD_ENCRYPTION_KEY)
 make setup
 ```
 
