@@ -19,6 +19,7 @@ from apps.journal.tests.factories import EntryFactory
 @pytest.mark.django_db
 @pytest.mark.api
 @pytest.mark.integration
+@pytest.mark.encryption
 class TestAutosaveView:
     """Test suite for AutosaveView."""
 
@@ -48,7 +49,7 @@ class TestAutosaveView:
         # Verify entry was created
         entry = Entry.objects.get(id=response_data['entry_id'])
         assert entry.title == 'Test Entry'
-        assert entry.content == 'This is a test entry'
+        assert entry.get_content() == 'This is a test entry'
         assert entry.mood_rating == 4
 
     def test_update_todays_entry(self, client):
@@ -85,7 +86,7 @@ class TestAutosaveView:
         # Verify entry was updated
         entry.refresh_from_db()
         assert entry.title == 'Updated Title'
-        assert entry.content == 'Updated content'
+        assert entry.get_content() == 'Updated content'
         assert entry.mood_rating == 5
 
     def test_cannot_update_past_entry(self, client):
@@ -123,7 +124,7 @@ class TestAutosaveView:
         # Verify entry was NOT updated
         old_entry.refresh_from_db()
         assert old_entry.title == 'Old Entry'
-        assert old_entry.content == 'This is an old entry'
+        assert old_entry.get_content() == 'This is an old entry'
 
     def test_empty_content_validation(self, client):
         """Test that empty content is rejected."""

@@ -5,9 +5,9 @@ This module handles automatic cleanup and processing of user-related files,
 such as deleting old avatars when new ones are uploaded.
 """
 
-from django.db.models.signals import pre_save, pre_delete
+from django.db.models.signals import pre_save, pre_delete, post_save
 from django.dispatch import receiver
-from .models import User
+from .models import User, EncryptionKey
 
 import logging
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ def delete_old_avatar_on_update(sender, instance, **kwargs):
 def delete_avatar_on_user_delete(sender, instance, **kwargs):
     """
     Delete avatar file when user account is deleted.
-    
+
     Ensures no orphaned files remain in storage after account deletion.
     """
     if instance.avatar:
@@ -60,3 +60,23 @@ def delete_avatar_on_user_delete(sender, instance, **kwargs):
                 f"Failed to delete avatar for user {instance.pk} during deletion",
                 exc_info=True
             )
+
+
+@receiver(post_save, sender=User)
+def create_encryption_key_for_user(sender, instance, created, **kwargs):
+    """
+    Create EncryptionKey for newly created users.
+
+    This ensures every user has an encryption key for their journal entries.
+    Only runs on user creation, not on updates.
+    """
+    if created:
+        # Check if key already exists (defensive)
+        if not EncryptionKey.objects.filter(user=instance).exists():
+            try:
+                EncryptionKey.objects.create(user=instance)
+            except Exception:
+                logger.error(
+                    f"Failed to create encryption key for user {instance.pk}",
+                    exc_info=True
+                )

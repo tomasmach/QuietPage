@@ -9,7 +9,7 @@ import factory
 from factory.django import DjangoModelFactory
 from faker import Faker
 from django.contrib.auth import get_user_model
-from apps.accounts.models import EmailChangeRequest
+from apps.accounts.models import EmailChangeRequest, EncryptionKey
 from django.utils import timezone
 from datetime import timedelta
 
@@ -135,3 +135,20 @@ class ExpiredEmailChangeRequestFactory(EmailChangeRequestFactory):
     @factory.lazy_attribute
     def created_at(self):
         return timezone.now() - timedelta(hours=25)  # Created 25 hours ago
+
+
+class EncryptionKeyFactory(DjangoModelFactory):
+    """
+    Factory for creating EncryptionKey instances.
+
+    Note: Keys are normally auto-created via signal when user is created.
+    This factory is for edge cases in testing.
+    """
+
+    class Meta:
+        model = EncryptionKey
+        django_get_or_create = ('user',)
+
+    user = factory.SubFactory(UserFactory)
+    version = 1
+    is_active = True

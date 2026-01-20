@@ -4,13 +4,14 @@ Comprehensive tests for accounts app signal handlers.
 Tests all signal handlers in apps/accounts/signals.py including:
 - delete_old_avatar_on_update: cleanup when avatar changes
 - delete_avatar_on_user_delete: cleanup on user deletion
+- create_encryption_key_for_user: auto-create EncryptionKey on user creation
 """
 
 import pytest
 from unittest.mock import patch, MagicMock, Mock
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from apps.accounts.models import User
+from apps.accounts.models import User, EncryptionKey
 from apps.accounts.tests.factories import UserFactory
 
 
@@ -334,6 +335,32 @@ class TestDeleteAvatarOnUserDelete:
         # Patch the avatar on the instance being deleted
         with patch.object(user, 'avatar', mock_avatar):
             user.delete()
-            
+
             # Avatar should have been deleted
             mock_avatar.delete.assert_called_once_with(save=False)
+
+
+@pytest.mark.unit
+@pytest.mark.encryption
+class TestEncryptionKeySignal:
+    """Test automatic EncryptionKey creation on user creation."""
+
+    def test_encryption_key_created_on_user_creation(self):
+        """Test that EncryptionKey is auto-created when user is created."""
+        user = UserFactory()
+
+        assert hasattr(user, 'encryption_key')
+        assert user.encryption_key is not None
+        assert isinstance(user.encryption_key, EncryptionKey)
+
+    def test_encryption_key_not_duplicated_on_user_save(self):
+        """Test that saving user doesn't create duplicate keys."""
+        user = UserFactory()
+        original_key_id = user.encryption_key.id
+
+        user.bio = "Updated bio"
+        user.save()
+        user.refresh_from_db()
+
+        assert user.encryption_key.id == original_key_id
+        assert EncryptionKey.objects.filter(user=user).count() == 1

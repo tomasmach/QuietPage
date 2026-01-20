@@ -9,7 +9,7 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
-from .fields import EncryptedTextField
+# Note: EncryptedTextField removed - using per-user encryption instead
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase, GenericUUIDTaggedItemBase
 
@@ -49,9 +49,9 @@ class Entry(models.Model):
         blank=True,
         help_text="Optional title for your entry"
     )
-    content = EncryptedTextField(
+    content = models.TextField(
         blank=True,
-        help_text="Your private journal entry (encrypted)"
+        help_text="Your private journal entry (encrypted with user's key)"
     )
     
     # Smart features
@@ -71,13 +71,20 @@ class Entry(models.Model):
         help_text="Mark entry as favorite"
     )
 
+    # Encryption tracking
+    key_version = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Version of user's encryption key used for this entry"
+    )
+
     # Tagging (free-form via django-taggit)
     tags = TaggableManager(through=UUIDTaggedItem, blank=True)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = "Journal Entry"
         verbose_name_plural = "Journal Entries"
@@ -85,6 +92,57 @@ class Entry(models.Model):
         indexes = [
             models.Index(fields=['user', '-created_at']),
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._needs_encryption = False
+        self._plaintext_for_word_count = None
+
+    def _encrypt_content(self, plaintext):
+        """Encrypt content with user's encryption key."""
+        if not plaintext:
+            return plaintext
+        from cryptography.fernet import Fernet
+        from django.core.exceptions import RelatedObjectDoesNotExist
+        try:
+            encryption_key = self.user.encryption_key.get_decrypted_key()
+        except RelatedObjectDoesNotExist as exc:
+            raise RuntimeError(
+                f"No encryption key found for user {self.user.id}. "
+                f"Please create an EncryptionKey for this user."
+            ) from exc
+        fernet = Fernet(encryption_key)
+        return fernet.encrypt(plaintext.encode('utf-8')).decode('utf-8')
+
+    def _decrypt_content(self, ciphertext):
+        """Decrypt content with user's encryption key."""
+        if not ciphertext:
+            return ciphertext
+        from cryptography.fernet import Fernet
+        from django.core.exceptions import RelatedObjectDoesNotExist
+        try:
+            encryption_key = self.user.encryption_key.get_decrypted_key()
+        except RelatedObjectDoesNotExist as exc:
+            raise RuntimeError(
+                f"No encryption key found for user {self.user.id}. "
+                f"Please create an EncryptionKey for this user."
+            ) from exc
+        fernet = Fernet(encryption_key)
+        return fernet.decrypt(ciphertext.encode('utf-8')).decode('utf-8')
+
+    def get_content(self):
+        """Get decrypted content."""
+        if not self.content:
+            return self.content
+        if self.key_version is not None:
+            return self._decrypt_content(self.content)
+        return self.content
+
+    def set_content(self, plaintext):
+        """Set content and mark for encryption on save."""
+        self._plaintext_for_word_count = plaintext
+        self._needs_encryption = True
+        self.content = plaintext
 
     def clean(self):
         """
@@ -102,19 +160,32 @@ class Entry(models.Model):
                 raise ValidationError({'mood_rating': 'Hodnocení musí být mezi 1 a 5.'})
 
     def save(self, *args, **kwargs):
-        """Auto-calculate word count and run validation before saving."""
-        # Allow callers to skip validation for non-form contexts
+        """Auto-calculate word count, encrypt content, and run validation."""
         skip_validation = kwargs.pop('skip_validation', False)
 
-        # Run full model validation (including clean()) unless explicitly skipped
         if not skip_validation:
             self.full_clean()
 
-        # Calculate word count from content (ensure non-negative)
-        if self.content:
+        # Calculate word count from plaintext content
+        if self._needs_encryption and self._plaintext_for_word_count:
+            self.word_count = max(0, len(self._plaintext_for_word_count.split()))
+        elif self.content and self.key_version is None:
+            # New content not via set_content (plaintext)
             self.word_count = max(0, len(self.content.split()))
-        else:
+        elif not self.content:
             self.word_count = 0
+
+        # Encrypt if needed
+        if self._needs_encryption and self.content:
+            self.content = self._encrypt_content(self.content)
+            self.key_version = self.user.encryption_key.version
+            self._needs_encryption = False
+            self._plaintext_for_word_count = None
+        elif self.content and self.key_version is None and not self._needs_encryption:
+            # Content was set directly (plaintext), encrypt it
+            self.word_count = max(0, len(self.content.split()))
+            self.content = self._encrypt_content(self.content)
+            self.key_version = self.user.encryption_key.version
 
         super().save(*args, **kwargs)
 

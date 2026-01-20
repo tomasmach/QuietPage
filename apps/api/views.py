@@ -212,8 +212,10 @@ class DashboardView(APIView):
         entry_date = entry.created_at.astimezone(user_tz).date()
         days_ago = (user_date - entry_date).days
 
-        content_preview = entry.content[:200] if entry.content else ''
-        if entry.content and len(entry.content) > 200:
+        # Use get_content() to get decrypted content
+        content = entry.get_content()
+        content_preview = content[:200] if content else ''
+        if content and len(content) > 200:
             content_preview += '...'
 
         return {
@@ -355,8 +357,10 @@ class RefreshFeaturedEntryView(APIView):
         if new_entry:
             entry_date = new_entry.created_at.astimezone(user_tz).date()
             days_ago = (user_date - entry_date).days
-            content_preview = new_entry.content[:200] if new_entry.content else ''
-            if new_entry.content and len(new_entry.content) > 200:
+            # Use get_content() to get decrypted content
+            content = new_entry.get_content()
+            content_preview = content[:200] if content else ''
+            if content and len(content) > 200:
                 content_preview += '...'
 
             featured_data = {
@@ -440,7 +444,7 @@ class TodayEntryView(APIView):
             if entry:
                 # Update existujícího záznamu
                 entry.title = (request.data.get('title') or '').strip()
-                entry.content = content
+                entry.set_content(content)
                 entry.mood_rating = request.data.get('mood_rating', None)
                 entry.save()
 
@@ -453,12 +457,13 @@ class TodayEntryView(APIView):
                 return Response(serializer.data)
             else:
                 # Vytvoření nového záznamu (streak signal se spustí)
-                entry = Entry.objects.create(
+                entry = Entry(
                     user=user,
                     title=(request.data.get('title') or '').strip(),
-                    content=content,
                     mood_rating=request.data.get('mood_rating', None)
                 )
+                entry.set_content(content)
+                entry.save()
 
                 # Přidání tagů
                 tags_list = parse_tags(request.data.get('tags', None))
@@ -548,7 +553,7 @@ class AutosaveView(APIView):
                                 'message': 'Cannot edit past entries'
                             }, status=status.HTTP_403_FORBIDDEN)
                         entry.title = title
-                        entry.content = content
+                        entry.set_content(content)
                         entry.mood_rating = mood_rating
                         entry.save()
 
@@ -568,13 +573,14 @@ class AutosaveView(APIView):
                             'message': 'Záznam nenalezen'
                         }, status=status.HTTP_404_NOT_FOUND)
                 else:
-                    # Create new entry
-                    entry = Entry.objects.create(
+                    # Create new entry with encrypted content
+                    entry = Entry(
                         user=request.user,
                         title=title,
-                        content=content,
                         mood_rating=mood_rating
                     )
+                    entry.set_content(content)
+                    entry.save()
 
                     # Add tags if provided
                     if tags_list is not None:

@@ -85,8 +85,10 @@ class EntrySerializer(serializers.ModelSerializer):
     Full serializer for Entry model with content.
 
     Used for detail view, create, and update operations.
+    Content is encrypted per-user, so we use get_content() and set_content().
     """
     tags = serializers.SerializerMethodField()
+    content = serializers.CharField(write_only=False, required=False, allow_blank=True)
 
     class Meta:
         model = Entry
@@ -102,23 +104,32 @@ class EntrySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'word_count', 'created_at', 'updated_at']
 
+    def to_representation(self, instance):
+        """Override to return decrypted content."""
+        ret = super().to_representation(instance)
+        ret['content'] = instance.get_content()
+        return ret
+
     def get_tags(self, obj):
         """Return tags as list of strings."""
         return [tag.name for tag in obj.tags.all()]
 
     def create(self, validated_data):
         """
-        Create a new entry and associate it with the authenticated user.
+        Create a new entry with encrypted content.
 
         Tags are handled separately since they're a ManyToMany field.
         """
         tags_data = self.initial_data.get('tags', [])
+        content = validated_data.pop('content', '')
 
-        # Create entry with user from context
-        entry = Entry.objects.create(
+        # Create entry without content first, then set it with encryption
+        entry = Entry(
             user=self.context['request'].user,
             **validated_data
         )
+        entry.set_content(content)
+        entry.save()
 
         # Set tags if provided
         if tags_data:
@@ -133,10 +144,16 @@ class EntrySerializer(serializers.ModelSerializer):
         Tags are handled separately since they're a ManyToMany field.
         """
         tags_data = self.initial_data.get('tags', None)
+        content = validated_data.pop('content', None)
 
         # Update regular fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
+        # Update content using encryption method
+        if content is not None:
+            instance.set_content(content)
+
         instance.save()
 
         # Update tags if provided in request
