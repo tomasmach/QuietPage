@@ -19,6 +19,7 @@ from apps.journal.tests.factories import EntryFactory
 @pytest.mark.django_db
 @pytest.mark.api
 @pytest.mark.integration
+@pytest.mark.encryption
 class TestAutosaveView:
     """Test suite for AutosaveView."""
 

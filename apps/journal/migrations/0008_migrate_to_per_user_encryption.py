@@ -30,7 +30,6 @@ def migrate_entries_to_per_user_encryption(apps, schema_editor):
 
     migrated = 0
     skipped = 0
-    errors = 0
 
     for entry in Entry.objects.select_related('user').all():
         if not entry.content:
@@ -42,39 +41,34 @@ def migrate_entries_to_per_user_encryption(apps, schema_editor):
             skipped += 1
             continue
 
+        # Get user's encryption key
+        user_key = EncryptionKey.objects.filter(user=entry.user).first()
+        if not user_key:
+            raise RuntimeError(
+                f"No encryption key found for user {entry.user_id} (entry {entry.id}). "
+                f"Please run migration 0010_create_encryption_keys_for_existing_users first."
+            )
+
+        # Try to decrypt with global key (old EncryptedTextField encryption)
         try:
-            # Get user's encryption key
-            user_key = EncryptionKey.objects.filter(user=entry.user).first()
-            if not user_key:
-                print(f"No encryption key for user {entry.user_id}, skipping entry {entry.id}")
-                skipped += 1
-                continue
+            plaintext = global_fernet.decrypt(entry.content.encode('utf-8')).decode('utf-8')
+        except InvalidToken:
+            raise RuntimeError(
+                f"Failed to decrypt entry {entry.id} for user {entry.user_id} with global key. "
+                f"Content may be corrupted or already re-encrypted."
+            )
 
-            # Try to decrypt with global key (old EncryptedTextField encryption)
-            try:
-                plaintext = global_fernet.decrypt(entry.content.encode('utf-8')).decode('utf-8')
-            except InvalidToken:
-                # Content might not be encrypted or already re-encrypted
-                print(f"Entry {entry.id} content not encrypted with global key, skipping")
-                skipped += 1
-                continue
+        # Re-encrypt with user's key
+        user_raw_key = master_fernet.decrypt(user_key.key.encode('utf-8'))
+        user_fernet = Fernet(user_raw_key)
+        new_content = user_fernet.encrypt(plaintext.encode('utf-8')).decode('utf-8')
 
-            # Re-encrypt with user's key
-            user_raw_key = master_fernet.decrypt(user_key.key.encode('utf-8'))
-            user_fernet = Fernet(user_raw_key)
-            new_content = user_fernet.encrypt(plaintext.encode('utf-8')).decode('utf-8')
+        entry.content = new_content
+        entry.key_version = user_key.version
+        entry.save(update_fields=['content', 'key_version'])
+        migrated += 1
 
-            entry.content = new_content
-            entry.key_version = user_key.version
-            entry.save(update_fields=['content', 'key_version'])
-            migrated += 1
-
-        except Exception as e:
-            print(f"Error migrating entry {entry.id}: {e}")
-            errors += 1
-            continue
-
-    print(f"Migration complete: {migrated} migrated, {skipped} skipped, {errors} errors")
+    print(f"Migration complete: {migrated} migrated, {skipped} skipped")
 
 
 def reverse_migration(apps, schema_editor):

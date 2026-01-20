@@ -72,7 +72,7 @@ def create_encryption_key_for_user(sender, instance, created, **kwargs):
     """
     if created:
         # Check if key already exists (defensive)
-        if not hasattr(instance, 'encryption_key') or instance.encryption_key is None:
+        if not EncryptionKey.objects.filter(user=instance).exists():
             try:
                 EncryptionKey.objects.create(user=instance)
             except Exception:

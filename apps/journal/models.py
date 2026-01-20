@@ -102,7 +102,15 @@ class Entry(models.Model):
         if not plaintext:
             return plaintext
         from cryptography.fernet import Fernet
-        fernet = Fernet(self.user.encryption_key.get_decrypted_key())
+        from django.core.exceptions import RelatedObjectDoesNotExist
+        try:
+            encryption_key = self.user.encryption_key.get_decrypted_key()
+        except RelatedObjectDoesNotExist:
+            raise RuntimeError(
+                f"No encryption key found for user {self.user.id}. "
+                f"Please create an EncryptionKey for this user."
+            )
+        fernet = Fernet(encryption_key)
         return fernet.encrypt(plaintext.encode('utf-8')).decode('utf-8')
 
     def _decrypt_content(self, ciphertext):
@@ -110,7 +118,15 @@ class Entry(models.Model):
         if not ciphertext:
             return ciphertext
         from cryptography.fernet import Fernet
-        fernet = Fernet(self.user.encryption_key.get_decrypted_key())
+        from django.core.exceptions import RelatedObjectDoesNotExist
+        try:
+            encryption_key = self.user.encryption_key.get_decrypted_key()
+        except RelatedObjectDoesNotExist:
+            raise RuntimeError(
+                f"No encryption key found for user {self.user.id}. "
+                f"Please create an EncryptionKey for this user."
+            )
+        fernet = Fernet(encryption_key)
         return fernet.decrypt(ciphertext.encode('utf-8')).decode('utf-8')
 
     def get_content(self):

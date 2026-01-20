@@ -838,7 +838,7 @@ class EntryAdmin(admin.ModelAdmin):
 
 Run: `cd /Users/tomasmach/Documents/Code/QuietPage/.worktrees/per-user-encryption && uv run python manage.py runserver`
 
-Visit: http://localhost:8000/admin/journal/entry/
+Visit: [Django Admin - Journal Entries](http://localhost:8000/admin/journal/entry/)
 
 Verify: Content shows "[Encrypted - User's private data]"
 
