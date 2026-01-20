@@ -30,7 +30,7 @@ class StaticFileView(View):
         ]
 
         for file_path in search_paths:
-            if file_path.exists():
+            if file_path.is_file():
                 return FileResponse(
                     open(file_path, 'rb'),
                     content_type=self.content_type,
