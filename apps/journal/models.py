@@ -84,10 +84,6 @@ class Entry(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    # Class-level attributes for tracking encryption state
-    _needs_encryption = False
-    _plaintext_for_word_count = None
 
     class Meta:
         verbose_name = "Journal Entry"
@@ -96,6 +92,11 @@ class Entry(models.Model):
         indexes = [
             models.Index(fields=['user', '-created_at']),
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._needs_encryption = False
+        self._plaintext_for_word_count = None
 
     def _encrypt_content(self, plaintext):
         """Encrypt content with user's encryption key."""
