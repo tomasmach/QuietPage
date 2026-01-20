@@ -134,7 +134,7 @@ class Entry(models.Model):
         """Get decrypted content."""
         if not self.content:
             return self.content
-        if self.key_version and self.content.startswith('gAAAAA'):
+        if self.key_version is not None:
             return self._decrypt_content(self.content)
         return self.content
 
@@ -169,20 +169,20 @@ class Entry(models.Model):
         # Calculate word count from plaintext content
         if self._needs_encryption and self._plaintext_for_word_count:
             self.word_count = max(0, len(self._plaintext_for_word_count.split()))
-        elif self.content and not self.content.startswith('gAAAAA'):
-            # New content not via set_content
+        elif self.content and self.key_version is None:
+            # New content not via set_content (plaintext)
             self.word_count = max(0, len(self.content.split()))
         elif not self.content:
             self.word_count = 0
 
         # Encrypt if needed
-        if self._needs_encryption and self.content and not self.content.startswith('gAAAAA'):
+        if self._needs_encryption and self.content:
             self.content = self._encrypt_content(self.content)
             self.key_version = self.user.encryption_key.version
             self._needs_encryption = False
             self._plaintext_for_word_count = None
-        elif self.content and not self.content.startswith('gAAAAA') and not self._needs_encryption:
-            # Content was set directly, encrypt it
+        elif self.content and self.key_version is None and not self._needs_encryption:
+            # Content was set directly (plaintext), encrypt it
             self.word_count = max(0, len(self.content.split()))
             self.content = self._encrypt_content(self.content)
             self.key_version = self.user.encryption_key.version
