@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { DashboardPage } from '../DashboardPage';
 import type { DashboardData } from '../../hooks/useDashboard';
 
@@ -75,9 +76,13 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// Wrapper component with MemoryRouter
+// Wrapper component with MemoryRouter and HelmetProvider
 function renderWithRouter(ui: React.ReactElement) {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
+  return render(
+    <HelmetProvider>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </HelmetProvider>
+  );
 }
 
 describe('DashboardPage', () => {
