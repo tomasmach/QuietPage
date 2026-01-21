@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useUtmTracking, clearUtmData } from '@/hooks';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -17,6 +18,7 @@ export function SignupPage() {
   const { register, isLoading } = useAuth();
   const { t } = useLanguage();
   const toast = useToast();
+  const utmData = useUtmTracking();
 
   const [formData, setFormData] = useState({
     username: '',
@@ -36,7 +38,13 @@ export function SignupPage() {
     setErrors({});
 
     try {
-      await register(formData);
+      // Include UTM tracking data with registration
+      await register({
+        ...formData,
+        ...utmData,
+      });
+      // Clear UTM data after successful registration
+      clearUtmData();
       navigate('/onboarding');
     } catch (err: unknown) {
       // Handle different error formats

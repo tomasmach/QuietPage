@@ -79,12 +79,39 @@ class RegisterSerializer(serializers.ModelSerializer):
         help_text="User timezone (e.g., Europe/Prague)"
     )
 
+    # UTM tracking fields (optional, captured from URL params)
+    utm_source = serializers.CharField(
+        required=False,
+        max_length=100,
+        allow_blank=True,
+        help_text="Traffic source (e.g., reddit, twitter, hackernews)"
+    )
+    utm_medium = serializers.CharField(
+        required=False,
+        max_length=100,
+        allow_blank=True,
+        help_text="Marketing medium (e.g., social, referral, email)"
+    )
+    utm_campaign = serializers.CharField(
+        required=False,
+        max_length=100,
+        allow_blank=True,
+        help_text="Campaign name (e.g., launch-week-1)"
+    )
+    referrer = serializers.URLField(
+        required=False,
+        max_length=500,
+        allow_blank=True,
+        help_text="Full referrer URL when user first visited"
+    )
+
     class Meta:
         model = User
         fields = [
             'username', 'email', 'password', 'password_confirm',
             'preferred_theme', 'preferred_language', 'daily_word_goal',
-            'preferred_writing_time', 'timezone'
+            'preferred_writing_time', 'timezone',
+            'utm_source', 'utm_medium', 'utm_campaign', 'referrer'
         ]
 
     def validate_username(self, value):
@@ -189,15 +216,17 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         # Update optional onboarding fields if provided
         # All fields have defaults in the model, so this is safe
-        for field in ['preferred_theme', 'preferred_language', 'daily_word_goal',
-                      'preferred_writing_time', 'timezone']:
+        optional_fields = [
+            'preferred_theme', 'preferred_language', 'daily_word_goal',
+            'preferred_writing_time', 'timezone',
+            'utm_source', 'utm_medium', 'utm_campaign', 'referrer'
+        ]
+        for field in optional_fields:
             if field in validated_data:
                 setattr(user, field, validated_data[field])
 
         # Save user with optional fields
-        if any(field in validated_data for field in ['preferred_theme', 'preferred_language',
-                                                       'daily_word_goal', 'preferred_writing_time',
-                                                       'timezone']):
+        if any(field in validated_data for field in optional_fields):
             user.save()
 
         return user

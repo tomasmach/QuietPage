@@ -35,6 +35,11 @@ interface RegisterCredentials {
   email: string;
   password: string;
   password_confirm: string;
+  // UTM tracking (optional)
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  referrer?: string;
 }
 
 interface AuthContextValue {

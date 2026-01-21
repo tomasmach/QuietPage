@@ -123,6 +123,32 @@ class User(AbstractUser):
         help_text="Whether user has completed the onboarding process"
     )
 
+    # Signup tracking (UTM parameters)
+    utm_source = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        help_text="Traffic source (e.g., reddit, twitter, hackernews)"
+    )
+    utm_medium = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        help_text="Marketing medium (e.g., social, referral, email)"
+    )
+    utm_campaign = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        help_text="Campaign name (e.g., launch-week-1)"
+    )
+    referrer = models.URLField(
+        max_length=500,
+        blank=True,
+        default='',
+        help_text="Full referrer URL when user first visited"
+    )
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
