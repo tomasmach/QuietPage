@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
-from . import views  # type: ignore
+from . import views
 from apps.api.views import HealthCheckView
 
 # Admin URL obfuscation - use environment variable in production
@@ -37,6 +37,9 @@ urlpatterns = [
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
     # API v1 routes
     path('api/v1/', include('apps.api.urls', namespace='api')),
+    # SEO files - must be served from root URL for search engines
+    path('sitemap.xml', views.SitemapView.as_view(), name='sitemap'),
+    path('robots.txt', views.RobotsView.as_view(), name='robots'),
     # Catch-all pattern for React SPA - MUST be last
     # Excludes: API routes, admin panel (with or without trailing slash), and debug toolbar
     # Serves React app on root and all other routes
