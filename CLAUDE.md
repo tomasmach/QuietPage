@@ -6,6 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 QuietPage is a journaling and mindfulness application with a Django REST API backend and React SPA frontend. The app features encrypted journal entries, streak tracking, mood analytics, and a distinctive "analog tech" design aesthetic.
 
+## Git Workflow
+
+- The **main development branch** is `dev` (not `main`)
+- **All new branches** should be created from `dev`
+- **All pull requests** should target `dev` (unless explicitly stated otherwise)
+- Use `main` branch only for production releases
+
 ## Development Guidelines
 
 - Always use best coding practices with a security-first approach
