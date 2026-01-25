@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame } from 'lucide-react';
+import { Flame, Maximize2, Minimize2 } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Sidebar } from '../components/layout/Sidebar';
@@ -28,6 +28,7 @@ export function TodayEntryPage() {
   const [content, setContent] = useState('');
   const [moodRating, setMoodRating] = useState<number | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const [zenMode, setZenMode] = useState(false);
   const [isCreatingEntry, setIsCreatingEntry] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [createError, setCreateError] = useState<Error | null>(null);
@@ -204,6 +205,7 @@ export function TodayEntryPage() {
 
             return (
               <AppLayout
+                zenMode={zenMode}
                 sidebar={<Sidebar />}
                 contextPanel={
                   <ContextPanel>
@@ -280,7 +282,7 @@ export function TodayEntryPage() {
                 }
               >
                 <div className="p-12 bg-bg-panel flex flex-col" style={{ minHeight: 'calc(100vh - 0px)' }}>
-                  <div className="max-w-5xl mx-auto w-full flex flex-col flex-1">
+                  <div className={`${zenMode ? 'max-w-3xl' : 'max-w-5xl'} mx-auto w-full flex flex-col flex-1`}>
                     {/* Header */}
                     <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed flex-shrink-0">
                       <div>
@@ -291,10 +293,20 @@ export function TodayEntryPage() {
                           {formattedDate}
                         </h1>
                       </div>
-                      <div className="text-right">
-                        <div className="text-4xl font-bold text-text-main">{wordCount}</div>
-                        <div className="text-sm font-bold uppercase text-text-text-muted">
-                          {t('meta.wordsToday')}
+                      <div className="flex items-end gap-4">
+                        <button
+                          onClick={() => setZenMode(!zenMode)}
+                          className="p-2 text-text-muted hover:text-text-main transition-colors"
+                          aria-label={zenMode ? t('entry.exitZenMode') : t('entry.zenMode')}
+                          title={zenMode ? t('entry.exitZenMode') : t('entry.zenMode')}
+                        >
+                          {zenMode ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                        </button>
+                        <div className="text-right">
+                          <div className="text-4xl font-bold text-text-main">{wordCount}</div>
+                          <div className="text-sm font-bold uppercase text-text-text-muted">
+                            {t('meta.wordsToday')}
+                          </div>
                         </div>
                       </div>
                     </div>
