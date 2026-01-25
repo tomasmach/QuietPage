@@ -1,10 +1,12 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, type FormEvent } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useUtmTracking, clearUtmData } from '@/hooks';
 import { Logo } from '@/components/ui/Logo';
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
+import { OAuthDivider } from '@/components/auth/OAuthDivider';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -32,6 +34,17 @@ export function SignupPage() {
     password?: string;
     password_confirm?: string;
   }>({});
+  const [searchParams] = useSearchParams();
+
+  // Handle OAuth errors from URL query params
+  useEffect(() => {
+    const error = searchParams.get('error');
+    if (error === 'oauth_cancelled') {
+      toast.error(t('auth.oauthCancelled'));
+    } else if (error === 'oauth_failed') {
+      toast.error(t('auth.oauthFailed'));
+    }
+  }, [searchParams, toast, t]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -113,6 +126,10 @@ export function SignupPage() {
 
         {/* Form Card */}
         <div className="bg-bg-panel border-2 border-border shadow-hard p-8">
+          {/* Google OAuth */}
+          <GoogleLoginButton />
+          <OAuthDivider />
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username Input */}
             <Input
