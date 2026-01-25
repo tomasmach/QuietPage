@@ -97,6 +97,7 @@ class Entry(models.Model):
         super().__init__(*args, **kwargs)
         self._needs_encryption = False
         self._plaintext_for_word_count = None
+        self._original_content = self.content if hasattr(self, 'content') else None
 
     def _encrypt_content(self, plaintext):
         """Encrypt content with user's encryption key."""
@@ -166,11 +167,19 @@ class Entry(models.Model):
         if not skip_validation:
             self.full_clean()
 
+        # Check if content was changed to plaintext (not encrypted)
+        content_changed = self.content != self._original_content
+        is_plaintext = (
+            self.content and
+            not self.content.startswith('gAAAAA') and  # Fernet encrypted data starts with 'gAAAAA'
+            (self.key_version is None or content_changed)
+        )
+
         # Calculate word count from plaintext content
         if self._needs_encryption and self._plaintext_for_word_count:
             self.word_count = max(0, len(self._plaintext_for_word_count.split()))
-        elif self.content and self.key_version is None:
-            # New content not via set_content (plaintext)
+        elif is_plaintext:
+            # New or updated content (plaintext)
             self.word_count = max(0, len(self.content.split()))
         elif not self.content:
             self.word_count = 0
@@ -181,9 +190,8 @@ class Entry(models.Model):
             self.key_version = self.user.encryption_key.version
             self._needs_encryption = False
             self._plaintext_for_word_count = None
-        elif self.content and self.key_version is None and not self._needs_encryption:
+        elif is_plaintext:
             # Content was set directly (plaintext), encrypt it
-            self.word_count = max(0, len(self.content.split()))
             self.content = self._encrypt_content(self.content)
             self.key_version = self.user.encryption_key.version
 
