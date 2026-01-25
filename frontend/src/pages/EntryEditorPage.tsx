@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Flame } from 'lucide-react';
+import { Flame, Maximize2, Minimize2 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Sidebar } from '../components/layout/Sidebar';
 import { ContextPanel } from '../components/layout/ContextPanel';
@@ -28,6 +28,7 @@ export function EntryEditorPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
 
   const closeDeleteModal = useCallback(() => setShowDeleteModal(false), []);
 
@@ -150,6 +151,7 @@ export function EntryEditorPage() {
 
   return (
     <AppLayout
+      zenMode={zenMode}
       sidebar={<Sidebar />}
       contextPanel={
         <ContextPanel>
@@ -240,7 +242,7 @@ export function EntryEditorPage() {
       }
     >
       <div className="p-12 bg-bg-panel min-h-screen">
-        <div className="max-w-5xl mx-auto">
+        <div className={`${zenMode ? 'max-w-3xl' : 'max-w-5xl'} mx-auto`}>
           {/* Header */}
           <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
             <div>
@@ -251,10 +253,20 @@ export function EntryEditorPage() {
                 {formattedDate}
               </h1>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-text-main">{wordCount}</div>
-              <div className="text-[10px] font-bold uppercase text-text-muted">
-                {t('meta.wordsToday')}
+            <div className="flex items-end gap-4">
+              <button
+                onClick={() => setZenMode(!zenMode)}
+                className="p-2 text-text-muted hover:text-text-main transition-colors"
+                aria-label={zenMode ? t('entry.exitZenMode') : t('entry.zenMode')}
+                title={zenMode ? t('entry.exitZenMode') : t('entry.zenMode')}
+              >
+                {zenMode ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+              </button>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-text-main">{wordCount}</div>
+                <div className="text-[10px] font-bold uppercase text-text-muted">
+                  {t('meta.wordsToday')}
+                </div>
               </div>
             </div>
           </div>
