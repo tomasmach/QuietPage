@@ -38,8 +38,13 @@ RUN pip install --no-cache-dir --upgrade pip && \
 FROM python:3.14-slim
 
 # Install runtime dependencies only
+# - libpq5: PostgreSQL client library for Django database connections
+# - postgresql-client: pg_dump utility for database backups (Celery task)
+# - gzip: compression for backup files
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    postgresql-client \
+    gzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
