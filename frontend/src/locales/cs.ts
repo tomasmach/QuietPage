@@ -266,6 +266,8 @@ export interface Translations {
     createError: string;
     createErrorDetails: string;
     retryCreate: string;
+    zenMode: string;
+    exitZenMode: string;
   };
   settings: {
     title: string;
@@ -868,6 +870,8 @@ export const cs: Translations = {
     createError: 'Nepodařilo se vytvořit dnešní záznam',
     createErrorDetails: 'Po {count} pokusech se nepodařilo vytvořit prázdný záznam. Zkontrolujte připojení k internetu a zkuste to znovu.',
     retryCreate: 'Zkusit znovu',
+    zenMode: 'Zen mód',
+    exitZenMode: 'Ukončit zen mód',
   },
   settings: {
     title: 'Nastavení',
