@@ -6,9 +6,10 @@ interface AppLayoutProps {
   children: ReactNode;
   sidebar?: ReactNode;
   contextPanel?: ReactNode;
+  zenMode?: boolean;
 }
 
-export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
+export function AppLayout({ children, sidebar, contextPanel, zenMode = false }: AppLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isContextPanelOpen, setIsContextPanelOpen] = useState(false);
 
@@ -26,34 +27,36 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-bg-app theme-aware">
       {/* Mobile Header with Hamburger Menu */}
-      <div className="lg:hidden sticky top-0 z-30 bg-bg-app border-b-2 border-border px-4 py-3 flex items-center justify-between theme-aware">
-        {sidebar && (
-          <button
-            onClick={toggleSidebar}
-            className="p-2 hover:bg-border/20 rounded-md transition-colors theme-aware"
-            aria-label="Toggle sidebar"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        )}
-        <div className="flex-1" />
-        {contextPanel && (
-          <button
-            onClick={toggleContextPanel}
-            className="p-2 hover:bg-border/20 rounded-md transition-colors theme-aware"
-            aria-label="Toggle context panel"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-        )}
-      </div>
+      {!zenMode && (
+        <div className="lg:hidden sticky top-0 z-30 bg-bg-app border-b-2 border-border px-4 py-3 flex items-center justify-between theme-aware">
+          {sidebar && (
+            <button
+              onClick={toggleSidebar}
+              className="p-2 hover:bg-border/20 rounded-md transition-colors theme-aware"
+              aria-label="Toggle sidebar"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
+          <div className="flex-1" />
+          {contextPanel && (
+            <button
+              onClick={toggleContextPanel}
+              className="p-2 hover:bg-border/20 rounded-md transition-colors theme-aware"
+              aria-label="Toggle context panel"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Mobile Sidebar Overlay */}
-      {sidebar && isSidebarOpen && (
+      {!zenMode && sidebar && isSidebarOpen && (
         <>
           <div
             className="lg:hidden fixed inset-0 bg-black/50 z-40"
@@ -85,7 +88,7 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
       )}
 
       {/* Mobile Context Panel Overlay */}
-      {contextPanel && isContextPanelOpen && (
+      {!zenMode && contextPanel && isContextPanelOpen && (
         <>
           <div
             className="lg:hidden fixed inset-0 bg-black/50 z-40"
@@ -117,11 +120,17 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
       )}
 
       {/* Responsive Layout */}
-      <div className="lg:grid lg:grid-cols-[minmax(240px,280px)_1fr_minmax(280px,320px)] lg:divide-x-2 divide-border min-h-screen">
+      <div className={
+        zenMode
+          ? "min-h-screen"
+          : "lg:grid lg:grid-cols-[minmax(240px,280px)_1fr_minmax(280px,320px)] lg:divide-x-2 divide-border min-h-screen"
+      }>
         {/* Left Sidebar */}
-        <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app theme-aware">
-          {sidebar}
-        </aside>
+        {!zenMode && (
+          <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app theme-aware">
+            {sidebar}
+          </aside>
+        )}
 
         {/* Main Content */}
         <main className="min-h-screen overflow-y-auto bg-bg-app relative theme-aware">
@@ -129,9 +138,11 @@ export function AppLayout({ children, sidebar, contextPanel }: AppLayoutProps) {
         </main>
 
         {/* Right Context Panel */}
-        <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app theme-aware">
-          {contextPanel}
-        </aside>
+        {!zenMode && (
+          <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app theme-aware">
+            {contextPanel}
+          </aside>
+        )}
       </div>
     </div>
   );
