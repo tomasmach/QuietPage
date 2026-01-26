@@ -17,6 +17,7 @@ django-taggit==6.1.0
 
 # Authentication
 django-allauth==65.13.1
+PyJWT==2.10.1  # Required by django-allauth for Google OAuth JWT verification
 
 # Rate limiting / Brute force protection
 django-axes==8.1.0
