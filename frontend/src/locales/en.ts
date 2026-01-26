@@ -319,6 +319,8 @@ export const en: Translations = {
     createError: 'Failed to create today\'s entry',
     createErrorDetails: 'After {count} attempts, we couldn\'t create an empty entry. Please check your internet connection and try again.',
     retryCreate: 'Try again',
+    zenMode: 'Zen mode',
+    exitZenMode: 'Exit zen mode',
   },
   settings: {
     title: 'Settings',

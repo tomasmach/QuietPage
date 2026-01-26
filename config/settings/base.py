@@ -35,12 +35,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # Required by allauth
 
     # Third-party
     'rest_framework',
     'corsheaders',
     'taggit',
     'axes',  # Brute force protection
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 
     # Local apps
     'apps.accounts',
@@ -48,6 +53,9 @@ INSTALLED_APPS = [
     'apps.api',
     'apps.core',  # Infrastructure tasks
 ]
+
+# Django Sites Framework (required by allauth)
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -59,6 +67,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'axes.middleware.AxesMiddleware',  # MUST be after AuthenticationMiddleware
+    'allauth.account.middleware.AccountMiddleware',  # After AuthenticationMiddleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -152,12 +161,16 @@ STORAGES = {
     },
 }
 
+# Redis URL for caching and health checks
+# Used by Celery broker, cache backend, and health check task
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/1')
+
 # Caching Configuration (Redis-backed for production performance)
 # https://docs.djangoproject.com/en/5.2/topics/cache/
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.getenv('REDIS_URL', 'redis://localhost:6379/1'),
+        'LOCATION': REDIS_URL,
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             'SOCKET_CONNECT_TIMEOUT': 5,
@@ -212,6 +225,7 @@ TAGGIT_STRIP_UNICODE_WHEN_SLUGIFYING = False  # Support Czech characters
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',  # MUST be first for rate limiting
     'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 # Session security - zkrácený timeout s automatickou prolongací při aktivitě
