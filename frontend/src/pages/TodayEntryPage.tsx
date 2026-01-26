@@ -28,7 +28,14 @@ export function TodayEntryPage() {
   const [content, setContent] = useState('');
   const [moodRating, setMoodRating] = useState<number | null>(null);
   const [tags, setTags] = useState<string[]>([]);
-  const [zenMode, setZenMode] = useState(false);
+  const [zenMode, setZenMode] = useState(() => {
+    try {
+      const stored = localStorage.getItem('zenMode');
+      return stored === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [isCreatingEntry, setIsCreatingEntry] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [createError, setCreateError] = useState<Error | null>(null);
@@ -73,6 +80,15 @@ export function TodayEntryPage() {
     onSuccess: onSaveSuccess,
     onError: (err) => onSaveError(err, isCreatingEntryRef.current),
   });
+
+  // Persist zen mode to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('zenMode', String(zenMode));
+    } catch {
+      // Silently ignore SecurityError
+    }
+  }, [zenMode]);
 
   // Auto-create empty entry if it doesn't exist (750words.com style)
   // with exponential backoff on retry
@@ -226,7 +242,7 @@ export function TodayEntryPage() {
                         <div className="border-2 border-border p-4 bg-bg-panel shadow-hard">
                           <div className="flex justify-between items-stretch gap-4">
                             <div className="flex flex-col justify-between">
-                              <span className="text-xs font-bold uppercase text-text-text-muted">
+                              <span className="text-xs font-bold uppercase text-text-muted">
                                 {t('meta.currentStreak')}
                               </span>
                               <div className="text-3xl font-bold text-text-main">{dashboardData.stats.currentStreak}</div>
@@ -282,11 +298,11 @@ export function TodayEntryPage() {
                 }
               >
                 <div className="p-12 bg-bg-panel flex flex-col" style={{ minHeight: 'calc(100vh - 0px)' }}>
-                  <div className="max-w-5xl mx-auto w-full flex flex-col flex-1">
+                  <div className={`${zenMode ? 'max-w-3xl' : 'max-w-5xl'} mx-auto w-full flex flex-col flex-1`}>
                     {/* Header */}
                     <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed flex-shrink-0">
                       <div>
-                        <div className="text-sm font-bold uppercase text-text-text-muted mb-1">
+                        <div className="text-sm font-bold uppercase text-text-muted mb-1">
                           {t(`dashboard.greeting.${greetingKey}`)}
                         </div>
                         <h1 className="text-3xl font-bold uppercase text-text-main">
@@ -300,11 +316,11 @@ export function TodayEntryPage() {
                           aria-label={t('entry.zenMode')}
                         >
                           <Sparkles size={16} />
-                          <span>{t('entry.zenMode')}</span>
+                          <span>{zenMode ? t('entry.exitZenMode') : t('entry.zenMode')}</span>
                         </button>
                         <div className="text-right">
                           <div className="text-4xl font-bold text-text-main">{wordCount}</div>
-                          <div className="text-sm font-bold uppercase text-text-text-muted">
+                          <div className="text-sm font-bold uppercase text-text-muted">
                             {t('meta.wordsToday')}
                           </div>
                         </div>
@@ -317,7 +333,7 @@ export function TodayEntryPage() {
                       onChange={(e) => setContent(e.target.value)}
                       placeholder={t('entry.contentPlaceholder')}
                       spellCheck={false}
-                      className="w-full flex-1 text-lg font-mono font-medium leading-relaxed resize-none border-0 bg-transparent focus:ring-0 focus:outline-none text-text-main placeholder:text-text-text-muted"
+                      className="w-full flex-1 text-lg font-mono font-medium leading-relaxed resize-none border-0 bg-transparent focus:ring-0 focus:outline-none text-text-main placeholder:text-text-muted"
                       autoFocus
                     />
                   </div>

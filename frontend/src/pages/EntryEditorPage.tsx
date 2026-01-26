@@ -28,7 +28,14 @@ export function EntryEditorPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [zenMode, setZenMode] = useState(false);
+  const [zenMode, setZenMode] = useState(() => {
+    try {
+      const stored = localStorage.getItem('zenMode');
+      return stored === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   const closeDeleteModal = useCallback(() => setShowDeleteModal(false), []);
 
@@ -46,6 +53,15 @@ export function EntryEditorPage() {
   const { save: autoSave, isSaving: isAutoSaving, lastSaved } = useAutoSave(id, {
     onSuccess: handleAutoSaveSuccess,
   });
+
+  // Persist zen mode to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('zenMode', String(zenMode));
+    } catch {
+      // Silently ignore SecurityError
+    }
+  }, [zenMode]);
 
   // Initialize form from entry data
   useEffect(() => {
@@ -242,7 +258,7 @@ export function EntryEditorPage() {
       }
     >
       <div className="p-12 bg-bg-panel min-h-screen">
-        <div className="max-w-5xl mx-auto">
+        <div className={`${zenMode ? 'max-w-3xl' : 'max-w-5xl'} mx-auto`}>
           {/* Header */}
           <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
             <div>
@@ -260,7 +276,7 @@ export function EntryEditorPage() {
                 aria-label={t('entry.zenMode')}
               >
                 <Sparkles size={16} />
-                <span>{t('entry.zenMode')}</span>
+                <span>{zenMode ? t('entry.exitZenMode') : t('entry.zenMode')}</span>
               </button>
               <div className="text-right">
                 <div className="text-3xl font-bold text-text-main">{wordCount}</div>
