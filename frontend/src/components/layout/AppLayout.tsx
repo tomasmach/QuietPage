@@ -139,7 +139,7 @@ export function AppLayout({ children, sidebar, contextPanel, zenMode = false }: 
         </aside>
 
         {/* Main Content */}
-        <main className="min-h-screen overflow-y-auto bg-bg-app relative theme-aware">
+        <main className={`min-h-screen overflow-y-auto bg-bg-app relative theme-aware ${zenMode ? 'zen-mode-content' : ''}`}>
           {children}
         </main>
 
@@ -157,7 +157,7 @@ export function AppLayout({ children, sidebar, contextPanel, zenMode = false }: 
 
       {/* Mobile Layout (no zen mode) */}
       <div className="lg:hidden min-h-screen">
-        <main className="min-h-screen overflow-y-auto bg-bg-app relative theme-aware">
+        <main className={`min-h-screen overflow-y-auto bg-bg-app relative theme-aware ${zenMode ? 'zen-mode-content' : ''}`}>
           {children}
         </main>
       </div>

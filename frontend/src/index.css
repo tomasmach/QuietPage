@@ -111,6 +111,15 @@ body,
   scrollbar-color: var(--color-border) transparent;
 }
 
+/* Hide scrollbar in zen mode */
+.zen-mode-content {
+  scrollbar-width: none; /* Firefox */
+}
+
+.zen-mode-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
 /* ============================================
    PROGRESS BAR STRIPED ANIMATION
    ============================================ */
