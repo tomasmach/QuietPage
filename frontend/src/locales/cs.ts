@@ -567,7 +567,7 @@ export const cs: Translations = {
     next: 'Další →',
   },
   meta: {
-    version: 'Verze 1.0',
+    version: 'Verze 1.0.1',
     wordsToday: 'Slov dnes',
     progress: 'Progress',
     goalMet: 'Cíl splněn',

@@ -16,7 +16,7 @@ export const en: Translations = {
     next: 'Next →',
   },
   meta: {
-    version: 'Version 1.0',
+    version: 'Version 1.0.1',
     wordsToday: 'Words Today',
     progress: 'Progress',
     goalMet: 'Goal Met',
