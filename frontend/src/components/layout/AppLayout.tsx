@@ -120,17 +120,23 @@ export function AppLayout({ children, sidebar, contextPanel, zenMode = false }: 
       )}
 
       {/* Responsive Layout */}
-      <div className={
-        zenMode
-          ? "min-h-screen"
-          : "lg:grid lg:grid-cols-[minmax(240px,280px)_1fr_minmax(280px,320px)] lg:divide-x-2 divide-border min-h-screen"
-      }>
+      <div
+        className="hidden lg:grid min-h-screen"
+        style={{
+          gridTemplateColumns: zenMode ? '0px 1fr 0px' : '280px 1fr 320px',
+          transition: 'grid-template-columns 300ms ease-in-out',
+        }}
+      >
         {/* Left Sidebar */}
-        {!zenMode && (
-          <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app theme-aware">
+        <aside
+          className={`sticky top-0 h-screen overflow-hidden theme-aware border-r-2 transition-colors duration-300 ${
+            zenMode ? 'bg-bg-panel border-transparent' : 'bg-bg-app border-border'
+          }`}
+        >
+          <div className="w-[280px] h-full overflow-y-auto">
             {sidebar}
-          </aside>
-        )}
+          </div>
+        </aside>
 
         {/* Main Content */}
         <main className="min-h-screen overflow-y-auto bg-bg-app relative theme-aware">
@@ -138,11 +144,22 @@ export function AppLayout({ children, sidebar, contextPanel, zenMode = false }: 
         </main>
 
         {/* Right Context Panel */}
-        {!zenMode && (
-          <aside className="hidden lg:block sticky top-0 h-screen overflow-y-auto bg-bg-app theme-aware">
+        <aside
+          className={`sticky top-0 h-screen overflow-hidden theme-aware border-l-2 transition-colors duration-300 ${
+            zenMode ? 'bg-bg-panel border-transparent' : 'bg-bg-app border-border'
+          }`}
+        >
+          <div className="w-[320px] h-full overflow-y-auto">
             {contextPanel}
-          </aside>
-        )}
+          </div>
+        </aside>
+      </div>
+
+      {/* Mobile Layout (no zen mode) */}
+      <div className="lg:hidden min-h-screen">
+        <main className="min-h-screen overflow-y-auto bg-bg-app relative theme-aware">
+          {children}
+        </main>
       </div>
     </div>
   );

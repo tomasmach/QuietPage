@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Flame, Maximize2, Minimize2 } from 'lucide-react';
+import { Flame, Sparkles } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Sidebar } from '../components/layout/Sidebar';
 import { ContextPanel } from '../components/layout/ContextPanel';
@@ -242,7 +242,7 @@ export function EntryEditorPage() {
       }
     >
       <div className="p-12 bg-bg-panel min-h-screen">
-        <div className={`${zenMode ? 'max-w-3xl' : 'max-w-5xl'} mx-auto`}>
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
             <div>
@@ -256,11 +256,11 @@ export function EntryEditorPage() {
             <div className="flex items-end gap-4">
               <button
                 onClick={() => setZenMode(!zenMode)}
-                className="p-2 text-text-muted hover:text-text-main transition-colors"
-                aria-label={zenMode ? t('entry.exitZenMode') : t('entry.zenMode')}
-                title={zenMode ? t('entry.exitZenMode') : t('entry.zenMode')}
+                className="theme-aware py-3 px-4 border-2 border-border font-bold text-sm uppercase flex items-center gap-2 group transition-all bg-bg-panel shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none text-text-main"
+                aria-label={t('entry.zenMode')}
               >
-                {zenMode ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                <Sparkles size={16} />
+                <span>{t('entry.zenMode')}</span>
               </button>
               <div className="text-right">
                 <div className="text-3xl font-bold text-text-main">{wordCount}</div>
