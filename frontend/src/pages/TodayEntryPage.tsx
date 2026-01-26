@@ -298,7 +298,7 @@ export function TodayEntryPage() {
                 }
               >
                 <div className="p-12 bg-bg-panel flex flex-col" style={{ minHeight: 'calc(100vh - 0px)' }}>
-                  <div className={`${zenMode ? 'max-w-3xl' : 'max-w-5xl'} mx-auto w-full flex flex-col flex-1`}>
+                  <div className="max-w-5xl mx-auto w-full flex flex-col flex-1">
                     {/* Header */}
                     <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed flex-shrink-0">
                       <div>
@@ -316,7 +316,7 @@ export function TodayEntryPage() {
                           aria-label={t('entry.zenMode')}
                         >
                           <Sparkles size={16} />
-                          <span>{zenMode ? t('entry.exitZenMode') : t('entry.zenMode')}</span>
+                          <span>{t('entry.zenMode')}</span>
                         </button>
                         <div className="text-right">
                           <div className="text-4xl font-bold text-text-main">{wordCount}</div>

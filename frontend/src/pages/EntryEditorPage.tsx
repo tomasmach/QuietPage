@@ -258,7 +258,7 @@ export function EntryEditorPage() {
       }
     >
       <div className="p-12 bg-bg-panel min-h-screen">
-        <div className={`${zenMode ? 'max-w-3xl' : 'max-w-5xl'} mx-auto`}>
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="mb-8 flex justify-between items-end border-b-2 border-border pb-4 border-dashed">
             <div>
@@ -276,7 +276,7 @@ export function EntryEditorPage() {
                 aria-label={t('entry.zenMode')}
               >
                 <Sparkles size={16} />
-                <span>{zenMode ? t('entry.exitZenMode') : t('entry.zenMode')}</span>
+                <span>{t('entry.zenMode')}</span>
               </button>
               <div className="text-right">
                 <div className="text-3xl font-bold text-text-main">{wordCount}</div>
