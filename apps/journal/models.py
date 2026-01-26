@@ -171,7 +171,6 @@ class Entry(models.Model):
         content_changed = self.content != self._original_content
         is_plaintext = (
             self.content and
-            not self.content.startswith('gAAAAA') and  # Fernet encrypted data starts with 'gAAAAA'
             (self.key_version is None or content_changed)
         )
 
