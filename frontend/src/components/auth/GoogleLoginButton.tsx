@@ -1,13 +1,17 @@
+import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 /**
  * Google OAuth login button.
  * Redirects to backend OAuth endpoint which handles the full OAuth flow.
+ * Shows loading state while redirect is in progress.
  */
 export function GoogleLoginButton() {
   const { t } = useLanguage();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = () => {
+    setIsLoading(true);
     // Redirect to backend OAuth endpoint
     window.location.href = '/api/v1/auth/social/google/login/';
   };
@@ -16,13 +20,24 @@ export function GoogleLoginButton() {
     <button
       type="button"
       onClick={handleGoogleLogin}
+      disabled={isLoading}
       className="w-full flex items-center justify-center gap-3 px-4 py-3
                  border-2 border-border bg-bg-panel text-text-main
                  shadow-hard hover:translate-x-[2px] hover:translate-y-[2px]
-                 hover:shadow-none transition-all font-mono"
+                 hover:shadow-none transition-all font-mono
+                 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:shadow-hard"
     >
-      <GoogleIcon />
-      <span>{t('auth.continueWithGoogle')}</span>
+      {isLoading ? (
+        <>
+          <LoadingSpinner />
+          <span>{t('auth.signingIn')}</span>
+        </>
+      ) : (
+        <>
+          <GoogleIcon />
+          <span>{t('auth.continueWithGoogle')}</span>
+        </>
+      )}
     </button>
   );
 }
@@ -45,6 +60,31 @@ function GoogleIcon() {
       <path
         fill="#EA4335"
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
+    </svg>
+  );
+}
+
+function LoadingSpinner() {
+  return (
+    <svg
+      className="w-5 h-5 animate-spin"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+        fill="none"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
       />
     </svg>
   );
