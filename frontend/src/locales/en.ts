@@ -43,8 +43,14 @@ export const en: Translations = {
     backToHome: 'Back',
     loggingIn: 'Logging in...',
     signingUp: 'Signing up...',
+    signingIn: 'Signing in...',
     loginError: 'Invalid credentials',
     signupError: 'Sign up failed',
+    // OAuth
+    continueWithGoogle: 'Continue with Google',
+    or: 'or',
+    oauthCancelled: 'Google login was cancelled',
+    oauthFailed: 'Google login failed. Please try again.',
   },
   landing: {
     title: 'QuietPage',

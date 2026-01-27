@@ -384,3 +384,36 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 # In production, this should be a persistent volume mounted path
 # Default to BASE_DIR/backups for development
 BACKUPS_DIR = Path(os.getenv('BACKUPS_PATH', str(BASE_DIR / 'backups')))
+
+# ============================================
+# GOOGLE OAUTH CONFIGURATION (django-allauth)
+# ============================================
+
+# Frontend URL for OAuth redirects
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+
+# Allauth base settings
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}  # Allow login with either username or email
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Required signup fields
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Google email already verified
+
+# Social account settings
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Enable account linking by email
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Auto-connect on email match
+SOCIALACCOUNT_LOGIN_ON_GET = True  # Skip confirmation page, redirect directly to provider
+
+# Custom adapter for redirect handling
+SOCIALACCOUNT_ADAPTER = 'apps.accounts.adapters.CustomSocialAccountAdapter'
+
+# Google OAuth provider settings
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'APP': {
+            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+            'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
+        },
+    }
+}

@@ -3,12 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useOAuthError } from '@/hooks';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { SEO } from '@/components/SEO';
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
+import { OAuthDivider } from '@/components/auth/OAuthDivider';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -20,6 +23,8 @@ export function LoginPage() {
     username: '',
     password: '',
   });
+
+  useOAuthError();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -57,6 +62,10 @@ export function LoginPage() {
 
         {/* Form Card */}
         <div className="bg-bg-panel border-2 border-border shadow-hard p-8">
+          {/* Google OAuth */}
+          <GoogleLoginButton />
+          <OAuthDivider />
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username/Email Input */}
             <Input

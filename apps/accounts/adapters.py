@@ -1,0 +1,81 @@
+"""
+Custom adapters for django-allauth social authentication.
+
+Handles OAuth redirect logic and username generation for new OAuth users.
+"""
+
+import re
+from urllib.parse import urlparse
+from django.conf import settings
+from django.shortcuts import redirect
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+
+
+class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    """
+    Custom adapter for social account authentication.
+
+    Handles:
+    - Redirect URLs after successful OAuth login
+    - Error redirects to frontend
+    - Username generation for new OAuth users
+    """
+
+    def get_login_redirect_url(self, request):
+        """Redirect to frontend after successful OAuth login."""
+        path = '/onboarding' if not request.user.onboarding_completed else '/dashboard'
+
+        # Validate FRONTEND_URL is well-formed to prevent open redirects
+        base_url = settings.FRONTEND_URL
+        try:
+            parsed = urlparse(base_url)
+            if not parsed.scheme or not parsed.netloc:
+                base_url = 'http://localhost:5173'
+        except Exception:
+            base_url = 'http://localhost:5173'
+
+        return f"{base_url}{path}"
+
+    def authentication_error(
+        self, request, provider_id, error=None, exception=None, extra_context=None
+    ):
+        """Redirect to frontend with error on OAuth failure."""
+        # Differentiate between user cancellation and actual OAuth errors
+        if error == 'access_denied':
+            error_type = 'oauth_cancelled'
+        else:
+            error_type = 'oauth_failed'
+        return redirect(f"{settings.FRONTEND_URL}/login?error={error_type}")
+
+    def populate_user(self, request, sociallogin, data):
+        """Generate username for new OAuth users from email."""
+        user = super().populate_user(request, sociallogin, data)
+        if not user.username:
+            email = data.get('email', '')
+            base = email.split('@')[0] if email else 'user'
+            user.username = self._generate_unique_username(base)
+        return user
+
+    def _generate_unique_username(self, base: str) -> str:
+        """
+        Generate a unique username from email prefix.
+
+        Args:
+            base: The email prefix to use as username base
+
+        Returns:
+            A unique username that doesn't exist in the database
+        """
+        from apps.accounts.models import User
+
+        # Clean base: only alphanumeric, underscore, dot (max 20 chars)
+        base = re.sub(r'[^a-zA-Z0-9_.]', '', base)[:20]
+        if not base:
+            base = 'user'
+
+        username = base
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base}{counter}"
+            counter += 1
+        return username
