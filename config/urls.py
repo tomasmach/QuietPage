@@ -39,6 +39,8 @@ urlpatterns = [
     path('api/v1/', include('apps.api.urls', namespace='api')),
     # OAuth routes (django-allauth)
     path('api/v1/auth/social/', include('allauth.socialaccount.urls')),
+    # Google OAuth provider routes (login, callback)
+    path('api/v1/auth/social/', include('allauth.socialaccount.providers.google.urls')),
     # SEO files - must be served from root URL for search engines
     path('sitemap.xml', views.SitemapView.as_view(), name='sitemap'),
     path('robots.txt', views.RobotsView.as_view(), name='robots'),

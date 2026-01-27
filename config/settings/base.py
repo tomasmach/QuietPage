@@ -402,6 +402,7 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'  # Google email already verified
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Enable account linking by email
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Auto-connect on email match
+SOCIALACCOUNT_LOGIN_ON_GET = True  # Skip confirmation page, redirect directly to provider
 
 # Custom adapter for redirect handling
 SOCIALACCOUNT_ADAPTER = 'apps.accounts.adapters.CustomSocialAccountAdapter'
