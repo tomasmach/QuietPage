@@ -393,9 +393,8 @@ BACKUPS_DIR = Path(os.getenv('BACKUPS_PATH', str(BASE_DIR / 'backups')))
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
 # Allauth base settings
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}  # Allow login with either username or email
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Required signup fields
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # Google email already verified
 
 # Social account settings
