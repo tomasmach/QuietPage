@@ -18,6 +18,10 @@ from csp.constants import SELF, NONE
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+# Add canonical domain redirect middleware (must be early in the chain)
+# Redirects non-www to www for consistent OAuth callbacks
+MIDDLEWARE.insert(1, 'apps.core.middleware.CanonicalDomainMiddleware')
+
 # Add CSP middleware (Content Security Policy)
 MIDDLEWARE += ['csp.middleware.CSPMiddleware']
 
