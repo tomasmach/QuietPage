@@ -41,6 +41,7 @@ export interface Translations {
     backToHome: string;
     loggingIn: string;
     signingUp: string;
+    signingIn: string;
     loginError: string;
     signupError: string;
     // OAuth
