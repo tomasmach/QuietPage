@@ -43,6 +43,11 @@ export interface Translations {
     signingUp: string;
     loginError: string;
     signupError: string;
+    // OAuth
+    continueWithGoogle: string;
+    or: string;
+    oauthCancelled: string;
+    oauthFailed: string;
   };
   landing: {
     title: string;
@@ -594,8 +599,14 @@ export const cs: Translations = {
     backToHome: 'Zpět',
     loggingIn: 'Přihlašuji...',
     signingUp: 'Registruji...',
+    signingIn: 'Přihlašuji...',
     loginError: 'Nesprávné přihlašovací údaje',
     signupError: 'Registrace se nezdařila',
+    // OAuth
+    continueWithGoogle: 'Pokračovat přes Google',
+    or: 'nebo',
+    oauthCancelled: 'Přihlášení přes Google bylo zrušeno',
+    oauthFailed: 'Přihlášení přes Google selhalo. Zkuste to znovu.',
   },
   landing: {
     title: 'QuietPage',
