@@ -175,3 +175,14 @@ CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 # Database sessions with SESSION_SAVE_EVERY_REQUEST cause DB write on every request
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'  # Uses Redis cache defined in base.py
+
+# OAuth Credentials Validation
+# Ensure Google OAuth credentials are configured in production
+_google_client_id = os.getenv('GOOGLE_CLIENT_ID', '').strip()
+_google_client_secret = os.getenv('GOOGLE_CLIENT_SECRET', '').strip()
+if not _google_client_id or not _google_client_secret:
+    raise ImproperlyConfigured(
+        'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set in production.\n'
+        'Get these credentials from: https://console.cloud.google.com/\n'
+        'See .env.example for setup instructions.'
+    )

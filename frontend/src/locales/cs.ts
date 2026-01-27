@@ -599,6 +599,7 @@ export const cs: Translations = {
     backToHome: 'Zpět',
     loggingIn: 'Přihlašuji...',
     signingUp: 'Registruji...',
+    signingIn: 'Přihlašuji...',
     loginError: 'Nesprávné přihlašovací údaje',
     signupError: 'Registrace se nezdařila',
     // OAuth

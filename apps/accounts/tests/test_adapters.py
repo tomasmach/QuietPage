@@ -95,3 +95,20 @@ class TestCustomSocialAccountAdapter:
         long_name = 'a' * 50
         username = self.adapter._generate_unique_username(long_name)
         assert len(username) <= 20
+
+    def test_populate_user_generates_username_from_email(self):
+        """populate_user generates username from email and sets user attributes."""
+        request = self.factory.get('/')
+        sociallogin = Mock()
+        data = {
+            'email': 'john.doe@example.com',
+            'first_name': 'John',
+            'last_name': 'Doe',
+        }
+
+        user = self.adapter.populate_user(request, sociallogin, data)
+
+        assert user.username == 'john.doe'
+        assert user.email == 'john.doe@example.com'
+        assert user.first_name == 'John'
+        assert user.last_name == 'Doe'

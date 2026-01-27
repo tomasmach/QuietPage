@@ -5,6 +5,7 @@ Handles OAuth redirect logic and username generation for new OAuth users.
 """
 
 import re
+from urllib.parse import urlparse
 from django.conf import settings
 from django.shortcuts import redirect
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
@@ -23,13 +24,28 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def get_login_redirect_url(self, request):
         """Redirect to frontend after successful OAuth login."""
         path = '/onboarding' if not request.user.onboarding_completed else '/dashboard'
-        return f"{settings.FRONTEND_URL}{path}"
+
+        # Validate FRONTEND_URL is well-formed to prevent open redirects
+        base_url = settings.FRONTEND_URL
+        try:
+            parsed = urlparse(base_url)
+            if not parsed.scheme or not parsed.netloc:
+                base_url = 'http://localhost:5173'
+        except Exception:
+            base_url = 'http://localhost:5173'
+
+        return f"{base_url}{path}"
 
     def authentication_error(
         self, request, provider_id, error=None, exception=None, extra_context=None
     ):
         """Redirect to frontend with error on OAuth failure."""
-        return redirect(f"{settings.FRONTEND_URL}/login?error=oauth_failed")
+        # Differentiate between user cancellation and actual OAuth errors
+        if error == 'access_denied':
+            error_type = 'oauth_cancelled'
+        else:
+            error_type = 'oauth_failed'
+        return redirect(f"{settings.FRONTEND_URL}/login?error={error_type}")
 
     def populate_user(self, request, sociallogin, data):
         """Generate username for new OAuth users from email."""

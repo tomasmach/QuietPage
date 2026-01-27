@@ -43,6 +43,7 @@ export const en: Translations = {
     backToHome: 'Back',
     loggingIn: 'Logging in...',
     signingUp: 'Signing up...',
+    signingIn: 'Signing in...',
     loginError: 'Invalid credentials',
     signupError: 'Sign up failed',
     // OAuth
