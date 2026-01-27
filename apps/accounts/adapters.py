@@ -22,10 +22,8 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
 
     def get_login_redirect_url(self, request):
         """Redirect to frontend after successful OAuth login."""
-        user = request.user
-        if not user.onboarding_completed:
-            return f"{settings.FRONTEND_URL}/onboarding"
-        return f"{settings.FRONTEND_URL}/dashboard"
+        path = '/onboarding' if not request.user.onboarding_completed else '/dashboard'
+        return f"{settings.FRONTEND_URL}{path}"
 
     def authentication_error(
         self, request, provider_id, error=None, exception=None, extra_context=None
