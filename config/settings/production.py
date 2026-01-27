@@ -64,6 +64,7 @@ else:
 # Can be set to False when SSL/TLS termination is handled by an upstream
 # Nginx reverse proxy in containerized deployments (SSL terminates at Nginx).
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust proxy's HTTPS header
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 # CSRF_COOKIE_HTTPONLY must be False for React SPA - JavaScript needs to read
