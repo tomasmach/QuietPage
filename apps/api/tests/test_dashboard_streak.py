@@ -16,6 +16,7 @@ from apps.journal.tests.factories import EntryFactory
 
 
 @pytest.mark.integration
+@pytest.mark.streak
 @pytest.mark.django_db
 class TestDashboardStreakRealTime:
     """Tests for real-time streak calculation in dashboard."""

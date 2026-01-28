@@ -26,8 +26,8 @@ from apps.journal.utils import (
     get_user_local_date,
     get_today_date_range,
     parse_tags,
+    recalculate_user_streak,
 )
-from django.db.models.functions import TruncDate
 from apps.api.serializers import (
     EntrySerializer,
     EntryListSerializer,
@@ -204,65 +204,6 @@ class DashboardView(APIView):
             'best_day': best_day
         }
 
-    def calculate_current_streak(self, user):
-        """
-        Calculate current writing streak in real-time based on actual entries.
-        
-        Unlike user.current_streak which is only updated when creating entries,
-        this method always returns the accurate current streak by checking
-        if the user wrote yesterday (streak continues) or not (streak is 0).
-        
-        Logic:
-        - Streak continues if last entry was today or yesterday
-        - Streak breaks if last entry was 2+ days ago
-        - Returns 0 if no entries or streak is broken
-        
-        Args:
-            user: User object with timezone field
-            
-        Returns:
-            int: Current consecutive days writing streak (0 if broken)
-        """
-        from apps.journal.models import Entry
-        
-        user_tz = ZoneInfo(str(user.timezone))
-        today = get_user_local_date(timezone.now(), user.timezone)
-        yesterday = today - timedelta(days=1)
-        
-        # Get all days with entries (with word_count > 0)
-        entry_dates = (
-            Entry.objects.filter(user=user, word_count__gt=0)
-            .annotate(day=TruncDate('created_at', tzinfo=user_tz))
-            .values('day')
-            .distinct()
-            .order_by('day')
-        )
-        
-        if not entry_dates.exists():
-            return 0
-        
-        # Get unique dates as a list
-        dates = sorted(set(item['day'] for item in entry_dates))
-        
-        # Check if streak is still active (last entry is today or yesterday)
-        last_entry_date = dates[-1]
-        if last_entry_date not in (today, yesterday):
-            # Streak is broken - user hasn't written yesterday or today
-            return 0
-        
-        # Calculate streak by working backwards from last entry date
-        current_streak = 0
-        check_date = last_entry_date
-        
-        for entry_date in reversed(dates):
-            if entry_date == check_date:
-                current_streak += 1
-                check_date -= timedelta(days=1)
-            else:
-                break
-        
-        return current_streak
-
     def serialize_featured_entry(self, entry, user_date):
         """Serialize featured entry for API response."""
         if not entry:
@@ -327,8 +268,8 @@ class DashboardView(APIView):
             )
 
             # Calculate current streak in real-time (not from user model cache)
-            # This ensures streak shows 0 if user hasn't written yesterday
-            current_streak = self.calculate_current_streak(user)
+            # allow_yesterday=True keeps streak alive if user wrote yesterday
+            current_streak = recalculate_user_streak(user, allow_yesterday=True)['current_streak']
 
             stats = {
                 'today_words': stats_aggregation['today_words'] or 0,
