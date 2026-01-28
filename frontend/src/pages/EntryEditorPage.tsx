@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Flame, Sparkles } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
@@ -22,12 +22,13 @@ export function EntryEditorPage() {
   const { t, language } = useLanguage();
 
   const { entry, isLoading, error, save, remove } = useEntry(id);
-  const { data: dashboardData } = useDashboard();
+  const { data: dashboardData, refresh: refreshDashboard } = useDashboard();
   const [content, setContent] = useState('');
   const [moodRating, setMoodRating] = useState<number | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const streakRefreshedRef = useRef(false);
   const [zenMode, setZenMode] = useState(() => {
     try {
       const stored = localStorage.getItem('zenMode');
@@ -46,8 +47,14 @@ export function EntryEditorPage() {
       if (!id && newId) {
         navigate(`/entries/${newId}`, { replace: true });
       }
+
+      // Refresh dashboard once after first successful save to update streak
+      if (!streakRefreshedRef.current) {
+        streakRefreshedRef.current = true;
+        refreshDashboard();
+      }
     },
-    [id, navigate]
+    [id, navigate, refreshDashboard]
   );
 
   const { save: autoSave, isSaving: isAutoSaving, lastSaved } = useAutoSave(id, {
