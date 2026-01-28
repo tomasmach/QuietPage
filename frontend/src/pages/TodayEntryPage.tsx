@@ -24,7 +24,7 @@ export function TodayEntryPage() {
   const { t, language } = useLanguage();
 
   const { entry, isLoading, error, exists } = useTodayEntry();
-  const { data: dashboardData } = useDashboard();
+  const { data: dashboardData, refresh: refreshDashboard } = useDashboard();
   const [content, setContent] = useState('');
   const [moodRating, setMoodRating] = useState<number | null>(null);
   const [tags, setTags] = useState<string[]>([]);
@@ -43,8 +43,9 @@ export function TodayEntryPage() {
   const retryCountRef = useRef(0);
   const retryTimeoutRef = useRef<number | null>(null);
   const isCreatingEntryRef = useRef(isCreatingEntry);
+  const streakRefreshedRef = useRef(false);
 
-  // Auto-save functionality (bez refresh - není potřeba)
+  // Auto-save functionality
   const onSaveSuccess = useCallback(() => {
     // Reset retry count on successful save
     retryCountRef.current = 0;
@@ -54,7 +55,13 @@ export function TodayEntryPage() {
       setIsCreatingEntry(false);
       isCreatingEntryRef.current = false;
     }
-  }, []);
+
+    // Refresh dashboard once after first successful save to update streak
+    if (!streakRefreshedRef.current) {
+      streakRefreshedRef.current = true;
+      refreshDashboard();
+    }
+  }, [refreshDashboard]);
 
   const onSaveError = useCallback((err: Error, isCreating: boolean) => {
     // Always reset isCreatingEntry to unblock future attempts

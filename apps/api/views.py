@@ -26,6 +26,7 @@ from apps.journal.utils import (
     get_user_local_date,
     get_today_date_range,
     parse_tags,
+    recalculate_user_streak,
 )
 from apps.api.serializers import (
     EntrySerializer,
@@ -266,11 +267,15 @@ class DashboardView(APIView):
                 ))
             )
 
+            # Calculate current streak in real-time (not from user model cache)
+            # allow_yesterday=True keeps streak alive if user wrote yesterday
+            current_streak = recalculate_user_streak(user, allow_yesterday=True)['current_streak']
+
             stats = {
                 'today_words': stats_aggregation['today_words'] or 0,
                 'daily_goal': user.daily_word_goal,
                 'goal_progress': min(100, int((stats_aggregation['today_words'] or 0) / user.daily_word_goal * 100)) if user.daily_word_goal > 0 else 0,
-                'current_streak': user.current_streak,
+                'current_streak': current_streak,
                 'longest_streak': user.longest_streak,
                 'total_entries': stats_aggregation['total_entries'] or 0,
                 'total_words': stats_aggregation['total_words'] or 0,

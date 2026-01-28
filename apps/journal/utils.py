@@ -100,39 +100,55 @@ def update_user_streak(user, entry_created_at):
         user.save(update_fields=['current_streak', 'longest_streak', 'last_entry_date'])
 
 
-def recalculate_user_streak(user):
+def recalculate_user_streak(user, allow_yesterday=False):
     """
     Recalculate streak from scratch based on entry history.
-    
+
     Useful for:
     - Data verification
     - Fixing corrupted streak data
     - Admin tools
-    
+    - Real-time dashboard streak (with allow_yesterday=True)
+
+    Args:
+        user: User object with timezone field
+        allow_yesterday: If True, treat yesterday as a valid anchor for the
+            current streak (the user can still write today). If False,
+            the streak is 0 unless the user wrote today.
+
     Returns:
         dict with current_streak and longest_streak
     """
     from .models import Entry
-    
+
     # Only include entries with actual content (word_count > 0)
     # This matches the signal logic for streak updates
     entries = Entry.objects.filter(user=user, word_count__gt=0).order_by('created_at')
-    
+
     if not entries.exists():
         return {'current_streak': 0, 'longest_streak': 0}
-    
+
     # Get all unique dates (in user's timezone)
     dates = sorted(set(
         get_user_local_date(entry.created_at, user.timezone)
         for entry in entries
     ))
-    
-    # Calculate current streak (working backwards from today)
+
+    # Calculate current streak (working backwards from anchor date)
     today = get_user_local_date(timezone.now(), user.timezone)
+    anchor = today
+
+    # When allow_yesterday is set, treat yesterday as a valid streak anchor
+    # so the dashboard shows the streak as still alive until end of today
+    if allow_yesterday and today not in set(dates):
+        yesterday = today - timedelta(days=1)
+        if yesterday in set(dates):
+            anchor = yesterday
+
     current_streak = 0
-    
+
     for i in range(len(dates) - 1, -1, -1):
-        expected_date = today - timedelta(days=current_streak)
+        expected_date = anchor - timedelta(days=current_streak)
         if dates[i] == expected_date:
             current_streak += 1
         else:
